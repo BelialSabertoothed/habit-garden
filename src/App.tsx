@@ -1,35 +1,36 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import { LandingPage } from './components/LandingPage';
+import { Navigation } from './components/Navigation';
+import { DashboardGarden } from './components/DashboardGarden';
+import { HabitsList } from './components/HabitsList';
+import { StatsGrowthLog } from './components/StatsGrowthLog';
+import { ProfileRewards } from './components/ProfileRewards';
 
-function App() {
-  const [count, setCount] = useState(0)
+type Page = 'landing' | 'garden' | 'habits' | 'stats' | 'profile';
+
+export default function App() {
+  const [currentPage, setCurrentPage] = useState<Page>('landing');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [theme, setTheme] = useState<'day' | 'night'>('day');
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    setCurrentPage('garden');
+  };
+
+  if (!isAuthenticated) {
+    return <LandingPage onLogin={handleLogin} />;
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className={`min-h-screen ${theme === 'night' ? 'bg-slate-900' : 'bg-gradient-to-br from-green-50 via-blue-50 to-beige-50'} transition-colors duration-300`}>
+      <Navigation currentPage={currentPage} onNavigate={setCurrentPage} theme={theme} />
+      <main className="max-w-[1200px] mx-auto px-6 py-8">
+        {currentPage === 'garden' && <DashboardGarden theme={theme} />}
+        {currentPage === 'habits' && <HabitsList theme={theme} />}
+        {currentPage === 'stats' && <StatsGrowthLog theme={theme} />}
+        {currentPage === 'profile' && <ProfileRewards theme={theme} onThemeChange={setTheme} />}
+      </main>
+    </div>
+  );
 }
-
-export default App
