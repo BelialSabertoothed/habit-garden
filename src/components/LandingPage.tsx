@@ -73,10 +73,6 @@ export function LandingPage({ onLogin }: LandingPageProps) {
                 Continue with Email
               </Button>
             </div>
-            
-            <p className="text-gray-500 text-sm">
-              No credit card required • Free to start • Cancel anytime
-            </p>
           </div>
 
           {/* Right side - Visual */}
