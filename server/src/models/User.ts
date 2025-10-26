@@ -1,12 +1,15 @@
 import mongoose, { Schema, model } from "mongoose";
 
 const UserSchema = new Schema({
-  email: { type: String, unique: true, required: true },
+  email: { type: String, unique: true, sparse: true },
+  passwordHash: { type: String },       // jen pro email+heslo
+  provider: { type: String, enum: ["local", "google"], required: true },
+  googleId: { type: String, index: true },
   nickname: String,
-  xp: { type: Number, default: 0 },
-  level: { type: Number, default: 1 },
-  currentStreak: { type: Number, default: 0 },
-  longestStreak: { type: Number, default: 0 },
-  theme: { type: String, default: "day" }
+  verified: { type: Boolean, default: false },
+  roles: { type: [String], default: [] },
+  refreshTokenHash: { type: String, default: null }, // pro 1 aktivní refresh token
+  lastLoginAt: Date
 }, { timestamps: true });
+
 export const User = mongoose.models.User || model("User", UserSchema);

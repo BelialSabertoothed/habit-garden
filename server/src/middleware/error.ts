@@ -1,6 +1,8 @@
 import type { ErrorRequestHandler } from "express";
+import { logger } from "../lib/logger.js";
+
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
-  console.error("API error:", err);
-  const status = (err as any).status || 500;
+  logger.error({ err }, 'API error');
+  const status = (err as { status?: number }).status ?? 500;
   res.status(status).json({ error: (err as Error).message || "Server error" });
 };
