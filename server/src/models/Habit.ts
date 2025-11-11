@@ -1,19 +1,16 @@
-import mongoose, { Schema, model, Types } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
-const HabitSchema = new Schema(
-  {
-    userId: { type: Types.ObjectId, ref: "User", required: true, index: true },
-    name: { type: String, required: true },
-    category: {
-      type: String,
-      enum: ["health", "eco", "productivity", "relationships", "custom"],
-      default: "custom",
-    },
-    frequency: { type: String, enum: ["daily", "weekly"], required: true },
-    icon: String,
-    isActive: { type: Boolean, default: true },
-  },
-  { timestamps: true }
-);
+// models/Habit.ts (ukázka klíčových polí)
+const HabitSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, index: true, required: true },
+  title: String,
+  category: { type: String, enum: ["Health","Eco","Productivity","Relationships"] },
+  icon: { type: String, enum: ["heart","leaf","briefcase","users"] },
+  frequency: { type: String, enum: ["Daily","Weekly"] },
+  streak: { type: Number, default: 0 },
+  lastCompletedAt: Date,
+  active: { type: Boolean, default: true }, // ← JEN 'active'
+}, { timestamps: true });
+
 
 export const Habit = mongoose.models.Habit || model("Habit", HabitSchema);

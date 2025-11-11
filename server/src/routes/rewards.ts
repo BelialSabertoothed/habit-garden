@@ -1,14 +1,14 @@
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { Reward } from "../models/Reward.js";
-import { requireUser } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 
 const router = Router();
 
 router.get(
   "/",
-  requireUser,
+  requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId!;
     const rewards = await Reward.find({ userId }).sort({ earnedAt: -1 });
@@ -18,7 +18,7 @@ router.get(
 
 router.post(
   "/",
-  requireUser,
+  requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId!;
     const input = z.object({ badge: z.string().min(2) }).parse(req.body);

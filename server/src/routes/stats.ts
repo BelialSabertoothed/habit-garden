@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from "express";
-import { requireUser } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { HabitLog } from "../models/HabitLog.js";
 
@@ -7,7 +7,7 @@ const router = Router();
 
 router.get(
   "/weekly",
-  requireUser,
+  requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId!;
     const now = new Date();

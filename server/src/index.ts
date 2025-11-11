@@ -14,6 +14,9 @@ import logs from "./routes/logs.js";
 import stats from "./routes/stats.js";
 import rewards from "./routes/rewards.js";
 import experiments from "./routes/experiments.js";
+import authRouter from "./routes/auth.js";       
+import authMeRouter from "./routes/auth.me.js";  
+import profileRouter from "./routes/profile.js";
 
 dotenv.config();
 const app = express();
@@ -38,7 +41,9 @@ app.use(passport.initialize());
 
 app.use("/api/health", health);
 app.use("/api/auth", auth);
-
+app.use("/api/auth", authRouter);
+app.use("/api/auth", authMeRouter);
+app.use("/api/profile", profileRouter);
 // chráněné trasy můžeš chránit requireJwt (až je napojíš na FE s Bearer tokenem)
 // např:
 // import { requireJwt } from "./middleware/requireJwt.js";

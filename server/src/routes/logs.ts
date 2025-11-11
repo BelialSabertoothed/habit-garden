@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Habit } from "../models/Habit.js";
 import { HabitLog } from "../models/HabitLog.js";
 import { User } from "../models/User.js";
-import { requireUser } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { calcAward, levelFromXp } from "../utils/xp.js";
 
@@ -16,7 +16,7 @@ const LogInput = z.object({
 
 router.post(
   "/",
-  requireUser,
+  requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId!;
     const { habitId, date } = LogInput.parse(req.body);

@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { UserExperiment } from "../models/Experiment.js";
-import { requireUser } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 
 const router = Router();
@@ -9,7 +9,7 @@ const assignVariant = (): "control" | "garden" =>
 
 router.get(
   "/",
-  requireUser,
+  requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId!;
     let exp = await UserExperiment.findOne({ userId, featureKey: "habit_garden_core" });
