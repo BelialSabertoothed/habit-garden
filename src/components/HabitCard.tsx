@@ -1,9 +1,9 @@
-import { Heart, Leaf, Briefcase, Users, MoreVertical } from 'lucide-react';
+import { Heart, Leaf, Briefcase, Users, Palette, MoreVertical } from 'lucide-react';
 import { Badge } from './ui/badge';
 
 interface HabitCardProps {
   name: string;
-  category: 'Health' | 'Eco' | 'Productivity' | 'Relationships';
+  category: 'Health' | 'Eco' | 'Productivity' | 'Relationships' | 'Creativity';
   frequency: 'Daily' | 'Weekly';
   xpReward: number;
   theme: 'day' | 'night';
@@ -14,6 +14,7 @@ const categoryConfig = {
   Eco: { icon: Leaf, color: 'bg-green-100 text-green-700 border-green-200' },
   Productivity: { icon: Briefcase, color: 'bg-blue-100 text-blue-700 border-blue-200' },
   Relationships: { icon: Users, color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  Creativity: { icon: Palette, color: 'bg-pink-100 text-pink-700 border-pink-200' },
 };
 
 const categoryConfigDark = {
@@ -21,6 +22,7 @@ const categoryConfigDark = {
   Eco: { icon: Leaf, color: 'bg-green-900/30 text-green-400 border-green-800' },
   Productivity: { icon: Briefcase, color: 'bg-blue-900/30 text-blue-400 border-blue-800' },
   Relationships: { icon: Users, color: 'bg-purple-900/30 text-purple-400 border-purple-800' },
+  Creativity: { icon: Palette, color: 'bg-pink-900/30 text-pink-400 border-pink-800' },
 };
 
 export function HabitCard({ name, category, frequency, xpReward, theme }: HabitCardProps) {

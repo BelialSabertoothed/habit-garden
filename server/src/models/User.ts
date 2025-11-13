@@ -14,14 +14,15 @@ const UserSchema = new Schema(
     level: { type: Number, default: 1 },
     currentStreak: { type: Number, default: 0 },
     longestStreak: { type: Number, default: 0 },
+    lastActiveDayKey: { type: String, default: null },
     profileComplete: { type: Boolean, default: false },
     onboardingDone: { type: Boolean, default: false },
     theme: { type: String, enum: ["day", "night"], default: "day" },
-      experimentVariant: {
-    type: String,
-    enum: ["gamified", "control"],
-    default: undefined, 
-  },
+    experimentVariant: {
+      type: String,
+      enum: ["gamified", "control"],
+      default: undefined,
+    },
 
     verified: { type: Boolean, default: false },
 

@@ -28,7 +28,12 @@ const RegisterInput = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   nickname: z.string().min(2).max(40).optional(),
+  avatar: z.string().optional(),
 });
+
+type Variant = "gamified" | "control";
+const pickVariant = (): Variant => (Math.random() < 0.5 ? "gamified" : "control");
+
 
 router.post("/register", async (req, res) => {
   const { email, password, nickname } = RegisterInput.parse(req.body);
@@ -43,7 +48,10 @@ router.post("/register", async (req, res) => {
     provider: "local",
     verified: true, // v produkci bys poslala verifikační e-mail
     nickname,
+    avatar: req.body.avatar,
     lastLoginAt: new Date(),
+    profileComplete: true,
+    experimentVariant: pickVariant(), 
   });
 
   const access = signAccessToken(user._id.toString());

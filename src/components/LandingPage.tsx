@@ -1,12 +1,13 @@
+// src/components/LandingPage.tsx
 import { useState } from "react";
 import { Sprout, Mail, Sparkles, TrendingUp, Award } from "lucide-react";
 import { Button } from "./ui/button";
 import EmailLogin from "./EmailLogin";
+import { RegistrationModal } from "./RegistrationModal";
 
 interface LandingPageProps {
   onGoogleLogin: () => void;
-  /** Pokud chceš vlastní verzi email loginu (modal, jiný layout), pošli sem ReactNode.
-   *  Když nic nepošleš, použije se defaultní <EmailLogin />. */
+  /** Volitelný override panelu pro e-mail přihlášení */
   emailLoginSlot?: React.ReactNode;
 }
 
@@ -30,6 +31,7 @@ const features = [
 
 export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps) {
   const [showEmail, setShowEmail] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-100 via-emerald-50 to-teal-50 overflow-hidden">
@@ -59,6 +61,7 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
 
             {/* CTA Buttons */}
             <div className="space-y-3 pt-4">
+              {/* Continue with Google */}
               <Button
                 onClick={onGoogleLogin}
                 className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-800 border-2 border-gray-200 rounded-full py-6 px-8 shadow-sm transition-all duration-200"
@@ -72,6 +75,7 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
                 Continue with Google
               </Button>
 
+              {/* Toggle Email Login */}
               <Button
                 onClick={() => setShowEmail((v) => !v)}
                 className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-full py-6 px-8 shadow-md transition-all duration-200"
@@ -86,6 +90,15 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
                   {emailLoginSlot ?? <EmailLogin />}
                 </div>
               )}
+
+              {/* Register (modal) */}
+              <Button
+                onClick={() => setShowRegister(true)}
+                className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-800 border-2 border-gray-200 rounded-full py-6 px-8 shadow-sm transition-all duration-200"
+              >
+                <Sparkles className="w-5 h-5 mr-2 text-green-600" />
+                Register
+              </Button>
             </div>
           </div>
 
@@ -131,6 +144,16 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
           </div>
         </div>
       </div>
+
+      {/* Registration modal – render mimo tlačítko */}
+      <RegistrationModal
+        open={showRegister}
+        onOpenChange={setShowRegister}
+        onComplete={() => {
+          // volitelné: po registraci můžeš skrýt email panel, spustit onboarding apod.
+          setShowEmail(false);
+        }}
+      />
     </div>
   );
 }

@@ -10,7 +10,7 @@ interface HabitsListProps {
   theme: 'day' | 'night';
 }
 
-type Category = 'All' | 'Health' | 'Eco' | 'Productivity' | 'Relationships';
+type Category = 'All' | 'Health' | 'Eco' | 'Productivity' | 'Relationships' | 'Creativity';
 
 export function HabitsList({ theme }: HabitsListProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,7 +30,7 @@ export function HabitsList({ theme }: HabitsListProps) {
     { id: 9, name: 'Date Night', category: 'Relationships' as const, frequency: 'Weekly' as const, xpReward: 60 },
   ];
 
-  const categories: Category[] = ['All', 'Health', 'Eco', 'Productivity', 'Relationships'];
+  const categories: Category[] = ['All', 'Health', 'Eco', 'Productivity', 'Relationships', 'Creativity'];
 
   const filteredHabits = habits.filter(habit => {
     const matchesSearch = habit.name.toLowerCase().includes(searchQuery.toLowerCase());

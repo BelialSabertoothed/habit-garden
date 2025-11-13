@@ -11,7 +11,20 @@ type Props = {
   onOpenChange: (v: boolean) => void;
 };
 
-const EMOJIS = ["🌱","🌿","🍀","🌵","🌻","🌼","🌸","🌺","🍃","🪴","🍄","✨"];
+const EMOJIS = [
+  { id: '🌱', emoji: '🌱', name: 'Seedling' },
+  { id: '🌿', emoji: '🌿', name: 'Herb' },
+  { id: '🌸', emoji: '🌸', name: 'Blossom' },
+  { id: '🌻', emoji: '🌻', name: 'Sunflower' },
+  { id: '🌺', emoji: '🌺', name: 'Hibiscus' },
+  { id: '🌹', emoji: '🌹', name: 'Rose' },
+  { id: '🌵', emoji: '🌵', name: 'Cactus' },
+  { id: '🌳', emoji: '🌳', name: 'Tree' },
+  { id: '🍀', emoji: '🍀', name: 'Clover' },
+  { id: '🌾', emoji: '🌾', name: 'Grain' },
+  { id: '🪴', emoji: '🪴', name: 'Potted Plant' },
+  { id: '🌼', emoji: '🌼', name: 'Daisy' },
+];
 
 export default function EditProfileModal({ open, onOpenChange }: Props) {
   const { data: me } = useMe();
@@ -75,14 +88,14 @@ export default function EditProfileModal({ open, onOpenChange }: Props) {
             <div className="grid grid-cols-8 gap-2">
               {EMOJIS.map((e) => (
                 <button
-                  key={e}
+                  key={e.id}
                   type="button"
-                  onClick={() => setAvatar(e)}
+                  onClick={() => setAvatar(e.emoji)}
                   className={`h-10 rounded border flex items-center justify-center text-xl ${
-                    avatar === e ? "border-emerald-500 bg-emerald-50" : "border-gray-200 hover:bg-gray-50"
+                    avatar === e.emoji ? "border-emerald-500 bg-emerald-50" : "border-gray-200 hover:bg-gray-50"
                   }`}
                 >
-                  {e}
+                  {e.emoji}
                 </button>
               ))}
             </div>

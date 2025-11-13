@@ -38,14 +38,14 @@ export default function EmailLogin() {
       />
       <input
         className="border rounded px-3 py-2 w-full"
-        placeholder="Heslo"
+        placeholder="Password"
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
       {err && <div className="text-red-600 text-sm">{err}</div>}
       <button disabled={loading} className="border rounded px-3 py-2 w-full">
-        {loading ? "Přihlašuji…" : "Přihlásit"}
+        {loading ? "Signing in..." : "Sign In"}
       </button>
     </form>
   );
