@@ -69,7 +69,7 @@ interface PlantCardProps {
   habitName: string;
   frequency: "Daily" | "Weekly";
   streak: number;
-  onWater: () => void;
+  onWater: () => Promise<any> | void;
   theme: "day" | "night";
   disabled?: boolean;
   disabledLabel?: string;

@@ -19,7 +19,7 @@ export function useCreateHabit() {
     },
 
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["habits-mine"] });
+      qc.invalidateQueries({ queryKey: ["habits", "mine"] });
     },
   });
 }

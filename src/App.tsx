@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { setAccessToken, clearAccessToken } from "./lib/authToken";
 import { LandingPage } from "./components/LandingPage";
@@ -10,7 +10,7 @@ import { StatsGrowthLog } from "./components/StatsGrowthLog";
 import { ProfileRewards } from "./components/ProfileRewards";
 import { useMe, loginWithGoogle, useLogout } from "./hooks/useAuth";
 import { api } from "./lib/api";
-import { Navigation } from "./components/Navigation"; 
+import { Navigation } from "./components/Navigation";
 
 type Page = "garden" | "habits" | "stats" | "profile";
 
@@ -26,17 +26,29 @@ export default function App() {
     const token = params.get("access_token");
     if (token) {
       setAccessToken(token);
-      history.replaceState(null, "", window.location.pathname + window.location.search);
+      history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search
+      );
       qc.invalidateQueries({ queryKey: ["me"] });
     }
   }, [qc]);
 
-  const [theme] = useState<"day" | "night">("day");
   const [currentPage, setCurrentPage] = useState<Page>("garden");
 
-  if (isLoading) return <div className="p-6">Načítám…</div>;
+  if (isLoading) {
+    // tady ještě neznáme me.theme, tak klidně jednoduchý loader
+    return <div className="p-6">Načítám…</div>;
+  }
 
-  if (!me) return <LandingPage onGoogleLogin={loginWithGoogle} />;
+  if (!me) {
+    // uživatel není přihlášený → landing
+    return <LandingPage onGoogleLogin={loginWithGoogle} />;
+  }
+
+  // tady už máme me, takže můžeme vzít theme z profilu
+  const theme = (me.theme ?? "day") as "day" | "night";
 
   if (!me.profileComplete) {
     return (
@@ -62,21 +74,27 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen ${theme === "night" ? "bg-slate-900" : "bg-gradient-to-br from-green-50 via-blue-50 to-beige-50"} transition-colors duration-300 pb-20 md:pb-0`}>
+    <div
+      className={`min-h-screen ${
+        theme === "night"
+          ? "bg-slate-900"
+          : "bg-gradient-to-br from-green-50 via-blue-50 to-beige-50"
+      } transition-colors duration-300 pb-20 md:pb-0`}
+    >
       <Navigation
         currentPage={currentPage}
         onNavigate={setCurrentPage}
         theme={theme}
         onLogout={async () => {
-          clearAccessToken();                 // 1) smazat token z FE
-          await logout.mutateAsync();         // 2) odhlásit se na BE (cookie)
+          clearAccessToken();
+          await logout.mutateAsync();
           qc.cancelQueries({ queryKey: ["me"] });
-          qc.setQueryData(["me"], null);      // 3) shodit cache „me“
-          setCurrentPage("garden");           // volitelné: přepnout na default
+          qc.setQueryData(["me"], null);
+          setCurrentPage("garden");
         }}
       />
 
-      <main className="max-w-[1200px] mx-auto px-6 py-8">
+      <main className="max-w-[1200px] mx-auto px-6 pb-8 pt-20 md:pt-24">
         {currentPage === "garden" && <DashboardGarden theme={theme} />}
         {currentPage === "habits" && <HabitsList theme={theme} />}
         {currentPage === "stats" && <StatsGrowthLog theme={theme} />}

@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Zap } from "lucide-react";
+import { Zap, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "./ui/button";
 import { FullGardenView } from "./FullGardenView";
 import { PlantCard } from "./PlantCard";
 import { AddHabitModal } from "./AddHabitModal";
 import { useHabits, useWaterHabit } from "../hooks/useHabits";
 import { useMe } from "../hooks/useAuth";
+import { SparkleButton } from "./ui/sparkle-button";
 
 /* stejné level křivce jako na BE */
-const levelMaxXp = (lvl: number) => ((lvl + 1) ** 2) * 100;
+const levelMaxXp = (lvl: number) => (lvl + 1) ** 2 * 100;
 
 function levelProgress(xp: number, level: number) {
   const currCap = levelMaxXp(level);
@@ -22,6 +22,36 @@ function levelProgress(xp: number, level: number) {
   const xpToNext = Math.max(0, currCap - xp);
   return { progress, xpToNext };
 }
+
+/* ---------- growth logic stejná jako v PlantCard ---------- */
+
+type Stage = "seed" | "sprout" | "flower" | "tree";
+
+function getGrowthStage(streak: number, freq: "Daily" | "Weekly"): Stage {
+  if (freq === "Daily") {
+    if (streak >= 14) return "tree";
+    if (streak >= 7) return "flower";
+    if (streak >= 3) return "sprout";
+    return "seed";
+  }
+  // WEEKLY
+  if (streak >= 6) return "tree";
+  if (streak >= 4) return "flower";
+  if (streak >= 2) return "sprout";
+  return "seed";
+}
+
+/* ---------- typy pro filtry ---------- */
+
+type CategoryFilter =
+  | "All"
+  | "Health"
+  | "Eco"
+  | "Productivity"
+  | "Relationships"
+  | "Creativity";
+type StageFilter = "all" | Stage;
+type StatusFilter = "all" | "waiting" | "done";
 
 export function DashboardGarden({
   theme: fallbackTheme,
@@ -38,7 +68,17 @@ export function DashboardGarden({
   const isGamified = (me?.experimentVariant ?? "gamified") === "gamified";
 
   const [showModal, setShowModal] = useState(false);
-  const [addHover, setAddHover] = useState(false);
+
+  // FILTRY
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("All");
+  const [stageFilter, setStageFilter] = useState<StageFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [showFilters, setShowFilters] = useState(false);
+
+  // krátkodobě držíme id zalitých habitů, aby se neposunuly dřív než doběhne animace
+  const [recentlyWatered, setRecentlyWatered] = useState<
+    Record<string, number>
+  >({});
 
   // hodnoty z /me
   const xp = me?.xp ?? 0;
@@ -55,11 +95,18 @@ export function DashboardGarden({
     if (level > prevLevelRef.current) {
       setLeveledUp(true);
 
-      // scroll k XP panelu
-      xpCardRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      // scrollujeme jen když je user blízko vrchu, jinak neskáčeme
+      const scrollY =
+        window.scrollY ??
+        window.pageYOffset ??
+        document.documentElement.scrollTop ??
+        0;
+      if (scrollY < 160) {
+        xpCardRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
 
       prevLevelRef.current = level;
       const t = setTimeout(() => setLeveledUp(false), 1100);
@@ -76,7 +123,7 @@ export function DashboardGarden({
   }
 
   const today = new Date();
-  const canWater = (
+  const canWaterBackend = (
     frequency: "Daily" | "Weekly",
     lastCompletedAt?: string | Date | null
   ) => {
@@ -94,9 +141,7 @@ export function DashboardGarden({
     const currentWeek = Math.ceil(
       (today.getUTCDate() - today.getUTCDay() + 1) / 7
     );
-    const lastWeek = Math.ceil(
-      (last.getUTCDate() - last.getUTCDay() + 1) / 7
-    );
+    const lastWeek = Math.ceil((last.getUTCDate() - last.getUTCDay() + 1) / 7);
     return (
       currentWeek !== lastWeek ||
       today.getUTCMonth() !== last.getUTCMonth() ||
@@ -104,14 +149,53 @@ export function DashboardGarden({
     );
   };
 
-  const stageFromStreak = (
-    s = 0
-  ): "seed" | "sprout" | "flower" | "tree" =>
-    s >= 30 ? "tree" : s >= 14 ? "flower" : s >= 7 ? "sprout" : "seed";
+  const categories: CategoryFilter[] = [
+    "All",
+    "Health",
+    "Eco",
+    "Productivity",
+    "Relationships",
+    "Creativity",
+  ];
 
-  const handleAddClick = () => {
-    setShowModal(true);
-  };
+  /* ---------- aplikace filtrů + řazení ---------- */
+
+  const filteredAndSortedHabits = habits
+    .filter((h) => {
+      const streak = h.streak ?? 0;
+      const stage = getGrowthStage(streak, h.frequency);
+      const waitingRaw = canWaterBackend(h.frequency, h.lastCompletedAt);
+      const waiting = waitingRaw || !!recentlyWatered[h._id];
+
+      // kategorie
+      if (categoryFilter !== "All" && h.category !== categoryFilter)
+        return false;
+
+      // stage
+      if (stageFilter !== "all" && stage !== stageFilter) return false;
+
+      // status
+      if (statusFilter === "waiting" && !waiting) return false;
+      if (statusFilter === "done" && waiting) return false;
+
+      return true;
+    })
+    .sort((a, b) => {
+      const aWaiting =
+        canWaterBackend(a.frequency, a.lastCompletedAt) ||
+        !!recentlyWatered[a._id];
+      const bWaiting =
+        canWaterBackend(b.frequency, b.lastCompletedAt) ||
+        !!recentlyWatered[b._id];
+
+      // čekající nahoře
+      if (aWaiting !== bWaiting) return aWaiting ? -1 : 1;
+
+      // pak podle streaku
+      const aStreak = a.streak ?? 0;
+      const bStreak = b.streak ?? 0;
+      return bStreak - aStreak;
+    });
 
   return (
     <div className="space-y-8">
@@ -120,7 +204,9 @@ export function DashboardGarden({
         <div
           ref={xpCardRef}
           className={`relative overflow-hidden ${
-            isDark ? "bg-slate-800 border-slate-700" : "bg-white border-green-100"
+            isDark
+              ? "bg-slate-800 border-slate-700"
+              : "bg-white border-green-100"
           } rounded-2xl p-6 shadow-md border`}
         >
           {/* 💥 Level-up burst aura */}
@@ -215,9 +301,7 @@ export function DashboardGarden({
 
             <div>
               <p
-                className={`mb-2 ${
-                  isDark ? "text-gray-300" : "text-gray-600"
-                }`}
+                className={`mb-2 ${isDark ? "text-gray-300" : "text-gray-600"}`}
               >
                 Current Streak
               </p>
@@ -229,11 +313,7 @@ export function DashboardGarden({
                 >
                   {globalStreak}
                 </span>
-                <span
-                  className={
-                    isDark ? "text-gray-400" : "text-gray-500"
-                  }
-                >
+                <span className={isDark ? "text-gray-400" : "text-gray-500"}>
                   days 🔥
                 </span>
               </div>
@@ -243,7 +323,7 @@ export function DashboardGarden({
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className={isDark ? "text-white" : "text-gray-900"}>
             Your Garden
@@ -252,54 +332,11 @@ export function DashboardGarden({
             Nurture your habits and watch them grow
           </p>
         </div>
-
-        {/* Add Habit button se sparkle efektem na HOVER */}
-        <motion.div
-          className="relative"
-          onMouseEnter={() => setAddHover(true)}
-          onMouseLeave={() => setAddHover(false)}
-        >
-          <Button
-            onClick={handleAddClick}
-            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-full shadow-md relative z-20"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Add New Habit
-          </Button>
-
-          <AnimatePresence>
-            {addHover && (
-              <motion.div
-                className="absolute inset-0 pointer-events-none z-10"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                {/* horní pravý třpyt */}
-                <motion.span
-                  className="absolute -top-2 right-1 text-yellow-300 text-lg"
-                  initial={{ scale: 0, rotate: -20, opacity: 0 }}
-                  animate={{ scale: 1.1, rotate: 0, opacity: 1 }}
-                  exit={{ scale: 0.5, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  ✨
-                </motion.span>
-                {/* levý dolní třpyt */}
-                <motion.span
-                  className="absolute -bottom-2 left-3 text-emerald-200 text-lg"
-                  initial={{ scale: 0, rotate: 20, opacity: 0 }}
-                  animate={{ scale: 1.1, rotate: 0, opacity: 1 }}
-                  exit={{ scale: 0.5, opacity: 0 }}
-                  transition={{ duration: 0.3, delay: 0.05 }}
-                >
-                  ✨
-                </motion.span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+        <SparkleButton
+          label="Add New Habit"
+          isDark={isDark}
+          onClick={() => setShowModal(true)}
+        />
       </div>
 
       {/* Full Garden View – pouze gamified */}
@@ -308,26 +345,181 @@ export function DashboardGarden({
           const habitsForGarden = (habits ?? []).map((h) => ({
             id: h._id,
             name: h.title,
-            stage: stageFromStreak(h.streak ?? 0),
+            stage: getGrowthStage(h.streak ?? 0, h.frequency),
             streak: h.streak ?? 0,
           }));
           return <FullGardenView habits={habitsForGarden} theme={theme} />;
         })()}
 
+      {/* Toggle pro filtry */}
+      {habits.length > 0 && (
+        <div className="flex items-center justify-between gap-3">
+          <span
+            className={`text-xs uppercase tracking-wide ${
+              isDark ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
+            Filters
+          </span>
+          <button
+            onClick={() => setShowFilters((s) => !s)}
+            className={`ml-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs border transition-colors ${
+              showFilters
+                ? "bg-emerald-500 text-white border-emerald-500"
+                : isDark
+                ? "border-slate-600 text-slate-200 hover:bg-slate-800"
+                : "border-gray-300 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            {showFilters ? "Hide filters" : "Show filters"}
+          </button>
+        </div>
+      )}
+
+      {/* Filtrační panel (collapsible) */}
+      <AnimatePresence initial={false}>
+        {showFilters && habits.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25 }}
+            className="origin-top"
+          >
+            <div
+              className={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mt-2 ${
+                isDark ? "text-gray-200" : "text-gray-700"
+              }`}
+            >
+              {/* Kategorie */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-xs uppercase tracking-wide opacity-70">
+                  Category:
+                </span>
+                {categories.map((cat) => {
+                  const active = categoryFilter === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setCategoryFilter(cat)}
+                      className={`px-3 py-1 rounded-full text-xs md:text-sm border transition-colors ${
+                        active
+                          ? "bg-emerald-500 text-white border-emerald-500"
+                          : isDark
+                          ? "border-slate-600 text-slate-200 hover:bg-slate-800"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Stage + Status */}
+              <div className="flex flex-wrap gap-3 items-center">
+                {/* Stage */}
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-xs uppercase tracking-wide opacity-70">
+                    Stage:
+                  </span>
+                  {(
+                    [
+                      { id: "all", label: "All" },
+                      { id: "seed", label: "Seed" },
+                      { id: "sprout", label: "Sprout" },
+                      { id: "flower", label: "Flower" },
+                      { id: "tree", label: "Tree" },
+                    ] as { id: StageFilter; label: string }[]
+                  ).map((s) => {
+                    const active = stageFilter === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => setStageFilter(s.id)}
+                        className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
+                          active
+                            ? "bg-emerald-500 text-white border-emerald-500"
+                            : isDark
+                            ? "border-slate-600 text-slate-200 hover:bg-slate-800"
+                            : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Status */}
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-xs uppercase tracking-wide opacity-70">
+                    Status:
+                  </span>
+                  {(
+                    [
+                      { id: "all", label: "All" },
+                      { id: "waiting", label: "Waiting" },
+                      { id: "done", label: "Done" },
+                    ] as { id: StatusFilter; label: string }[]
+                  ).map((s) => {
+                    const active = statusFilter === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => setStatusFilter(s.id)}
+                        className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
+                          active
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : isDark
+                            ? "border-slate-600 text-slate-200 hover:bg-slate-800"
+                            : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Cards */}
-      {habits.length === 0 ? (
+      {/* Cards */}
+      {filteredAndSortedHabits.length === 0 ? (
         <div
           className={`${
             isDark ? "text-gray-400" : "text-gray-600"
           } text-center py-12`}
         >
-          Your garden is empty. Add your first habit!
+          No habits match your filters.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {habits.map((h) => {
+          {filteredAndSortedHabits.map((h) => {
             const streak = h.streak ?? 0;
-            const allowed = canWater(h.frequency, h.lastCompletedAt);
+            const backendAllowed = canWaterBackend(
+              h.frequency,
+              h.lastCompletedAt
+            );
+
+            // je tahle konkrétní karta právě „watering“?
+            const isWateringThis = water.isPending && water.variables === h._id;
+
+            const disabled = !backendAllowed || isWateringThis;
+
+            const disabledLabel = !backendAllowed
+              ? h.frequency === "Daily"
+                ? "Done today"
+                : "Done this week"
+              : isWateringThis
+              ? "Updating…"
+              : undefined;
+
             return (
               <PlantCard
                 key={h._id}
@@ -335,15 +527,39 @@ export function DashboardGarden({
                 frequency={h.frequency}
                 streak={streak}
                 theme={theme}
-                disabled={!allowed}
-                disabledLabel={
-                  allowed
-                    ? undefined
-                    : h.frequency === "Daily"
-                    ? "Done today"
-                    : "Done this week"
-                }
-                onWater={() => allowed && water.mutate(h._id)}
+                disabled={disabled}
+                disabledLabel={disabledLabel}
+                onWater={() => {
+                  const id = h._id;
+
+                  // pokud BE říká „ne“ nebo je už pending, nic nedělej
+                  if (!backendAllowed || isWateringThis) {
+                    return Promise.resolve();
+                  }
+
+                  // 1) označíme habit jako „recentlyWatered“, aby
+                  //    se kvůli animaci hned nepřehodil do DONE
+                  const ts = Date.now();
+                  setRecentlyWatered((prev) => ({
+                    ...prev,
+                    [id]: ts,
+                  }));
+
+                  // 2) po ~1.2 s smažeme „waiting“ flag
+                  setTimeout(() => {
+                    setRecentlyWatered((prev) => {
+                      // pokud mezitím přišlo nové kliknutí,
+                      // nechej novější timestamp
+                      if (prev[id] && prev[id] !== ts) return prev;
+                      const copy = { ...prev };
+                      delete copy[id];
+                      return copy;
+                    });
+                  }, 1200); // sladěné s animací v PlantCard
+
+                  // 3) skutečný tick -> vrací promise pro PlantCard (await onWater)
+                  return water.mutateAsync(id);
+                }}
               />
             );
           })}

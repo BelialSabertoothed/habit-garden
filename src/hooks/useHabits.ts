@@ -15,13 +15,7 @@ export type Habit = {
   worth: number;
 };
 
-/** stejná level křivka jako na BE – můžeš ji případně použít i na FE */
-const levelMaxXp = (lvl: number) => ((lvl + 1) ** 2) * 100;
-export const recalcLevel = (xp: number) => {
-  let lvl = 1;
-  while (xp >= levelMaxXp(lvl)) lvl += 1;
-  return lvl;
-};
+const HABITS_KEY = ["habits", "mine"] as const;
 
 async function fetchMine(): Promise<Habit[]> {
   const res = await api.get("habits/mine");
@@ -34,7 +28,7 @@ async function fetchMine(): Promise<Habit[]> {
 
 export function useHabits() {
   return useQuery({
-    queryKey: ["habits-mine"],
+    queryKey: HABITS_KEY,
     queryFn: fetchMine,
     staleTime: 30_000,
   });
@@ -49,9 +43,9 @@ type TickResponse = {
   };
   me?: {
     xp?: number;
+    level?: number;
     currentStreak?: number;
     longestStreak?: number;
-    level?: number;
   };
 };
 
@@ -59,17 +53,19 @@ export function useWaterHabit() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<TickResponse> => {
+    // vracíme { id, ...data } – ať máme id i v onSuccess
+    mutationFn: async (id: string) => {
       const res = await api.post(`habits/${id}/tick`, { json: {} });
-      const data =
+      const data: TickResponse =
         typeof (res as any).json === "function" ? await (res as any).json() : res;
-      return data as TickResponse;
+      return { id, ...data };
     },
 
-    // optimistický update streaku
+    // optimistic update – zvedneme streak + nastavíme lastCompletedAt už před odpovědí
     onMutate: async (id: string) => {
-      await qc.cancelQueries({ queryKey: ["habits-mine"] });
-      const prev = qc.getQueryData<Habit[]>(["habits-mine"]);
+      await qc.cancelQueries({ queryKey: HABITS_KEY });
+
+      const prev = qc.getQueryData<Habit[]>(HABITS_KEY);
 
       if (prev) {
         const updated = prev.map((h) =>
@@ -81,30 +77,51 @@ export function useWaterHabit() {
               }
             : h
         );
-        qc.setQueryData(["habits-mine"], updated);
+        qc.setQueryData(HABITS_KEY, updated);
       }
 
       return { prev };
     },
 
-    onSuccess: (data) => {
-      // BE vrací snapshot me – rovnou ho mergneme do cache
-      if (data?.me) {
+    // přesně dorovnáme podle toho, co vrátil BE + propsání do /me
+    onSuccess: (result) => {
+      const { id, habit, me } = result as { id: string } & TickResponse;
+
+      if (habit) {
+        qc.setQueryData<Habit[] | undefined>(HABITS_KEY, (prev) =>
+          prev
+            ? prev.map((h) =>
+                h._id === id
+                  ? {
+                      ...h,
+                      streak:
+                        typeof habit.streak === "number"
+                          ? habit.streak
+                          : h.streak,
+                      lastCompletedAt:
+                        habit.lastCompletedAt ?? h.lastCompletedAt,
+                    }
+                  : h
+              )
+            : prev
+        );
+      }
+
+      if (me) {
         qc.setQueryData(["me"], (old: any) =>
-          old ? { ...old, ...data.me } : data.me
+          old ? { ...old, ...me } : me
         );
       }
     },
 
-    onError: (_err, _id, ctx) => {
+    onError: (_err, _variables, ctx) => {
       if (ctx?.prev) {
-        qc.setQueryData(["habits-mine"], ctx.prev);
+        qc.setQueryData(HABITS_KEY, ctx.prev);
       }
     },
 
     onSettled: () => {
-      // pro jistotu refetch habits + profil
-      qc.invalidateQueries({ queryKey: ["habits-mine"] });
+      qc.invalidateQueries({ queryKey: HABITS_KEY });
       qc.invalidateQueries({ queryKey: ["me"] });
     },
   });

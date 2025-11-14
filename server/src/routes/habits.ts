@@ -88,129 +88,136 @@ router.get(
 
 /* ---------------------------- Tick habit + XP + streak ---------------------------- */
 
-router.post("/:id/tick", requireAuth, async (req: AuthReq, res: Response) => {
-  const { id } = req.params;
-  const userId = req.userId!;
-  const now = new Date();
+router.post(
+  "/:id/tick",
+  requireAuth,
+  asyncHandler(async (req: AuthReq, res: Response) => {
+    const { id } = req.params;
+    const userId = req.userId!;
+    const now = new Date();
 
-  const habit = await Habit.findOne({ _id: id, userId });
-  if (!habit) return res.status(404).json({ error: "not found" });
+    const habit = await Habit.findOne({ _id: id, userId });
+    if (!habit) return res.status(404).json({ error: "not found" });
 
-  const dKey = dayKey(now);
-  const wKey = weekKey(now);
+    const todayKey = dayKey(now);
 
-  // 1) Už dnes/tento týden splněno? (per habit)
-  const tickFilter =
-    habit.frequency === "Daily"
-      ? { habitId: habit._id, userId, dayKey: dKey }
-      : { habitId: habit._id, userId, weekKey: wKey };
+    // 1) Deduplikace podle lastCompletedAt (stejně jako FE)
+    if (habit.frequency === "Daily") {
+      const lastKey = habit.lastCompletedAt
+        ? dayKey(habit.lastCompletedAt)
+        : undefined;
+      if (lastKey === todayKey) {
+        const me = await User.findById(userId).lean();
+        return res.json({ ok: true, habit, me });
+      }
+    } else {
+      // Weekly
+      const thisWeek = weekKey(now);
+      const lastWeek = habit.lastCompletedAt
+        ? weekKey(habit.lastCompletedAt)
+        : undefined;
+      if (lastWeek === thisWeek) {
+        const me = await User.findById(userId).lean();
+        return res.json({ ok: true, habit, me });
+      }
+    }
 
-  const already = await HabitTick.findOne(tickFilter);
-  if (already) {
-    const me = await User.findById(userId).lean();
-    return res.json({ ok: true, habit, me });
-  }
+    // 2) Zapiš / upsertni HabitTick (kvůli streakům)
+    const tickDoc = {
+      userId,
+      habitId: habit._id,
+      frequency: habit.frequency,
+      dayKey: todayKey, // i pro weekly – dnešní kalendářní den
+      weekKey: weekKey(now),
+    };
 
-  // 2) Globální info: měl user dnes nějaký tick před tímto?
-  const hadTickTodayBefore = await HabitTick.exists({
-    userId,
-    dayKey: dKey,
-  });
+    await HabitTick.updateOne(
+      {
+        userId,
+        habitId: habit._id,
+        dayKey: todayKey,
+      },
+      { $setOnInsert: tickDoc },
+      { upsert: true }
+    );
 
-  // 3) Zapiš nový tick (vždy dayKey = dnešní den, weekKey jen pro Weekly)
-  await HabitTick.create({
-    userId,
-    habitId: habit._id,
-    frequency: habit.frequency,
-    dayKey: dKey,
-    weekKey: habit.frequency === "Weekly" ? wKey : undefined,
-  });
+    // 3) Per-habit streak – podle dní/týdnů
+    if (habit.frequency === "Daily") {
+      const yesterdayKey = prevDayKey(now);
+      const lastKey = habit.lastCompletedAt
+        ? dayKey(habit.lastCompletedAt)
+        : undefined;
+      habit.streak =
+        lastKey === yesterdayKey ? (habit.streak ?? 0) + 1 : 1;
+    } else {
+      const prevWeek = prevWeekKey(now);
+      const lastWeek = habit.lastCompletedAt
+        ? weekKey(habit.lastCompletedAt)
+        : undefined;
+      habit.streak =
+        lastWeek === prevWeek ? (habit.streak ?? 0) + 1 : 1;
+    }
 
-  // 4) Per-habit streak (po dnech / týdnech)
-  if (habit.frequency === "Daily") {
+    habit.lastCompletedAt = now;
+    await habit.save();
+
+    // 4) XP – škálujeme podle streaku
+    const me = await User.findById(userId);
+    if (!me) return res.status(404).json({ error: "user missing" });
+
+    const baseWorth = habit.worth ?? 10;
+    const bonusMultiplier = Math.min(
+      1.5,
+      1 + 0.05 * Math.max(0, (habit.streak ?? 1) - 1)
+    );
+    const gainedXp = Math.round(baseWorth * bonusMultiplier);
+
+    me.xp = (me.xp ?? 0) + gainedXp;
+    me.level = recalcLevel(me.xp ?? 0);
+
+    // 5) Globální user streak – jen 1× za den
     const yesterdayKey = prevDayKey(now);
-    const lastKey = habit.lastCompletedAt
-      ? dayKey(habit.lastCompletedAt)
-      : undefined;
+    const lastActive = (me.lastActiveDayKey as string | undefined) || undefined;
 
-    habit.streak = lastKey === yesterdayKey ? (habit.streak ?? 0) + 1 : 1;
-  } else {
-    const prevWKey = prevWeekKey(now);
-    const lastW = habit.lastCompletedAt
-      ? weekKey(habit.lastCompletedAt)
-      : undefined;
-
-    habit.streak = lastW === prevWKey ? (habit.streak ?? 0) + 1 : 1;
-  }
-
-  habit.lastCompletedAt = now;
-  await habit.save();
-
-  // 5) XP – základ = habit.worth, bonus podle streaku u toho habit
-  const me = await User.findById(userId);
-  if (!me) return res.status(404).json({ error: "user missing" });
-
-  const baseWorth = habit.worth ?? 10;
-  const streakForBonus = habit.streak ?? 1;
-
-  // +5 % za každý den/týden streaku, maximum +50 %
-  const bonusMultiplier = Math.min(
-    1.5,
-    1 + 0.05 * Math.max(0, streakForBonus - 1)
-  );
-  const gainedXp = Math.round(baseWorth * bonusMultiplier);
-
-  const prevXp = me.xp ?? 0;
-  me.xp = prevXp + gainedXp;
-  me.level = recalcLevel(me.xp);
-
-  // 6) Globální streak (user.currentStreak) – počítá se max 1× / den
-  const lastKey = (me.lastActiveDayKey as string | undefined) ?? undefined;
-
-  if (!hadTickTodayBefore) {
-    const yesterday = prevDayKey(now);
-
-    if (!lastKey) {
+    if (!lastActive) {
       me.currentStreak = 1;
       me.longestStreak = Math.max(me.longestStreak ?? 0, 1);
-      me.lastActiveDayKey = dKey;
-    } else if (lastKey === yesterday) {
+      me.lastActiveDayKey = todayKey;
+    } else if (lastActive === yesterdayKey) {
       me.currentStreak = (me.currentStreak ?? 0) + 1;
-      me.longestStreak = Math.max(me.longestStreak ?? 0, me.currentStreak);
-      me.lastActiveDayKey = dKey;
-    } else if (lastKey === dKey) {
-      // edge case – druhý tick stejného dne, necháme streak
+      me.longestStreak = Math.max(
+        me.longestStreak ?? 0,
+        me.currentStreak
+      );
+      me.lastActiveDayKey = todayKey;
+    } else if (lastActive === todayKey) {
+      // už dnes něco dělal – streak necháme
     } else {
-      // díra v kalendáři → reset streaku
+      // díra v kalendáři -> reset
       me.currentStreak = 1;
-      me.lastActiveDayKey = dKey;
+      me.lastActiveDayKey = todayKey;
     }
-  } else {
-    // už dnes aspoň jeden tick byl – jen refreshneme lastActiveDayKey
-    me.lastActiveDayKey = dKey;
-  }
 
-  await me.save();
+    await me.save();
 
-  // 7) Vrátíme aktuální snapshot pro FE
-  res.json({
-    ok: true,
-    gainedXp,
-    habit: {
-      _id: habit._id,
-      streak: habit.streak,
-      lastCompletedAt: habit.lastCompletedAt,
-    },
-    me: {
-      xp: me.xp,
-      level: me.level,
-      currentStreak: me.currentStreak,
-      longestStreak: me.longestStreak,
-      lastActiveDayKey: me.lastActiveDayKey,
-    },
-  });
-});
-
+    return res.json({
+      ok: true,
+      gainedXp,
+      habit: {
+        _id: habit._id,
+        streak: habit.streak,
+        lastCompletedAt: habit.lastCompletedAt,
+      },
+      me: {
+        xp: me.xp,
+        level: me.level,
+        currentStreak: me.currentStreak,
+        longestStreak: me.longestStreak,
+        lastActiveDayKey: me.lastActiveDayKey,
+      },
+    });
+  })
+);
 /* ---------------------------- CRUD (detailní) ---------------------------- */
 
 router.get(

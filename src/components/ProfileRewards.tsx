@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Award, Sun, Moon, Zap, Pencil, User as UserIcon } from "lucide-react";
+import {
+  Award,
+  Sun,
+  Moon,
+  Zap,
+  Pencil,
+  User as UserIcon,
+} from "lucide-react";
+import { motion } from "framer-motion";
 import { BadgeIcon } from "./BadgeIcon";
 import { Progress } from "./ui/progress";
 import { Switch } from "./ui/switch";
@@ -9,9 +17,22 @@ import { useMe } from "../hooks/useAuth";
 import { api } from "../lib/api";
 import EditProfileModal from "./UpdateProfileModal";
 
-function xpForLevel(level: number) {
-  // jednoduchá křivka: 100 XP / level (můžeš později nahradit)
-  return level * 100;
+/* ---------- XP / level křivka – stejné jako na BE ---------- */
+
+const levelMaxXp = (lvl: number) => ((lvl + 1) ** 2) * 100;
+
+function levelProgress(xp: number, level: number) {
+  const currCap = levelMaxXp(level);
+  const prevCap = level > 1 ? levelMaxXp(level - 1) : 0;
+  const span = currCap - prevCap || 1;
+
+  const inLevel = Math.max(0, xp - prevCap);
+  const progress = Math.min(100, (inLevel / span) * 100);
+  return {
+    progressPercent: progress,
+    inLevel,
+    span,
+  };
 }
 
 export function ProfileRewards() {
@@ -22,37 +43,65 @@ export function ProfileRewards() {
   if (isLoading || !me) {
     return (
       <div className="space-y-6">
-        <div className="rounded-2xl p-6 border bg-white/70 animate-pulse h-40" />
-        <div className="rounded-2xl p-6 border bg-white/70 animate-pulse h-28" />
-        <div className="rounded-2xl p-6 border bg-white/70 animate-pulse h-64" />
+        <div className="rounded-2xl p-6 border bg-white/70 dark:bg-slate-800/70 animate-pulse h-40" />
+        <div className="rounded-2xl p-6 border bg-white/70 dark:bg-slate-800/70 animate-pulse h-28" />
+        <div className="rounded-2xl p-6 border bg-white/70 dark:bg-slate-800/70 animate-pulse h-64" />
       </div>
     );
   }
 
-  const theme = me.theme ?? "day";
+  const theme = (me.theme ?? "day") as "day" | "night";
   const isDark = theme === "night";
-  const currentVariant = (me.experimentVariant ?? "gamified") as "gamified" | "control";
+  const currentVariant = (me.experimentVariant ?? "gamified") as
+    | "gamified"
+    | "control";
   const isGamified = currentVariant === "gamified";
 
-  // --- gamified data only (počítáme jen když je potřeba)
   const level = me.level ?? 1;
   const totalXP = me.xp ?? 0;
-  const nextLevelXP = xpForLevel(level);
-  const prevLevelXP = xpForLevel(Math.max(0, level - 1));
-  const progressInLevel = Math.max(0, totalXP - prevLevelXP);
-  const progressMax = Math.max(1, nextLevelXP - prevLevelXP);
-  const progressPercent = Math.min(100, (progressInLevel / progressMax) * 100);
+  const { progressPercent, inLevel, span } = levelProgress(totalXP, level);
 
   const badges = [
-    { type: "firstStep",   unlocked: totalXP >= 10,                  name: "First Step",   description: "Complete your first habit" },
-    { type: "weekWarrior", unlocked: (me.currentStreak ?? 0) >= 7,   name: "Week Warrior", description: "7-day streak achieved" },
-    { type: "consistent",  unlocked: (me.longestStreak ?? 0) >= 30,  name: "Consistent",   description: "30-day streak achieved" },
-    { type: "powerUser",   unlocked: level >= 10,                    name: "Power User",   description: "Reach level 10" },
-    { type: "legendary",   unlocked: (me.longestStreak ?? 0) >= 100, name: "Legendary",    description: "100-day streak" },
-    { type: "dedicated",   unlocked: totalXP >= 10000,               name: "Dedicated",    description: "Complete 1000 habits" },
+    {
+      type: "firstStep",
+      unlocked: totalXP >= 10,
+      name: "First Step",
+      description: "Complete your first habit",
+    },
+    {
+      type: "weekWarrior",
+      unlocked: (me.currentStreak ?? 0) >= 7,
+      name: "Week Warrior",
+      description: "7-day streak achieved",
+    },
+    {
+      type: "consistent",
+      unlocked: (me.longestStreak ?? 0) >= 30,
+      name: "Consistent",
+      description: "30-day streak achieved",
+    },
+    {
+      type: "powerUser",
+      unlocked: level >= 10,
+      name: "Power User",
+      description: "Reach level 10",
+    },
+    {
+      type: "legendary",
+      unlocked: (me.longestStreak ?? 0) >= 100,
+      name: "Legendary",
+      description: "100-day streak",
+    },
+    {
+      type: "dedicated",
+      unlocked: totalXP >= 10000,
+      name: "Dedicated",
+      description: "Complete 1000 habits",
+    },
   ];
 
-  // --- Actions
+  /* ---------- Actions ---------- */
+
   const handleThemeToggle = async (checked: boolean) => {
     const newTheme: "day" | "night" = checked ? "night" : "day";
     const prev = qc.getQueryData(["me"]);
@@ -76,6 +125,8 @@ export function ProfileRewards() {
       qc.setQueryData(["me"], prev);
     }
   };
+
+  /* ---------- UI ---------- */
 
   return (
     <div className="space-y-6">
@@ -113,23 +164,42 @@ export function ProfileRewards() {
           Edit
         </button>
 
-        <div className="flex items-start gap-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-md text-white text-4xl">
-            {me.avatar ? <span>{me.avatar}</span> : <UserIcon className="w-10 h-10" />}
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-6">
+          {/* Avatar + drobná animace */}
+          <motion.div
+            className="w-20 h-20 rounded-full shadow-md flex items-center justify-center text-4xl bg-gradient-to-br from-green-400 to-emerald-500 text-white shrink-0 mx-auto sm:mx-0"
+            whileHover={{ scale: 1.05, rotate: -2 }}
+            transition={{ type: "spring", stiffness: 260, damping: 18 }}
+          >
+            {me.avatar ? (
+              <span>{me.avatar}</span>
+            ) : (
+              <UserIcon className="w-10 h-10" />
+            )}
+          </motion.div>
 
-          <div className="flex-1">
-            <h3 className={`mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+          <div className="flex-1 text-center sm:text-left">
+            <h3
+              className={`mb-1 text-lg sm:text-xl ${
+                isDark ? "text-white" : "text-gray-900"
+              }`}
+            >
               {me.nickname ?? "Habit Gardener"}
             </h3>
-            <p className={`${isDark ? "text-gray-400" : "text-gray-600"} mb-4`}>{me.email}</p>
+            <p
+              className={`mb-4 text-sm ${
+                isDark ? "text-gray-400" : "text-gray-600"
+              } truncate`}
+            >
+              {me.email}
+            </p>
 
             {/* Gamified metrics – jen když je varianta gamified */}
             {isGamified && (
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
                   <div
-                    className={`px-4 py-2 rounded-full text-white shadow-sm ${
+                    className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-white text-sm shadow-sm ${
                       isDark
                         ? "bg-gradient-to-r from-green-600 to-emerald-700"
                         : "bg-gradient-to-r from-green-500 to-emerald-500"
@@ -137,27 +207,41 @@ export function ProfileRewards() {
                   >
                     Level {level}
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-sm">
                     <Zap className="w-5 h-5 text-amber-500" />
                     <span className={isDark ? "text-white" : "text-gray-900"}>
-                      {totalXP} Total XP
+                      {totalXP} XP total
                     </span>
                   </div>
-                  <div className={isDark ? "text-gray-300" : "text-gray-700"}>
-                    🔥 Streak: {me.currentStreak ?? 0} (best {me.longestStreak ?? 0})
+
+                  <div
+                    className={`text-xs md:text-sm ${
+                      isDark ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    🔥 Streak: {me.currentStreak ?? 0} (best{" "}
+                    {me.longestStreak ?? 0})
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                  <div className="flex justify-between text-xs sm:text-sm">
+                    <span
+                      className={isDark ? "text-gray-300" : "text-gray-600"}
+                    >
                       Progress to Level {level + 1}
                     </span>
-                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>
-                      {progressInLevel} / {progressMax} XP
+                    <span
+                      className={isDark ? "text-gray-400" : "text-gray-500"}
+                    >
+                      {inLevel} / {span} XP
                     </span>
                   </div>
-                  <Progress value={progressPercent} className="h-2" />
+                  <Progress
+                    value={progressPercent}
+                    className="h-2 bg-gray-200 dark:bg-slate-700"
+                  />
                 </div>
               </div>
             )}
@@ -171,16 +255,35 @@ export function ProfileRewards() {
           isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-100"
         } rounded-2xl p-6 shadow-md border`}
       >
-        <h3 className={`mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>Theme Preferences</h3>
-        <div className="flex items-center justify-between">
+        <h3 className={`mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>
+          Theme Preferences
+        </h3>
+
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
-            <Sun className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-amber-500"}`} />
-            <Label htmlFor="theme-switch" className={isDark ? "text-gray-300" : "text-gray-700"}>
+            <Sun
+              className={`w-5 h-5 ${
+                isDark ? "text-gray-400" : "text-amber-500"
+              }`}
+            />
+            <Label
+              htmlFor="theme-switch"
+              className={isDark ? "text-gray-300" : "text-gray-700"}
+            >
               {theme === "day" ? "Day Mode" : "Night Mode"}
             </Label>
-            <Moon className={`w-5 h-5 ${isDark ? "text-blue-400" : "text-gray-400"}`} />
+            <Moon
+              className={`w-5 h-5 ${
+                isDark ? "text-blue-400" : "text-gray-400"
+              }`}
+            />
           </div>
-          <Switch id="theme-switch" checked={theme === "night"} onCheckedChange={handleThemeToggle} />
+
+          <Switch
+            id="theme-switch"
+            checked={theme === "night"}
+            onCheckedChange={handleThemeToggle}
+          />
         </div>
       </div>
 
@@ -193,35 +296,103 @@ export function ProfileRewards() {
         >
           <div className="flex items-center gap-2 mb-6">
             <Award className="w-5 h-5 text-purple-500" />
-            <h3 className={isDark ? "text-white" : "text-gray-900"}>Earned Badges</h3>
-            <span className={`ml-auto text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-              {badges.filter((b) => b.unlocked).length} of {badges.length} unlocked
+            <h3 className={isDark ? "text-white" : "text-gray-900"}>Badges</h3>
+            <span
+              className={`ml-auto text-sm ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              {badges.filter((b) => b.unlocked).length} of {badges.length}{" "}
+              unlocked
             </span>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {badges.map((badge, idx) => (
-              <BadgeIcon
-                key={idx}
-                type={badge.type as any}
-                unlocked={badge.unlocked}
-                name={badge.name}
-                description={badge.description}
-                theme={theme}
-              />
-            ))}
+            {badges.map((badge, idx) =>
+              badge.unlocked ? (
+                <motion.div
+                  key={badge.type}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ y: -2, rotate: -1 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="relative h-full min-h-[170px]"
+                >
+                  <BadgeIcon
+                    type={badge.type as any}
+                    unlocked
+                    name={badge.name}
+                    description={badge.description}
+                    theme={theme}
+                  />
+                  {/* malý ✨ efekt v rohu */}
+                  <motion.span
+                    className="pointer-events-none absolute -top-1 -right-1 text-[10px]"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.15 + idx * 0.04 }}
+                  >
+                    ✨
+                  </motion.span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={badge.type}
+                  className={`flex flex-col items-center text-center rounded-xl border px-3 py-4 h-full min-h-[170px] ${
+                    isDark
+                      ? "border-slate-700 bg-slate-900/40"
+                      : "border-gray-200 bg-gray-50"
+                  }`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.04 }}
+                >
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
+                      isDark
+                        ? "bg-slate-800 text-gray-300"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    <span className="text-xl">?</span>
+                  </div>
+                  <p
+                    className={`font-medium text-sm mb-1 ${
+                      isDark ? "text-gray-200" : "text-gray-800"
+                    }`}
+                  >
+                    Hidden badge
+                  </p>
+                  <p
+                    className={`text-xs ${
+                      isDark ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
+                    {badge.description}
+                  </p>
+                </motion.div>
+              )
+            )}
           </div>
         </div>
       )}
-{/* Experiment Variant Selector */}
+
+      {/* Experiment Variant Selector */}
       <div
         className={`${
           isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-100"
         } rounded-2xl p-6 shadow-md border`}
       >
-        <h3 className={`mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Experiment Variant</h3>
-        <p className={isDark ? "text-gray-400 mb-4" : "text-gray-600 mb-4"}>
-          Switch between the gamified experience (XP, levels, badges) and the minimal experience (no gamification).
+        <h3 className={`mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+          Experiment Variant
+        </h3>
+        <p
+          className={
+            isDark ? "text-gray-400 mb-4" : "text-gray-600 mb-4"
+          }
+        >
+          Switch between the gamified experience (XP, levels, badges) and the
+          minimal experience (no gamification).
         </p>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -252,7 +423,7 @@ export function ProfileRewards() {
           </button>
         </div>
       </div>
-      
+
       {/* Edit Profile Modal */}
       <EditProfileModal open={editOpen} onOpenChange={setEditOpen} />
     </div>
