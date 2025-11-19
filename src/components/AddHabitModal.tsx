@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, Leaf, Briefcase, Users, Palette } from "lucide-react";
+import { Heart, Leaf, Briefcase, Users, Palette, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,12 @@ import {
   SelectValue,
 } from "./ui/select";
 import { useCreateHabit } from "../hooks/useCreateHabit";
+import {
+  SUGGESTED_HABITS_BY_CATEGORY,
+  type SuggestedHabit,
+  type SuggestedCategory,
+} from "../data/SuggestedHabits";
+import type { Habit } from "../hooks/useHabits";
 
 interface AddHabitModalProps {
   open: boolean;
@@ -25,7 +31,13 @@ interface AddHabitModalProps {
   theme: "day" | "night";
 }
 
-const icons = [
+// typy zarovnané s BE
+type Frequency = "Daily" | "Weekly";
+type HabitCategory = Habit["category"]; // "Health" | "Eco" | "Productivity" | "Relationships" | "Creativity" | "Custom"
+type HabitIconId = Habit["icon"]; // "heart" | "leaf" | "briefcase" | "users" | "palette"
+
+// ikony, které můžeš vybrat (hlavně pro Custom)
+const icons: { id: HabitIconId; icon: any; label: string }[] = [
   { id: "heart", icon: Heart, label: "Health" },
   { id: "leaf", icon: Leaf, label: "Eco" },
   { id: "briefcase", icon: Briefcase, label: "Productivity" },
@@ -33,7 +45,8 @@ const icons = [
   { id: "palette", icon: Palette, label: "Creativity" },
 ];
 
-const predefinedCategories = [
+// BE kategorie (včetně Custom)
+const predefinedCategories: HabitCategory[] = [
   "Health",
   "Eco",
   "Productivity",
@@ -42,20 +55,38 @@ const predefinedCategories = [
   "Custom",
 ];
 
+// mapování kategorie → default ikona (pro ne-Custom)
+const ICON_BY_CATEGORY: Record<
+  Exclude<HabitCategory, "Custom">,
+  HabitIconId
+> = {
+  Health: "heart",
+  Eco: "leaf",
+  Productivity: "briefcase",
+  Relationships: "users",
+  Creativity: "palette",
+};
+
+// pro inspirační panel (Health, Eco, …)
+type SuggestCategory = SuggestedCategory;
+
 export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
   const isDark = theme === "night";
 
   const [title, setTitle] = useState("");
-  const [selectedIcon, setSelectedIcon] = useState("heart");
-  const [selectedCategory, setSelectedCategory] = useState("Health");
-  const [customCategory, setCustomCategory] = useState("");
-  const [frequency, setFrequency] = useState<"Daily" | "Weekly">("Daily");
+  const [selectedIcon, setSelectedIcon] = useState<HabitIconId>("heart");
+  const [selectedCategory, setSelectedCategory] =
+    useState<HabitCategory>("Health");
+  const [frequency, setFrequency] = useState<Frequency>("Daily");
 
-  const isCustom = selectedCategory === "Custom";
+  // inspo panel
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestCategory, setSuggestCategory] =
+    useState<SuggestCategory>("Health");
 
   const createHabit = useCreateHabit();
 
-  function randomWorth(freq: "Daily" | "Weekly") {
+  function randomWorth(freq: Frequency) {
     if (freq === "Daily") {
       const options = [10, 15, 20, 25];
       return options[Math.floor(Math.random() * options.length)];
@@ -66,35 +97,51 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
   }
 
   function handleSubmit() {
-    const category = isCustom ? customCategory.trim() : selectedCategory;
+    const category = selectedCategory;
 
     if (!title.trim() || !category) return;
 
+    // rozhodnutí, jakou ikonu pošleme na BE
+    let iconToSend: HabitIconId;
+
+    if (category === "Custom") {
+      // Custom → použij uživatelem vybranou ikonku
+      iconToSend = selectedIcon ?? "leaf";
+    } else {
+      // standardní kategorie → default podle kategorie
+      iconToSend =
+        ICON_BY_CATEGORY[category as Exclude<HabitCategory, "Custom">];
+    }
+
     createHabit.mutate(
       {
-        title,
+        title: title.trim(),
         category,
-        icon: selectedIcon as any,
+        icon: iconToSend,
         frequency,
         worth: randomWorth(frequency),
       },
       {
         onSuccess: () => {
           setTitle("");
-          setCustomCategory("");
           setSelectedCategory("Health");
+          setSelectedIcon("heart");
+          setFrequency("Daily");
           onClose();
         },
       }
     );
   }
 
+  const suggestions: SuggestedHabit[] =
+    SUGGESTED_HABITS_BY_CATEGORY[suggestCategory];
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
         className={`${
           isDark ? "bg-slate-800 border-slate-700 text-white" : "bg-white"
-        } rounded-2xl max-w-md`}
+        } rounded-2xl max-w-md w-[95vw] max-h-[90vh] flex flex-col`}
       >
         <DialogHeader>
           <DialogTitle className={isDark ? "text-white" : ""}>
@@ -105,7 +152,8 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-4">
+        {/* scrollovatelný obsah */}
+        <div className="flex-1 overflow-y-auto space-y-5 py-4 pr-1">
           {/* TITLE */}
           <div className="space-y-2">
             <Label
@@ -122,7 +170,7 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
               className={`rounded-lg ${
                 isDark
                   ? "bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
-                  : ""
+                  : "bg-gray-50 border border-gray-300 text-gray-900 placeholder:text-gray-400"
               }`}
             />
           </div>
@@ -132,19 +180,23 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
             <Label className={isDark ? "text-gray-300" : ""}>Category</Label>
             <Select
               value={selectedCategory}
-              onValueChange={setSelectedCategory}
+              onValueChange={(v) => setSelectedCategory(v as HabitCategory)}
             >
               <SelectTrigger
                 className={`rounded-lg ${
-                  isDark ? "bg-slate-700 border-slate-600 text-white" : ""
+                  isDark
+                    ? "bg-slate-700 border-slate-600 text-white"
+                    : "bg-gray-50 border border-gray-300 text-gray-900"
                 }`}
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent
-                className={
-                  isDark ? "bg-slate-700 border-slate-600 text-white" : ""
-                }
+                className={`rounded-lg ${
+                  isDark
+                    ? "bg-slate-700 border-slate-600 text-white"
+                    : "bg-white border border-gray-300 text-gray-900"
+                }`}
               >
                 {predefinedCategories.map((c) => (
                   <SelectItem key={c} value={c}>
@@ -153,19 +205,6 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
                 ))}
               </SelectContent>
             </Select>
-
-            {isCustom && (
-              <Input
-                placeholder="Enter custom category"
-                value={customCategory}
-                onChange={(e) => setCustomCategory(e.target.value)}
-                className={`rounded-lg ${
-                  isDark
-                    ? "bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
-                    : ""
-                }`}
-              />
-            )}
           </div>
 
           {/* FREQUENCY */}
@@ -173,19 +212,23 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
             <Label className={isDark ? "text-gray-300" : ""}>Frequency</Label>
             <Select
               value={frequency}
-              onValueChange={(v) => setFrequency(v as "Daily" | "Weekly")}
+              onValueChange={(v) => setFrequency(v as Frequency)}
             >
               <SelectTrigger
                 className={`rounded-lg ${
-                  isDark ? "bg-slate-700 border-slate-600 text-white" : ""
+                  isDark
+                    ? "bg-slate-700 border-slate-600 text-white"
+                    : "bg-gray-50 border border-gray-300 text-gray-900"
                 }`}
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent
-                className={
-                  isDark ? "bg-slate-700 border-slate-600 text-white" : ""
-                }
+                className={`rounded-lg ${
+                  isDark
+                    ? "bg-slate-700 border-slate-600 text-white"
+                    : "bg-white border border-gray-300 text-gray-900"
+                }`}
               >
                 <SelectItem value="Daily">Daily</SelectItem>
                 <SelectItem value="Weekly">Weekly</SelectItem>
@@ -193,49 +236,165 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
             </Select>
           </div>
 
-          {/* ICON */}
-          <div className="space-y-2">
-            <Label className={isDark ? "text-gray-300" : ""}>Icon</Label>
-            <div className="grid grid-cols-5 gap-3">
-              {icons.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    type="button"
-                    key={item.id}
-                    onClick={() => setSelectedIcon(item.id)}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 
-                      ${
-                        selectedIcon === item.id
-                          ? "border-green-500 bg-green-50"
-                          : isDark
-                          ? "border-slate-600 bg-slate-700 hover:border-slate-500"
-                          : "border-gray-200 bg-gray-50 hover:border-gray-300"
-                      }`}
-                  >
-                    <Icon
-                      className={`w-6 h-6 mx-auto ${
-                        selectedIcon === item.id
-                          ? "text-green-600"
-                          : isDark
-                          ? "text-gray-400"
-                          : "text-gray-600"
-                      }`}
-                    />
-                  </button>
-                );
-              })}
+          {/* ICON – jen pro Custom */}
+          {selectedCategory === "Custom" && (
+            <div className="space-y-2">
+              <Label className={isDark ? "text-gray-300" : ""}>Icon</Label>
+              <div className="grid grid-cols-5 gap-3">
+                {icons.map((item) => {
+                  const Icon = item.icon;
+                  const active = selectedIcon === item.id;
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={() => setSelectedIcon(item.id)}
+                      className={`p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 
+                        ${
+                          active
+                            ? "border-green-500 bg-green-50"
+                            : isDark
+                            ? "border-slate-600 bg-slate-700 hover:border-slate-500"
+                            : "border-gray-200 bg-gray-50 hover:border-gray-300"
+                        }`}
+                    >
+                      <Icon
+                        className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto ${
+                          active
+                            ? "text-green-600"
+                            : isDark
+                            ? "text-gray-400"
+                            : "text-gray-600"
+                        }`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+          )}
+
+          {/* INSPIRATION TOGGLE + LIST */}
+          <div className="pt-2 border-t border-slate-700/40 mt-2">
+            <button
+              type="button"
+              onClick={() => setShowSuggestions((s) => !s)}
+              className={`w-full inline-flex items-center justify-center gap-2 text-sm rounded-full px-3 py-2 mt-1
+                ${
+                  isDark
+                    ? "bg-slate-700 hover:bg-slate-600 text-gray-200"
+                    : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              {showSuggestions ? "Hide habit ideas" : "Show habit ideas"}
+            </button>
+
+            {showSuggestions && (
+              <div className="mt-3 space-y-3">
+                {/* category pills */}
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {(
+                    [
+                      "Health",
+                      "Eco",
+                      "Productivity",
+                      "Relationships",
+                      "Creativity",
+                    ] as SuggestCategory[]
+                  ).map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setSuggestCategory(cat)}
+                      className={`px-2.5 py-1 rounded-full text-xs border
+                        ${
+                          suggestCategory === cat
+                            ? "bg-emerald-500 text-white border-emerald-500"
+                            : isDark
+                            ? "border-slate-600 text-slate-200 hover:bg-slate-700"
+                            : "border-gray-200 text-gray-700 hover:bg-gray-100"
+                        }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                {/* suggestion cards */}
+                <div className="space-y-2 max-h-52 overflow-y-auto -mx-1 px-1">
+                  {suggestions.map((h) => {
+                    const Icon = icons.find((i) => i.id === h.icon)?.icon;
+                    const active = title === h.title;
+                    return (
+                      <button
+                        key={h.id}
+                        type="button"
+                        onClick={() => {
+                          setTitle(h.title);
+                          setSelectedCategory(h.category as HabitCategory);
+                          setSelectedIcon(h.icon as HabitIconId);
+                          setFrequency(h.frequency as Frequency);
+                        }}
+                        className={`w-full flex items-start gap-3 p-2.5 rounded-xl border text-left text-sm transition-colors
+                          ${
+                            active
+                              ? "border-emerald-500 bg-emerald-50/70"
+                              : isDark
+                              ? "border-slate-600 bg-slate-700 hover:bg-slate-600"
+                              : "border-gray-200 bg-gray-50 hover:bg-gray-100"
+                          }`}
+                      >
+                        {Icon && (
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
+                              ${isDark ? "bg-slate-800" : "bg-white"}`}
+                          >
+                            <Icon
+                              className={
+                                isDark
+                                  ? "w-4 h-4 text-emerald-300"
+                                  : "w-4 h-4 text-emerald-600"
+                              }
+                            />
+                          </div>
+                        )}
+                        <div className="flex flex-col min-w-0">
+                          <span
+                            className={
+                              isDark
+                                ? "text-gray-50 text-sm"
+                                : "text-gray-900 text-sm"
+                            }
+                          >
+                            {h.title}
+                          </span>
+                          <span
+                            className={`text-[11px] mt-0.5 ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}
+                          >
+                            {h.category} • {h.frequency}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* FOOTER */}
+        {/* FOOTER – zůstává viditelný, ne-scrolluje */}
         <div className="flex gap-3 pt-2">
           <Button
             variant="outline"
             onClick={onClose}
             className={`flex-1 rounded-full ${
-              isDark ? "border-slate-600 text-gray-300 hover:bg-slate-700" : ""
+              isDark
+                ? "border-slate-500 bg-slate-800 text-gray-200 hover:bg-slate-700"
+                : "border-gray-300 text-gray-700 hover:bg-gray-100"
             }`}
           >
             Cancel

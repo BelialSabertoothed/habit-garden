@@ -11,5 +11,17 @@ const HabitTickSchema = new Schema(
   { timestamps: true }
 );
 
+// ✅ 1× za den pro DAILY
+HabitTickSchema.index(
+  { userId: 1, habitId: 1, dayKey: 1 },
+  { unique: true, partialFilterExpression: { frequency: "Daily" } }
+);
+
+// ✅ 1× za týden pro WEEKLY
+HabitTickSchema.index(
+  { userId: 1, habitId: 1, weekKey: 1 },
+  { unique: true, partialFilterExpression: { frequency: "Weekly" } }
+);
+
 export const HabitTick =
   mongoose.models.HabitTick || model("HabitTick", HabitTickSchema);

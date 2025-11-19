@@ -11,7 +11,7 @@ import health from "./routes/health.js";
 import auth from "./routes/auth.js";
 import habits from "./routes/habits.js";
 import logs from "./routes/logs.js";
-import stats from "./routes/stats.js";
+import statsRouter from "./routes/stats.js";
 import rewards from "./routes/rewards.js";
 import experiments from "./routes/experiments.js";
 import authRouter from "./routes/auth.js";       
@@ -50,7 +50,7 @@ app.use("/api/profile", profileRouter);
 // app.use("/api/habits", requireJwt, habits);
 app.use("/api/habits", habits);
 app.use("/api/logs", logs);
-app.use("/api/stats", stats);
+app.use("/api/stats", statsRouter);
 app.use("/api/rewards", rewards);
 app.use("/api/experiments", experiments);
 

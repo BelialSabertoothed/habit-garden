@@ -22,9 +22,9 @@ function getGrowthStage(streak: number, freq: "Daily" | "Weekly"): Stage {
 
 function getGrowthProgress(streak: number, freq: "Daily" | "Weekly") {
   if (freq === "Daily") {
-    if (streak < 3) return (streak / 3) * 100;       // seed → sprout
+    if (streak < 3) return (streak / 3) * 100; // seed → sprout
     if (streak < 7) return ((streak - 3) / 4) * 100; // sprout → flower
-    if (streak < 14) return ((streak - 7) / 7) * 100;// flower → tree
+    if (streak < 14) return ((streak - 7) / 7) * 100; // flower → tree
     return 100;
   }
 
@@ -120,7 +120,6 @@ export function PlantCard({
         isDark ? "bg-slate-800 border-slate-700" : "bg-white border-green-100"
       } rounded-2xl p-6 shadow-md hover:shadow-lg transition-all duration-200 border relative overflow-hidden`}
     >
-
       {/* ✨ Stage-up aura */}
       <AnimatePresence>
         {evolving && (
@@ -145,9 +144,15 @@ export function PlantCard({
             exit={{ opacity: 0 }}
             className="absolute inset-0 pointer-events-none"
           >
-            <div className="absolute top-3 left-6 text-yellow-300 text-xl animate-ping">✨</div>
-            <div className="absolute bottom-4 right-8 text-green-200 text-xl animate-ping">✨</div>
-            <div className="absolute top-10 right-10 text-emerald-200 text-xl animate-ping">✨</div>
+            <div className="absolute top-3 left-6 text-yellow-300 text-xl animate-ping">
+              ✨
+            </div>
+            <div className="absolute bottom-4 right-8 text-green-200 text-xl animate-ping">
+              ✨
+            </div>
+            <div className="absolute top-10 right-10 text-emerald-200 text-xl animate-ping">
+              ✨
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -183,10 +188,11 @@ export function PlantCard({
 
       {/* ---------------- CONTENT ---------------- */}
       <div className="flex flex-col items-center gap-4 relative z-10">
-
         {/* 🌱 Plant Icon with evolution pop */}
         <motion.div
-          animate={watering || evolving ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+          animate={
+            watering || evolving ? { scale: [1, 1.15, 1] } : { scale: 1 }
+          }
           transition={{ duration: 0.6 }}
           className="flex items-center justify-center"
         >
@@ -204,7 +210,11 @@ export function PlantCard({
 
         {/* 📊 Progress Bar with stage-based gradient */}
         <div className="w-full">
-          <div className={`h-2 rounded-full overflow-hidden mb-2 ${isDark ? "bg-slate-700" : "bg-gray-200"}`}>
+          <div
+            className={`h-2 rounded-full overflow-hidden mb-2 ${
+              isDark ? "bg-slate-700" : "bg-gray-200"
+            }`}
+          >
             <motion.div
               className={`h-full bg-gradient-to-r ${config.progressColor} rounded-full`}
               animate={{ width: `${progress}%` }}
@@ -212,10 +222,18 @@ export function PlantCard({
             />
           </div>
 
-          <p className={`text-center font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+          <p
+            className={`text-center font-medium ${
+              isDark ? "text-white" : "text-gray-900"
+            }`}
+          >
             {habitName}
           </p>
-          <p className={`text-center text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+          <p
+            className={`text-center text-sm ${
+              isDark ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
             🔥 {streak} {frequency === "Daily" ? "days" : "weeks"} streak
           </p>
         </div>

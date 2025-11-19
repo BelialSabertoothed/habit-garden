@@ -10,12 +10,13 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { BadgeIcon } from "./BadgeIcon";
-import { Progress } from "./ui/progress";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
 import { useMe } from "../hooks/useAuth";
 import { api } from "../lib/api";
 import EditProfileModal from "./UpdateProfileModal";
+import { useRewards } from "../hooks/useRewards";
+import { BADGES, type BadgeId } from "./badges/config";
 
 /* ---------- XP / level křivka – stejné jako na BE ---------- */
 
@@ -38,6 +39,7 @@ function levelProgress(xp: number, level: number) {
 export function ProfileRewards() {
   const [editOpen, setEditOpen] = useState(false);
   const { data: me, isLoading } = useMe();
+  const { data: rewardsRaw } = useRewards();
   const qc = useQueryClient();
 
   if (isLoading || !me) {
@@ -61,44 +63,27 @@ export function ProfileRewards() {
   const totalXP = me.xp ?? 0;
   const { progressPercent, inLevel, span } = levelProgress(totalXP, level);
 
-  const badges = [
-    {
-      type: "firstStep",
-      unlocked: totalXP >= 10,
-      name: "First Step",
-      description: "Complete your first habit",
-    },
-    {
-      type: "weekWarrior",
-      unlocked: (me.currentStreak ?? 0) >= 7,
-      name: "Week Warrior",
-      description: "7-day streak achieved",
-    },
-    {
-      type: "consistent",
-      unlocked: (me.longestStreak ?? 0) >= 30,
-      name: "Consistent",
-      description: "30-day streak achieved",
-    },
-    {
-      type: "powerUser",
-      unlocked: level >= 10,
-      name: "Power User",
-      description: "Reach level 10",
-    },
-    {
-      type: "legendary",
-      unlocked: (me.longestStreak ?? 0) >= 100,
-      name: "Legendary",
-      description: "100-day streak",
-    },
-    {
-      type: "dedicated",
-      unlocked: totalXP >= 10000,
-      name: "Dedicated",
-      description: "Complete 1000 habits",
-    },
-  ];
+  /* ---------- Badges z BE rewards + configu ---------- */
+  const rewards = Array.isArray(rewardsRaw)
+    ? rewardsRaw
+    : (rewardsRaw as any)?.items ?? [];
+
+  const unlockedIds = new Set<BadgeId>(
+    rewards
+      .map((r: any) => r.badge as string | null | undefined)
+      .filter((b): b is BadgeId => !!b) // stačí jen vyhodit null/undefined
+  );
+
+  const badges = (Object.entries(BADGES) as [
+    BadgeId,
+    (typeof BADGES)[BadgeId]
+  ][]).map(([id, cfg]) => ({
+    id,
+    unlocked: unlockedIds.has(id),
+    name: cfg.name,
+    description: cfg.description,
+    clue: cfg.clue,
+  }));
 
   /* ---------- Actions ---------- */
 
@@ -148,7 +133,7 @@ export function ProfileRewards() {
           isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-100"
         } rounded-2xl p-6 shadow-md border`}
       >
-        {/* Edit button – pravý horní roh */}
+        {/* Edit button */}
         <button
           onClick={() => setEditOpen(true)}
           className={`absolute top-4 right-4 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-medium transition-colors
@@ -165,7 +150,7 @@ export function ProfileRewards() {
         </button>
 
         <div className="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-6">
-          {/* Avatar + drobná animace */}
+          {/* Avatar */}
           <motion.div
             className="w-20 h-20 rounded-full shadow-md flex items-center justify-center text-4xl bg-gradient-to-br from-green-400 to-emerald-500 text-white shrink-0 mx-auto sm:mx-0"
             whileHover={{ scale: 1.05, rotate: -2 }}
@@ -194,7 +179,7 @@ export function ProfileRewards() {
               {me.email}
             </p>
 
-            {/* Gamified metrics – jen když je varianta gamified */}
+            {/* Gamified metrics */}
             {isGamified && (
               <div className="space-y-3">
                 <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
@@ -238,10 +223,19 @@ export function ProfileRewards() {
                       {inLevel} / {span} XP
                     </span>
                   </div>
-                  <Progress
-                    value={progressPercent}
-                    className="h-2 bg-gray-200 dark:bg-slate-700"
-                  />
+                  <div
+                    className={`h-3 rounded-full overflow-hidden ${
+                      isDark ? "bg-slate-700" : "bg-gray-200"
+                    }`}
+                  >
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-emerald-400 via-green-500 to-lime-400 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 0.6 }}
+                      key={level + "-" + Math.round(progressPercent)}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -291,12 +285,16 @@ export function ProfileRewards() {
       {isGamified && (
         <div
           className={`${
-            isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-100"
+            isDark
+              ? "bg-slate-800 border-slate-700"
+              : "bg-white border-gray-100"
           } rounded-2xl p-6 shadow-md border`}
         >
           <div className="flex items-center gap-2 mb-6">
             <Award className="w-5 h-5 text-purple-500" />
-            <h3 className={isDark ? "text-white" : "text-gray-900"}>Badges</h3>
+            <h3 className={isDark ? "text-white" : "text-gray-900"}>
+              Badges
+            </h3>
             <span
               className={`ml-auto text-sm ${
                 isDark ? "text-gray-400" : "text-gray-500"
@@ -311,7 +309,7 @@ export function ProfileRewards() {
             {badges.map((badge, idx) =>
               badge.unlocked ? (
                 <motion.div
-                  key={badge.type}
+                  key={badge.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -2, rotate: -1 }}
@@ -319,13 +317,12 @@ export function ProfileRewards() {
                   className="relative h-full min-h-[170px]"
                 >
                   <BadgeIcon
-                    type={badge.type as any}
+                    type={badge.id}
                     unlocked
                     name={badge.name}
                     description={badge.description}
                     theme={theme}
                   />
-                  {/* malý ✨ efekt v rohu */}
                   <motion.span
                     className="pointer-events-none absolute -top-1 -right-1 text-[10px]"
                     initial={{ scale: 0, opacity: 0 }}
@@ -337,8 +334,8 @@ export function ProfileRewards() {
                 </motion.div>
               ) : (
                 <motion.div
-                  key={badge.type}
-                  className={`flex flex-col items-center text-center rounded-xl border px-3 py-4 h-full min-h-[170px] ${
+                  key={badge.id}
+                  className={`flex flex-col items-center text:center rounded-xl border px-3 py-4 h-full min-h-[170px] ${
                     isDark
                       ? "border-slate-700 bg-slate-900/40"
                       : "border-gray-200 bg-gray-50"
@@ -368,7 +365,7 @@ export function ProfileRewards() {
                       isDark ? "text-gray-400" : "text-gray-600"
                     }`}
                   >
-                    {badge.description}
+                    {badge.clue}
                   </p>
                 </motion.div>
               )
@@ -425,7 +422,11 @@ export function ProfileRewards() {
       </div>
 
       {/* Edit Profile Modal */}
-      <EditProfileModal open={editOpen} onOpenChange={setEditOpen} />
+      <EditProfileModal
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        theme={theme}
+      />
     </div>
   );
 }

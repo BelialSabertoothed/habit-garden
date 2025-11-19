@@ -3,15 +3,21 @@ import { z } from "zod";
 import { Reward } from "../models/Reward.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
+import { BADGE_IDS, type BadgeId } from "../utils/badgesRules.js";
+import { awardRewardIfMissing } from "../services/rewards.js";
 
 const router = Router();
+
+const BadgeEnum = z.enum(BADGE_IDS);
 
 router.get(
   "/",
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId!;
-    const rewards = await Reward.find({ userId }).sort({ earnedAt: -1 });
+    const rewards = await Reward.find({ userId }).sort({
+      earnedAt: -1,
+    });
     res.json(rewards);
   })
 );
@@ -21,9 +27,16 @@ router.post(
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId!;
-    const input = z.object({ badge: z.string().min(2) }).parse(req.body);
-    const created = await Reward.create({ userId, badge: input.badge });
-    res.status(201).json(created);
+
+    const input = z
+      .object({
+        badge: BadgeEnum, // ✅ jen validní ID badge
+      })
+      .parse(req.body);
+
+    const reward = await awardRewardIfMissing(userId, input.badge as BadgeId);
+
+    res.status(201).json(reward);
   })
 );
 

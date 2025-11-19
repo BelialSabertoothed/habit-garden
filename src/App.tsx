@@ -11,6 +11,7 @@ import { ProfileRewards } from "./components/ProfileRewards";
 import { useMe, loginWithGoogle, useLogout } from "./hooks/useAuth";
 import { api } from "./lib/api";
 import { Navigation } from "./components/Navigation";
+import { useBadgeToasts } from "./hooks/useBadgeToasts"; // 👈 správný import
 
 type Page = "garden" | "habits" | "stats" | "profile";
 
@@ -18,6 +19,14 @@ export default function App() {
   const { data: me, isLoading } = useMe();
   const logout = useLogout();
   const qc = useQueryClient();
+
+  const [currentPage, setCurrentPage] = useState<Page>("garden");
+
+  // theme můžeme odvodit i když ještě řešíme onboarding apod.
+  const theme = (me?.theme ?? "day") as "day" | "night";
+
+  const badgeToastsEnabled = me?.experimentVariant === "gamified";
+  useBadgeToasts(theme, badgeToastsEnabled);
 
   useEffect(() => {
     const hash = window.location.hash.slice(1);
@@ -35,20 +44,13 @@ export default function App() {
     }
   }, [qc]);
 
-  const [currentPage, setCurrentPage] = useState<Page>("garden");
-
   if (isLoading) {
-    // tady ještě neznáme me.theme, tak klidně jednoduchý loader
     return <div className="p-6">Načítám…</div>;
   }
 
   if (!me) {
-    // uživatel není přihlášený → landing
     return <LandingPage onGoogleLogin={loginWithGoogle} />;
   }
-
-  // tady už máme me, takže můžeme vzít theme z profilu
-  const theme = (me.theme ?? "day") as "day" | "night";
 
   if (!me.profileComplete) {
     return (

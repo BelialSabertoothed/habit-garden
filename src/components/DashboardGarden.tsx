@@ -49,7 +49,8 @@ type CategoryFilter =
   | "Eco"
   | "Productivity"
   | "Relationships"
-  | "Creativity";
+  | "Creativity"
+  | "Custom";
 type StageFilter = "all" | Stage;
 type StatusFilter = "all" | "waiting" | "done";
 
@@ -77,7 +78,7 @@ export function DashboardGarden({
 
   // krátkodobě držíme id zalitých habitů, aby se neposunuly dřív než doběhne animace
   const [recentlyWatered, setRecentlyWatered] = useState<
-    Record<string, number>
+    Record<string, { ts: number; lockStreak: number }>
   >({});
 
   // hodnoty z /me
@@ -122,31 +123,49 @@ export function DashboardGarden({
     return <div className="p-6 text-red-600">Failed to load habits.</div>;
   }
 
+  function dayKey(date: string | Date) {
+    const d = new Date(date);
+    // jednoduché porovnání podle UTC data → "YYYY-MM-DD"
+    return d.toISOString().slice(0, 10);
+  }
+
+  // ISO týden: pondělí = 1, neděle = 7
+  function isoWeekKey(date: string | Date) {
+    const d = new Date(date);
+    // přepočítáme na čistý UTC den
+    const utc = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+
+    let day = utc.getUTCDay();
+    if (day === 0) day = 7; // neděle = 7
+
+    // posun na čtvrtek v tomto týdnu (ISO trik)
+    utc.setUTCDate(utc.getUTCDate() + 4 - day);
+
+    const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil(
+      ((utc.getTime() - yearStart.getTime()) / 86400000 + 1) / 7
+    );
+
+    return `${utc.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+  }
   const today = new Date();
+
   const canWaterBackend = (
     frequency: "Daily" | "Weekly",
     lastCompletedAt?: string | Date | null
   ) => {
     if (!lastCompletedAt) return true;
+
     const last = new Date(lastCompletedAt);
 
     if (frequency === "Daily") {
-      return (
-        last.getUTCFullYear() !== today.getUTCFullYear() ||
-        last.getUTCMonth() !== today.getUTCMonth() ||
-        last.getUTCDate() !== today.getUTCDate()
-      );
+      // hotovo dnes → nesmí se zalívat
+      return dayKey(last) !== dayKey(today);
     }
 
-    const currentWeek = Math.ceil(
-      (today.getUTCDate() - today.getUTCDay() + 1) / 7
-    );
-    const lastWeek = Math.ceil((last.getUTCDate() - last.getUTCDay() + 1) / 7);
-    return (
-      currentWeek !== lastWeek ||
-      today.getUTCMonth() !== last.getUTCMonth() ||
-      today.getUTCFullYear() !== last.getUTCFullYear()
-    );
+    // WEEKLY:
+    // hotovo v tomto ISO týdnu → nesmí se zalívat
+    return isoWeekKey(last) !== isoWeekKey(today);
   };
 
   const categories: CategoryFilter[] = [
@@ -156,7 +175,20 @@ export function DashboardGarden({
     "Productivity",
     "Relationships",
     "Creativity",
+    "Custom",
   ];
+
+  // helper MUSÍ být nadefinovaný před použitím v sortu
+  const getSortStreak = (
+    habit: (typeof habits)[number],
+    map: typeof recentlyWatered
+  ) => {
+    const lock = map[habit._id];
+    if (lock && typeof lock.lockStreak === "number") {
+      return lock.lockStreak;
+    }
+    return habit.streak ?? 0;
+  };
 
   /* ---------- aplikace filtrů + řazení ---------- */
 
@@ -191,9 +223,11 @@ export function DashboardGarden({
       // čekající nahoře
       if (aWaiting !== bWaiting) return aWaiting ? -1 : 1;
 
-      // pak podle streaku
-      const aStreak = a.streak ?? 0;
-      const bStreak = b.streak ?? 0;
+      // během animace používáme zamražený streak,
+      // jinak aktuální => karta se nehýbe, dokud neskončí animace
+      const aStreak = getSortStreak(a, recentlyWatered);
+      const bStreak = getSortStreak(b, recentlyWatered);
+
       return bStreak - aStreak;
     });
 
@@ -489,7 +523,6 @@ export function DashboardGarden({
       </AnimatePresence>
 
       {/* Cards */}
-      {/* Cards */}
       {filteredAndSortedHabits.length === 0 ? (
         <div
           className={`${
@@ -507,7 +540,6 @@ export function DashboardGarden({
               h.lastCompletedAt
             );
 
-            // je tahle konkrétní karta právě „watering“?
             const isWateringThis = water.isPending && water.variables === h._id;
 
             const disabled = !backendAllowed || isWateringThis;
@@ -531,33 +563,29 @@ export function DashboardGarden({
                 disabledLabel={disabledLabel}
                 onWater={() => {
                   const id = h._id;
-
-                  // pokud BE říká „ne“ nebo je už pending, nic nedělej
                   if (!backendAllowed || isWateringThis) {
                     return Promise.resolve();
                   }
 
-                  // 1) označíme habit jako „recentlyWatered“, aby
-                  //    se kvůli animaci hned nepřehodil do DONE
                   const ts = Date.now();
+                  const lockStreak = streak; // původní hodnota před zalitím
+
                   setRecentlyWatered((prev) => ({
                     ...prev,
-                    [id]: ts,
+                    [id]: { ts, lockStreak },
                   }));
 
-                  // 2) po ~1.2 s smažeme „waiting“ flag
                   setTimeout(() => {
                     setRecentlyWatered((prev) => {
-                      // pokud mezitím přišlo nové kliknutí,
-                      // nechej novější timestamp
-                      if (prev[id] && prev[id] !== ts) return prev;
-                      const copy = { ...prev };
+                      const current = prev[id];
+                      // pokud mezitím proběhlo další zalití, necháme novější zámek
+                      if (!current || current.ts !== ts) return prev;
+                      const copy: typeof prev = { ...prev };
                       delete copy[id];
                       return copy;
                     });
-                  }, 1200); // sladěné s animací v PlantCard
+                  }, 1200);
 
-                  // 3) skutečný tick -> vrací promise pro PlantCard (await onWater)
                   return water.mutateAsync(id);
                 }}
               />
