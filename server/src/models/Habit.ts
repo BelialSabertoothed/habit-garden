@@ -9,6 +9,7 @@ const HabitSchema = new Schema({
   frequency: { type: String, enum: ["Daily","Weekly"], required: true },
   worth: { type: Number, default: 10, min: 1, max: 100 }, // můžeš upravit rozsah
   streak: { type: Number, default: 0 },
+  bestStreak: { type: Number, default: 0 },
   lastCompletedAt: Date,
   active: { type: Boolean, default: true },
 }, { timestamps: true });

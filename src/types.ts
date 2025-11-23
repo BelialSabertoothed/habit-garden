@@ -11,6 +11,7 @@ export type User = {
   profileComplete: boolean;
   onboardingDone: boolean;
   experimentVariant: "gamified" | "control" | undefined;
+  notificationsEnabled: boolean;
 };
 
 

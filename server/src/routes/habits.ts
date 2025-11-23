@@ -6,7 +6,8 @@ import { requireAuth, AuthReq } from "../middleware/requireAuth.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { HabitTick } from "../models/HabitTick.js";
 import { dayKey, prevDayKey, weekKey, prevWeekKey } from "../lib/dateKeys.js";
-import { awardBadgesForUser } from "../services/rewards.js"; // ✅ NOVÉ
+import { awardBadgesForUser } from "../services/rewards.js";
+import { trackEvent } from "../utils/trackEvent.js";
 
 const router = Router();
 
@@ -59,6 +60,12 @@ router.post(
     }));
 
     const created = await Habit.insertMany(docs, { ordered: false });
+
+    await trackEvent({
+      userId,
+      type: "habit_created",
+      payload: { count: created.length },
+    });
 
     res.status(201).json({
       created: created.length,
@@ -176,22 +183,32 @@ router.post(
       });
     }
 
-    // 3) Per-habit streak
+    // 3) Per-habit streak – podle dní/týdnů
+    const prevStreak = habit.streak ?? 0;
+
     if (habit.frequency === "Daily") {
       const yesterdayKey = prevDayKey(now);
       const lastKey = habit.lastCompletedAt
         ? dayKey(habit.lastCompletedAt)
         : undefined;
-      habit.streak = lastKey === yesterdayKey ? (habit.streak ?? 0) + 1 : 1;
+
+      // pokud bylo naposledy včera → navazujeme
+      // jinak začínáme znovu od 1 (první zalití po pauze)
+      habit.streak = lastKey === yesterdayKey ? prevStreak + 1 : 1;
     } else {
       const prevWeek = prevWeekKey(now);
       const lastWeek = habit.lastCompletedAt
         ? weekKey(habit.lastCompletedAt)
         : undefined;
-      habit.streak = lastWeek === prevWeek ? (habit.streak ?? 0) + 1 : 1;
+
+      habit.streak = lastWeek === prevWeek ? prevStreak + 1 : 1;
     }
 
     habit.lastCompletedAt = now;
+
+    const currentStreak = habit.streak ?? 0;
+    habit.bestStreak = Math.max(habit.bestStreak ?? 0, currentStreak);
+
     await habit.save();
 
     // 4) XP & level
@@ -233,12 +250,24 @@ router.post(
     // 6) 🎖 Udělení badge podle XP / streak / level
     await awardBadgesForUser(me);
 
+    await trackEvent({
+      userId,
+      type: "habit_completed",
+      payload: {
+        habitId: habit._id.toString(),
+        frequency: habit.frequency,
+        worth: gainedXp,
+        streak: habit.streak,
+      },
+    });
+
     return res.json({
       ok: true,
       gainedXp,
       habit: {
         _id: habit._id,
         streak: habit.streak,
+        bestStreak: habit.bestStreak,
         lastCompletedAt: habit.lastCompletedAt,
       },
       me: {
@@ -277,6 +306,12 @@ router.post(
       ...data,
       userId,
       worth: data.worth ?? 10,
+    });
+
+    await trackEvent({
+      userId,
+      type: "habit_created",
+      payload: { count: 1 },
     });
     res.status(201).json(created);
   })

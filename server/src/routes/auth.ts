@@ -4,6 +4,7 @@ import passport from "../lib/passport.js";
 import { User } from "../models/User.js";
 import { hashPassword, verifyPassword } from "../lib/password.js";
 import { signAccessToken, signRefreshToken, verifyRefresh } from "../lib/jwt.js";
+import { trackEvent } from "../utils/trackEvent.js";
 import crypto from "node:crypto";
 import argon2 from "argon2";
 
@@ -52,6 +53,7 @@ router.post("/register", async (req, res) => {
     lastLoginAt: new Date(),
     profileComplete: true,
     experimentVariant: pickVariant(), 
+    notificationsEnabled: false,
   });
 
   const access = signAccessToken(user._id.toString());
@@ -79,6 +81,11 @@ router.post("/login", async (req, res) => {
   if (!ok) return res.status(401).json({ error: "invalid credentials" });
 
   user.lastLoginAt = new Date();
+
+  await trackEvent({
+  userId: user._id,
+  type: "login",
+});
 
   const access = signAccessToken(user._id.toString());
   const refresh = signRefreshToken(user._id.toString(), crypto.randomUUID());

@@ -54,6 +54,58 @@ type CategoryFilter =
 type StageFilter = "all" | Stage;
 type StatusFilter = "all" | "waiting" | "done";
 
+/* ---------- helpery pro daily/weekly vodu ---------- */
+
+function dayKey(date: string | Date) {
+  const d = new Date(date);
+  return d.toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
+function isoWeekKey(date: string | Date) {
+  const d = new Date(date);
+  const utc = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+
+  let day = utc.getUTCDay();
+  if (day === 0) day = 7; // neděle = 7
+
+  utc.setUTCDate(utc.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(
+    ((utc.getTime() - yearStart.getTime()) / 86400000 + 1) / 7
+  );
+
+  return `${utc.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+const today = new Date();
+
+const canWaterBackend = (
+  frequency: "Daily" | "Weekly",
+  lastCompletedAt?: string | Date | null
+) => {
+  if (!lastCompletedAt) return true;
+  const last = new Date(lastCompletedAt);
+
+  if (frequency === "Daily") {
+    return dayKey(last) !== dayKey(today);
+  }
+  return isoWeekKey(last) !== isoWeekKey(today);
+};
+
+function getMsUntilNext20() {
+  const now = new Date();
+  const target = new Date();
+
+  target.setHours(20, 0, 0, 0); // dnešní 20:00
+
+  if (target <= now) {
+    // už po 20:00 → bereme zítřek
+    target.setDate(target.getDate() + 1);
+  }
+
+  return target.getTime() - now.getTime();
+}
+
 export function DashboardGarden({
   theme: fallbackTheme,
 }: {
@@ -92,6 +144,77 @@ export function DashboardGarden({
   const [leveledUp, setLeveledUp] = useState(false);
   const xpCardRef = useRef<HTMLDivElement | null>(null);
 
+
+    useEffect(() => {
+        if (!me?.notificationsEnabled) return;
+
+    // Notifications nemusí existovat (starý browser)
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      return;
+    }
+
+
+    // pokud user explicitně zakázal notifikace, nedělej nic
+    if (Notification.permission === "denied") {
+      return;
+    }
+
+    let cancelled = false;
+    let timeoutId: number | undefined;
+
+    const scheduleNext = () => {
+      if (cancelled) return;
+      const ms = getMsUntilNext20();
+      timeoutId = window.setTimeout(async () => {
+        if (cancelled) return;
+
+        // jistota – když je permission default, můžeme se zkusit zeptat
+        if (Notification.permission === "default") {
+          const perm = await Notification.requestPermission();
+          if (perm !== "granted") {
+            // user nechce → už ho neotravujeme
+            return;
+          }
+        }
+
+        if (Notification.permission !== "granted") {
+          return;
+        }
+
+        // máme habits z React Query
+        const hasWaterable = (habits ?? []).some((h) =>
+          canWaterBackend(h.frequency, h.lastCompletedAt)
+        );
+
+        if (hasWaterable) {
+          const n = new Notification("Time to water your garden 🌱", {
+            body: "You still have habits waiting today.",
+            icon: "/icons/icon-192.png",
+            badge: "/icons/icon-192.png",
+          });
+
+          n.onclick = () => {
+            // fokus na okno + přepnutí na Garden (kdybys měla routování)
+            window.focus();
+            // můžeš si sem případně dát window.location.hash = "#garden";
+          };
+        }
+
+        // naplánuj další den
+        scheduleNext();
+      }, ms);
+    };
+
+    scheduleNext();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [habits, me?.notificationsEnabled]);
+
   useEffect(() => {
     if (level > prevLevelRef.current) {
       setLeveledUp(true);
@@ -122,51 +245,6 @@ export function DashboardGarden({
   if (isError) {
     return <div className="p-6 text-red-600">Failed to load habits.</div>;
   }
-
-  function dayKey(date: string | Date) {
-    const d = new Date(date);
-    // jednoduché porovnání podle UTC data → "YYYY-MM-DD"
-    return d.toISOString().slice(0, 10);
-  }
-
-  // ISO týden: pondělí = 1, neděle = 7
-  function isoWeekKey(date: string | Date) {
-    const d = new Date(date);
-    // přepočítáme na čistý UTC den
-    const utc = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-
-    let day = utc.getUTCDay();
-    if (day === 0) day = 7; // neděle = 7
-
-    // posun na čtvrtek v tomto týdnu (ISO trik)
-    utc.setUTCDate(utc.getUTCDate() + 4 - day);
-
-    const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
-    const weekNo = Math.ceil(
-      ((utc.getTime() - yearStart.getTime()) / 86400000 + 1) / 7
-    );
-
-    return `${utc.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
-  }
-  const today = new Date();
-
-  const canWaterBackend = (
-    frequency: "Daily" | "Weekly",
-    lastCompletedAt?: string | Date | null
-  ) => {
-    if (!lastCompletedAt) return true;
-
-    const last = new Date(lastCompletedAt);
-
-    if (frequency === "Daily") {
-      // hotovo dnes → nesmí se zalívat
-      return dayKey(last) !== dayKey(today);
-    }
-
-    // WEEKLY:
-    // hotovo v tomto ISO týdnu → nesmí se zalívat
-    return isoWeekKey(last) !== isoWeekKey(today);
-  };
 
   const categories: CategoryFilter[] = [
     "All",
@@ -379,9 +457,11 @@ export function DashboardGarden({
           const habitsForGarden = (habits ?? []).map((h) => ({
             id: h._id,
             name: h.title,
-            stage: getGrowthStage(h.streak ?? 0, h.frequency),
-            streak: h.streak ?? 0,
+            frequency: h.frequency,
+            currentStreak: h.streak ?? 0,
+            bestStreak: (h as any).bestStreak ?? h.streak ?? 0,
           }));
+
           return <FullGardenView habits={habitsForGarden} theme={theme} />;
         })()}
 
@@ -558,6 +638,7 @@ export function DashboardGarden({
                 habitName={h.title}
                 frequency={h.frequency}
                 streak={streak}
+                bestStreak={h.bestStreak}
                 theme={theme}
                 disabled={disabled}
                 disabledLabel={disabledLabel}

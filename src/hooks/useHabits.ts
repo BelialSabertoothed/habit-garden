@@ -4,11 +4,18 @@ import { api } from "../lib/api";
 export type Habit = {
   _id: string;
   title: string;
-  category: "Health" | "Eco" | "Productivity" | "Relationships" | "Creativity" | "Custom";
+  category:
+    | "Health"
+    | "Eco"
+    | "Productivity"
+    | "Relationships"
+    | "Creativity"
+    | "Custom";
   icon: "heart" | "leaf" | "briefcase" | "users" | "palette";
   frequency: "Daily" | "Weekly";
   active: boolean;
   streak?: number;
+  bestStreak?: number;
   lastCompletedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -44,6 +51,7 @@ type TickResponse = {
   habit?: {
     _id: string;
     streak?: number;
+    bestStreak?: number;
     lastCompletedAt?: string;
   };
   me?: {
@@ -63,7 +71,9 @@ export function useWaterHabit() {
     mutationFn: async (id: string) => {
       const res = await api.post(`habits/${id}/tick`, { json: {} });
       const data: TickResponse =
-        typeof (res as any).json === "function" ? await (res as any).json() : res;
+        typeof (res as any).json === "function"
+          ? await (res as any).json()
+          : res;
       return { id, ...data };
     },
 
@@ -104,6 +114,10 @@ export function useWaterHabit() {
                         typeof habit.streak === "number"
                           ? habit.streak
                           : h.streak,
+                      bestStreak:
+                        typeof habit.bestStreak === "number"
+                          ? habit.bestStreak
+                          : h.bestStreak,
                       lastCompletedAt:
                         habit.lastCompletedAt ?? h.lastCompletedAt,
                     }
@@ -114,9 +128,7 @@ export function useWaterHabit() {
       }
 
       if (me) {
-        qc.setQueryData(["me"], (old: any) =>
-          old ? { ...old, ...me } : me
-        );
+        qc.setQueryData(["me"], (old: any) => (old ? { ...old, ...me } : me));
       }
     },
 
@@ -128,7 +140,7 @@ export function useWaterHabit() {
 
     onSettled: () => {
       qc.invalidateQueries({ queryKey: HABITS_KEY });
-      qc.invalidateQueries({ queryKey: ["rewards"] }); 
+      qc.invalidateQueries({ queryKey: ["rewards"] });
       qc.invalidateQueries({ queryKey: ["me"] });
     },
   });
@@ -139,7 +151,9 @@ export function useWaterHabit() {
 type UpdateHabitVariables = {
   id: string;
   // uživatel NESMÍ měnit worth / XP
-  payload: Partial<Pick<Habit, "title" | "category" | "frequency" | "icon" | "active">>;
+  payload: Partial<
+    Pick<Habit, "title" | "category" | "frequency" | "icon" | "active">
+  >;
 };
 
 export function useUpdateHabit() {
@@ -153,7 +167,9 @@ export function useUpdateHabit() {
 
       const res = await api.patch(`habits/${id}`, { json: safePayload });
       const data =
-        typeof (res as any).json === "function" ? await (res as any).json() : res;
+        typeof (res as any).json === "function"
+          ? await (res as any).json()
+          : res;
       return data as Habit;
     },
     onSuccess: (updated) => {
@@ -178,7 +194,9 @@ export function useDeleteHabit() {
     mutationFn: async (id: string) => {
       const res = await api.del(`habits/${id}`);
       const data =
-        typeof (res as any).json === "function" ? await (res as any).json() : res;
+        typeof (res as any).json === "function"
+          ? await (res as any).json()
+          : res;
       return data as { ok: boolean };
     },
     onMutate: async (id: string) => {
@@ -186,7 +204,10 @@ export function useDeleteHabit() {
       const prev = qc.getQueryData<Habit[]>(HABITS_KEY);
 
       if (prev) {
-        qc.setQueryData<Habit[]>(HABITS_KEY, prev.filter((h) => h._id !== id));
+        qc.setQueryData<Habit[]>(
+          HABITS_KEY,
+          prev.filter((h) => h._id !== id)
+        );
       }
 
       return { prev };

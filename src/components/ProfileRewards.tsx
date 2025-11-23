@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Award,
-  Sun,
-  Moon,
-  Zap,
-  Pencil,
-  User as UserIcon,
-} from "lucide-react";
+import { Award, Sun, Moon, Zap, Pencil, User as UserIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { BadgeIcon } from "./BadgeIcon";
 import { Switch } from "./ui/switch";
@@ -17,10 +10,15 @@ import { api } from "../lib/api";
 import EditProfileModal from "./UpdateProfileModal";
 import { useRewards } from "../hooks/useRewards";
 import { BADGES, type BadgeId } from "./badges/config";
+import { Bell } from "lucide-react";
+import {
+  enableNotificationsOnClient,
+  disableNotificationsOnClient,
+} from "../lib/notification";
 
 /* ---------- XP / level křivka – stejné jako na BE ---------- */
 
-const levelMaxXp = (lvl: number) => ((lvl + 1) ** 2) * 100;
+const levelMaxXp = (lvl: number) => (lvl + 1) ** 2 * 100;
 
 function levelProgress(xp: number, level: number) {
   const currCap = levelMaxXp(level);
@@ -71,13 +69,12 @@ export function ProfileRewards() {
   const unlockedIds = new Set<BadgeId>(
     rewards
       .map((r: any) => r.badge as string | null | undefined)
-      .filter((b): b is BadgeId => !!b) // stačí jen vyhodit null/undefined
+      .filter((b): b is BadgeId => !!b)
   );
 
-  const badges = (Object.entries(BADGES) as [
-    BadgeId,
-    (typeof BADGES)[BadgeId]
-  ][]).map(([id, cfg]) => ({
+  const badges = (
+    Object.entries(BADGES) as [BadgeId, (typeof BADGES)[BadgeId]][]
+  ).map(([id, cfg]) => ({
     id,
     unlocked: unlockedIds.has(id),
     name: cfg.name,
@@ -95,6 +92,36 @@ export function ProfileRewards() {
       await api.post("profile/theme", { json: { theme: newTheme } });
       await qc.invalidateQueries({ queryKey: ["me"] });
     } catch {
+      qc.setQueryData(["me"], prev);
+    }
+  };
+
+  const handleNotificationsToggle = async (checked: boolean) => {
+    const prev = qc.getQueryData(["me"]);
+    // optimistic update v UI
+    qc.setQueryData(["me"], { ...me, notificationsEnabled: checked });
+
+    try {
+      if (checked) {
+        // chceme zapnout – zajistíme permission + subscription
+        const ok = await enableNotificationsOnClient();
+        if (!ok) {
+          throw new Error("enableNotificationsOnClient returned false");
+        }
+      } else {
+        // vypínáme – odhlásíme subscription
+        await disableNotificationsOnClient();
+      }
+
+      // uložíme stav i do BE
+      await api.post("profile/notifications", {
+        json: { notificationsEnabled: checked },
+      });
+
+      await qc.invalidateQueries({ queryKey: ["me"] });
+    } catch (err) {
+      console.error("notifications toggle failed:", err);
+      // rollback UI, pokud cokoliv selže
       qc.setQueryData(["me"], prev);
     }
   };
@@ -281,6 +308,42 @@ export function ProfileRewards() {
         </div>
       </div>
 
+      {/* Notifications */}
+      <div
+        className={`${
+          isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-100"
+        } rounded-2xl p-6 shadow-md border`}
+      >
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <Bell
+              className={`w-5 h-5 ${
+                isDark ? "text-emerald-300" : "text-emerald-500"
+              }`}
+            />
+            <div>
+              <p className={isDark ? "text-white" : "text-gray-900"}>
+                Habit reminders
+              </p>
+              <p
+                className={`text-sm ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                Daily push notification around 20:00 if you still have habits to
+                water.
+              </p>
+            </div>
+          </div>
+
+          <Switch
+            id="notifications-switch"
+            checked={!!me.notificationsEnabled}
+            onCheckedChange={handleNotificationsToggle}
+          />
+        </div>
+      </div>
+
       {/* Badges Section – jen pro gamified */}
       {isGamified && (
         <div
@@ -292,9 +355,7 @@ export function ProfileRewards() {
         >
           <div className="flex items-center gap-2 mb-6">
             <Award className="w-5 h-5 text-purple-500" />
-            <h3 className={isDark ? "text-white" : "text-gray-900"}>
-              Badges
-            </h3>
+            <h3 className={isDark ? "text-white" : "text-gray-900"}>Badges</h3>
             <span
               className={`ml-auto text-sm ${
                 isDark ? "text-gray-400" : "text-gray-500"
@@ -383,11 +444,7 @@ export function ProfileRewards() {
         <h3 className={`mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
           Experiment Variant
         </h3>
-        <p
-          className={
-            isDark ? "text-gray-400 mb-4" : "text-gray-600 mb-4"
-          }
-        >
+        <p className={isDark ? "text-gray-400 mb-4" : "text-gray-600 mb-4"}>
           Switch between the gamified experience (XP, levels, badges) and the
           minimal experience (no gamification).
         </p>

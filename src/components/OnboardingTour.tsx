@@ -12,6 +12,7 @@ import {
   Palette,
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { Switch } from "./ui/switch";
 import { useMe } from "../hooks/useAuth";
 import { api } from "../lib/api";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,7 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { SUGGESTED_HABITS_BY_CATEGORY, type SuggestedHabit } from "../data/SuggestedHabits";
+import {
+  SUGGESTED_HABITS_BY_CATEGORY,
+  type SuggestedHabit,
+} from "../data/suggestedHabits";
+import {
+  enableNotificationsOnClient,
+  disableNotificationsOnClient,
+} from "../lib/notification";
 
 /* -------------------------------- utils -------------------------------- */
 function cn(...classes: Array<string | undefined | false>) {
@@ -42,6 +50,7 @@ type Category =
 type StarterHabit = SuggestedHabit & {
   selected?: boolean;
 };
+
 interface OnboardingTourProps {
   onComplete: () => void;
   theme: Theme;
@@ -62,12 +71,10 @@ export function OnboardingTour({
   theme,
   startOnStarter,
 }: OnboardingTourProps) {
-  // --- hooks only at top-level ---
   const { data: me, isLoading } = useMe();
   const qc = useQueryClient();
   const isDark = theme === "night";
 
-  // local state (not conditional)
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [nick, setNick] = useState(me?.nickname ?? "");
   const [avatar, setAvatar] = useState(me?.avatar ?? "");
@@ -76,18 +83,20 @@ export function OnboardingTour({
     "Productivity",
     "Creativity",
   ]);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    me?.notificationsEnabled ?? false
+  );
   const [habits, setHabits] = useState<StarterHabit[]>(
-    (Object.values(SUGGESTED_HABITS_BY_CATEGORY)
-      .flat() as SuggestedHabit[])
-      .map((h) => ({ ...h, selected: false }))
+    (
+      Object.values(SUGGESTED_HABITS_BY_CATEGORY).flat() as SuggestedHabit[]
+    ).map((h) => ({ ...h, selected: false }))
   );
 
   const hasProfile = Boolean(me?.nickname && me?.avatar);
   const isGamified = (me?.experimentVariant ?? "gamified") === "gamified";
 
-  // steps are derived, but memoized; not a hook call in a branch
+  /* ---------- steps definition ---------- */
   const steps = useMemo(() => {
-    // 1) intro with consent + experiment info
     const intro = [
       {
         key: "consent",
@@ -102,9 +111,15 @@ export function OnboardingTour({
         description:
           "There is a gamified and a non-gamified version. You were assigned randomly — please try the assigned version first, then you can switch.",
       },
+      {
+        key: "notifications",
+        title: "Stay on track 🔔",
+        description:
+          "Enable daily reminders so you don’t forget to water your habits at 20:00.",
+        isNotifications: true,
+      },
     ] as const;
 
-    // 2) profile step (only if needed)
     const maybeProfile = hasProfile
       ? []
       : [
@@ -117,7 +132,6 @@ export function OnboardingTour({
           },
         ];
 
-    // 3) product intro + starters
     const productIntro = isGamified
       ? [
           {
@@ -149,30 +163,34 @@ export function OnboardingTour({
     return [...intro, ...maybeProfile, ...productIntro, ...starters];
   }, [hasProfile, isGamified]);
 
-  // current step index (ensure valid if steps change)
+  /* ---------- current step ---------- */
   const [currentStep, setCurrentStep] = useState(() =>
     startOnStarter ? steps.length - 1 : 0
   );
+
   useEffect(() => {
     setCurrentStep((i) => Math.min(i, steps.length - 1));
   }, [steps.length]);
 
-  // keep inputs in sync if me changes after mount
+  // sync z /me do lokálního stavu
   useEffect(() => {
     if (me?.nickname) setNick(me.nickname);
     if (me?.avatar) setAvatar(me.avatar);
-  }, [me?.nickname, me?.avatar]);
+    if (typeof me?.notificationsEnabled === "boolean") {
+      setNotificationsEnabled(me.notificationsEnabled);
+    }
+  }, [me?.nickname, me?.avatar, me?.notificationsEnabled]);
 
-  // derived
   const visibleHabits = useMemo(
     () => habits.filter((h) => activeCats.includes(h.category)),
     [habits, activeCats]
   );
+
   const current = steps[currentStep];
   const isFirst = currentStep === 0;
   const isLast = currentStep === steps.length - 1;
 
-  // handlers (no hooks here)
+  /* ---------- helpers ---------- */
   const toggleCat = (c: Category) =>
     setActiveCats((prev) =>
       prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]
@@ -196,6 +214,27 @@ export function OnboardingTour({
   const handleNext = async () => {
     if ((current as any).isConsent && !consentAccepted) return;
 
+    if ((current as any).isNotifications) {
+      try {
+        if (notificationsEnabled) {
+          await enableNotificationsOnClient();
+        } else {
+          await disableNotificationsOnClient();
+        }
+      } catch (err) {
+        console.error("notifications client setup failed:", err);
+      }
+
+      try {
+        await api.post("profile/notifications", {
+          json: { notificationsEnabled },
+        });
+        await qc.invalidateQueries({ queryKey: ["me"] });
+      } catch (err) {
+        console.error("profile/notifications failed:", err);
+      }
+    }
+
     if ((current as any).isProfileStep) {
       if (!nick.trim() || !avatar.trim()) return;
       await saveProfile();
@@ -203,22 +242,20 @@ export function OnboardingTour({
 
     if (isLast) {
       if ((current as any).isStarter) {
-        // vezmeme všechny vybrané, i když zrovna nejsou ve filtru
         const selected = habits.filter((h) => h.selected);
         if (selected.length) {
           await api.post("habits/bulk", {
             json: {
               habits: selected.map((h) => ({
                 title: h.title,
-                category: h.category, // "Health" | "Eco" | "Productivity" | "Relationships" | "Creativity"
-                icon: h.icon, // "heart" | "leaf" | "briefcase" | "users" | "palette"
-                frequency: h.frequency, // "Daily" | "Weekly"
-                worth: h.worth ?? 10, // ← DŮLEŽITÉ: pošli skutečný worth!
+                category: h.category,
+                icon: h.icon,
+                frequency: h.frequency,
+                worth: h.worth ?? 10,
               })),
             },
           });
 
-          // po vytvoření si stáhni znovu habits i me (kvůli případné inicializaci XP na BE)
           await qc.invalidateQueries({ queryKey: ["habits", "mine"] });
           await qc.invalidateQueries({ queryKey: ["me"] });
         }
@@ -226,6 +263,7 @@ export function OnboardingTour({
       onComplete();
       return;
     }
+
     setCurrentStep((s) => s + 1);
   };
 
@@ -233,7 +271,7 @@ export function OnboardingTour({
     if (!isFirst) setCurrentStep((s) => s - 1);
   };
 
-  // auto-skip profile step if se mezitím doplnil
+  // auto-skip profile step, pokud už je profil mezitím hotový
   useEffect(() => {
     if (hasProfile && (current as any)?.isProfileStep) {
       setCurrentStep((s) => Math.min(s + 1, steps.length - 1));
@@ -241,7 +279,6 @@ export function OnboardingTour({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasProfile]);
 
-  // loading overlay (hooky už jsou inicializované nahoře, early return je OK)
   if (isLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
@@ -313,6 +350,15 @@ export function OnboardingTour({
           />
         )}
 
+        {/* notifications step */}
+        {(current as any).isNotifications && (
+          <NotificationsStep
+            isDark={isDark}
+            enabled={notificationsEnabled}
+            setEnabled={setNotificationsEnabled}
+          />
+        )}
+
         {/* starters */}
         {(current as any).isStarter && (
           <StarterPicker
@@ -326,7 +372,7 @@ export function OnboardingTour({
         )}
 
         {/* nav */}
-        <div className="flex items-center justify-between mt-8">
+        <div className="flex items-center justify_between mt-8">
           <Button
             onClick={handlePrev}
             disabled={isFirst}
@@ -455,6 +501,38 @@ function ProfileStep({
   );
 }
 
+/* ------------------------------ NotificationsStep ----------------------- */
+function NotificationsStep({
+  isDark,
+  enabled,
+  setEnabled,
+}: {
+  isDark: boolean;
+  enabled: boolean;
+  setEnabled: (v: boolean) => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border p-4 flex items-center justify-between gap-4",
+        isDark
+          ? "border-slate-600 bg-slate-700/40 text-gray-200"
+          : "border-green-200 bg-green-50/60 text-gray-800"
+      )}
+    >
+      <div className="max-w-[75%]">
+        <p className="font-medium mb-1">Daily Reminder</p>
+        <p className="text-sm opacity-80">
+          Enable a helpful reminder at <b>20:00</b> if you still have habits
+          left to water.
+        </p>
+      </div>
+
+      <Switch checked={enabled} onCheckedChange={setEnabled} />
+    </div>
+  );
+}
+
 /* ------------------------------ StarterPicker --------------------------- */
 function StarterPicker({
   theme,
@@ -522,7 +600,7 @@ function StarterPicker({
                 key={h.id}
                 onClick={toggleSelect}
                 className={cn(
-                  "relative flex flex-col justify-between p-5 rounded-xl border transition-all duration-200 overflow-visible cursor-pointer",
+                  "relative flex flex_col justify-between p-5 rounded-xl border transition-all duration-200 overflow-visible cursor-pointer",
                   selected
                     ? "border-emerald-500 ring-1 ring-emerald-200/60 bg-emerald-50/10"
                     : isDark
@@ -530,7 +608,7 @@ function StarterPicker({
                     : "border-gray-200 hover:bg-gray-50"
                 )}
               >
-                {/* selected chip (no stopPropagation -> celá karta funguje) */}
+                {/* selected chip */}
                 <div
                   className={cn(
                     "absolute top-3 right-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs border",
@@ -580,7 +658,7 @@ function StarterPicker({
                   </div>
                 </div>
 
-                {/* frequency select (stop click from toggling selection) */}
+                {/* frequency select */}
                 <div className="mt-4" onClick={(e) => e.stopPropagation()}>
                   <Select
                     value={frequency}
@@ -598,7 +676,9 @@ function StarterPicker({
                       position="popper"
                       className={cn(
                         "z-[60]",
-                        isDark ? "bg-slate-700 border-slate-600 text-white" : ""
+                        isDark
+                          ? "bg-slate-700 border-slate-600 text-white"
+                          : ""
                       )}
                     >
                       <SelectItem value="Daily">Daily</SelectItem>

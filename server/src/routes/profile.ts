@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { requireAuth, AuthReq } from "../middleware/requireAuth.js";
 import { User } from "../models/User.js";
+import { trackEvent } from "../utils/trackEvent.js";
 
 const router = Router();
 
@@ -32,9 +33,16 @@ const OnboardingInput = z.object({ done: z.boolean() });
 router.post("/onboarding", requireAuth, async (req: AuthReq, res) => {
   const { done } = OnboardingInput.parse(req.body);
   await User.findByIdAndUpdate(req.userId, { onboardingDone: !!done });
+
+  if (done) {
+    await trackEvent({
+      userId: req.userId!,
+      type: "onboarding_done",
+    });
+  }
+
   return res.status(204).end();
 });
-
 router.post("/theme", requireAuth, async (req: AuthReq, res) => {
   const { theme } = req.body;
   if (theme !== "day" && theme !== "night") {
@@ -75,8 +83,97 @@ const VariantInput = z.object({
 
 router.post("/experiment", requireAuth, async (req: AuthReq, res) => {
   const { variant } = VariantInput.parse(req.body);
-  await User.findByIdAndUpdate(req.userId, { experimentVariant: variant });
+  const user = await User.findById(req.userId);
+  if (!user) return res.status(404).end();
+
+  const prev = user.experimentVariant ?? "gamified";
+  user.experimentVariant = variant;
+  await user.save();
+
+  // log switch
+  await trackEvent({
+    userId: user._id,
+    type: "variant_switch",
+    payload: {
+      from: prev,
+      to: variant,
+    },
+  });
+
   return res.status(204).end();
 });
+
+// POST /api/profile/notifications
+router.post(
+  "/notifications",
+  requireAuth,
+  async (req: AuthReq, res) => {
+    try {
+      const { notificationsEnabled } = req.body;
+
+      // 💾 ULOŽÍME DO DB – pomocí findByIdAndUpdate
+      const user = await User.findByIdAndUpdate(
+        req.userId,
+        { $set: { notificationsEnabled: !!notificationsEnabled } },
+        { new: true } // ← vrátí aktualizovaného usera
+      );
+
+      if (!user) {
+        return res.status(404).json({ ok: false, message: "user not found" });
+      }
+      await trackEvent({
+        userId: user._id,
+        type: "notifications_toggle",
+        payload: {
+          enabled: !!notificationsEnabled,
+        },
+      });
+
+      return res.json({
+        ok: true,
+        notificationsEnabled: user.notificationsEnabled,
+      });
+    } catch (err) {
+      console.error("notifications toggle error:", err);
+      return res.status(500).json({ ok: false });
+    }
+  }
+);
+
+const PushSubInput = z.object({
+  endpoint: z.string().url(),
+  keys: z.object({
+    p256dh: z.string(),
+    auth: z.string(),
+  }),
+});
+
+// POST /api/profile/push-subscription
+router.post(
+  "/push-subscription",
+  requireAuth,
+  async (req: AuthReq, res) => {
+    try {
+      const sub = PushSubInput.parse(req.body);
+
+      const user = await User.findByIdAndUpdate(
+        req.userId,
+        { $set: { pushSubscription: sub } },
+        { new: true }
+      );
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({ ok: false, message: "user not found" });
+      }
+
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error("push-subscription error:", err);
+      return res.status(500).json({ ok: false });
+    }
+  }
+);
 
 export default router;

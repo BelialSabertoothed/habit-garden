@@ -23,8 +23,18 @@ const UserSchema = new Schema(
       enum: ["gamified", "control"],
       default: undefined,
     },
+    notificationsEnabled: { type: Boolean, default: false },
+    pushSubscription: {
+      endpoint: String,
+      keys: {
+        p256dh: String,
+        auth: String,
+      },
+    },
 
-    verified: { type: Boolean, default: false },
+    emailVerified: { type: Boolean, default: false },
+    emailVerificationToken: { type: String, default: null },
+    emailVerificationExpiresAt: { type: Date, default: null },
 
     refreshTokenHash: { type: String, default: null },
     lastLoginAt: Date,

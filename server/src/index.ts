@@ -13,11 +13,17 @@ import habits from "./routes/habits.js";
 import logs from "./routes/logs.js";
 import statsRouter from "./routes/stats.js";
 import rewards from "./routes/rewards.js";
-import experiments from "./routes/experiments.js";
 import authRouter from "./routes/auth.js";       
 import authMeRouter from "./routes/auth.me.js";  
 import profileRouter from "./routes/profile.js";
+import pushRouter from "./routes/push.js";
+import { sendDailyNotifications } from "./cron/checkHabits.js";
+import cron from "node-cron";
 
+cron.schedule("0 20 * * *", async () => {
+  console.log("Running daily habit notification check...");
+  await sendDailyNotifications();
+});
 dotenv.config();
 const app = express();
 
@@ -52,7 +58,7 @@ app.use("/api/habits", habits);
 app.use("/api/logs", logs);
 app.use("/api/stats", statsRouter);
 app.use("/api/rewards", rewards);
-app.use("/api/experiments", experiments);
+app.use("/api/push", pushRouter);
 
 app.use((req, res) => res.status(404).json({ error: "Not found", path: req.path }));
 app.use(errorHandler);

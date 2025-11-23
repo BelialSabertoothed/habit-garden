@@ -7,31 +7,48 @@ import { useState, useRef, useEffect } from "react";
 
 type Stage = "seed" | "sprout" | "flower" | "tree";
 
-function getGrowthStage(streak: number, freq: "Daily" | "Weekly"): Stage {
-  if (freq === "Daily") {
-    if (streak >= 14) return "tree";
-    if (streak >= 7) return "flower";
-    if (streak >= 3) return "sprout";
-    return "seed";
-  }
-  if (streak >= 6) return "tree";
-  if (streak >= 4) return "flower";
-  if (streak >= 2) return "sprout";
-  return "seed";
-}
+const stageOrder: Stage[] = ["seed", "sprout", "flower", "tree"];
 
-function getGrowthProgress(streak: number, freq: "Daily" | "Weekly") {
-  if (freq === "Daily") {
-    if (streak < 3) return (streak / 3) * 100; // seed → sprout
-    if (streak < 7) return ((streak - 3) / 4) * 100; // sprout → flower
-    if (streak < 14) return ((streak - 7) / 7) * 100; // flower → tree
-    return 100;
+// hranice pro jednotlivé stage
+const DAILY_THRESHOLDS = [0, 3, 7, 14]; // 0–2 seed, 3–6 sprout, 7–13 flower, 14+ tree
+const WEEKLY_THRESHOLDS = [0, 2, 4, 6]; // 0–1 seed, 2–3 sprout, 4–5 flower, 6+ tree
+
+function getStageAndProgress(
+  freq: "Daily" | "Weekly",
+  streak: number,
+  bestStreak: number
+): { stage: Stage; progress: number } {
+  const thresholds = freq === "Daily" ? DAILY_THRESHOLDS : WEEKLY_THRESHOLDS;
+
+  const safeBest = Math.max(0, bestStreak || 0);
+  const safeCurrent = Math.max(0, streak || 0);
+
+  // 1) Stage podle NEJLEPŠÍHO streaku
+  let stageIndex = 0;
+  for (let i = 0; i < thresholds.length; i++) {
+    if (safeBest >= thresholds[i]) {
+      stageIndex = i;
+    }
+  }
+  const stage = stageOrder[stageIndex];
+
+  // 2) Progress podle AKTUÁLNÍHO streaku v rámci rozsahu té stage
+  const lower = thresholds[stageIndex];
+  const upper =
+    stageIndex < thresholds.length - 1
+      ? thresholds[stageIndex + 1]
+      : thresholds[stageIndex] + (freq === "Daily" ? 7 : 2); // poslední stage – libovolný „cap“
+
+  // pokud je current menší než dolní hranice stage, progress = 0
+  if (safeCurrent <= lower) {
+    return { stage, progress: 0 };
   }
 
-  if (streak < 2) return (streak / 2) * 100;
-  if (streak < 4) return ((streak - 2) / 2) * 100;
-  if (streak < 6) return ((streak - 4) / 2) * 100;
-  return 100;
+  const span = Math.max(1, upper - lower);
+  const raw = ((safeCurrent - lower) / span) * 100;
+  const progress = Math.max(0, Math.min(100, raw));
+
+  return { stage, progress };
 }
 
 /* -------------------------------- UI Config -------------------------------- */
@@ -69,6 +86,7 @@ interface PlantCardProps {
   habitName: string;
   frequency: "Daily" | "Weekly";
   streak: number;
+  bestStreak?: number;
   onWater: () => Promise<any> | void;
   theme: "day" | "night";
   disabled?: boolean;
@@ -79,15 +97,20 @@ export function PlantCard({
   habitName,
   frequency,
   streak,
+  bestStreak,
   onWater,
   theme,
   disabled,
   disabledLabel,
 }: PlantCardProps) {
   const isDark = theme === "night";
+  
 
-  const stage = getGrowthStage(streak, frequency);
-  const progress = getGrowthProgress(streak, frequency);
+  const { stage, progress } = getStageAndProgress(
+    frequency,
+    streak,
+    bestStreak ?? 0
+  );
   const config = stageConfig[stage];
   const Icon = config.icon;
 
@@ -219,6 +242,8 @@ export function PlantCard({
               className={`h-full bg-gradient-to-r ${config.progressColor} rounded-full`}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.6 }}
+              key={progress}
+              initial={{ width: 0 }}
             />
           </div>
 

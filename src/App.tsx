@@ -11,7 +11,8 @@ import { ProfileRewards } from "./components/ProfileRewards";
 import { useMe, loginWithGoogle, useLogout } from "./hooks/useAuth";
 import { api } from "./lib/api";
 import { Navigation } from "./components/Navigation";
-import { useBadgeToasts } from "./hooks/useBadgeToasts"; // 👈 správný import
+import { useBadgeToasts } from "./hooks/useBadgeToasts";
+import { askNotificationPermission } from "./lib/notificationPermission";
 
 type Page = "garden" | "habits" | "stats" | "profile";
 
@@ -27,6 +28,18 @@ export default function App() {
 
   const badgeToastsEnabled = me?.experimentVariant === "gamified";
   useBadgeToasts(theme, badgeToastsEnabled);
+
+   useEffect(() => {
+    if (!me) return;
+    if (!me.onboardingDone) return;
+
+    // nechceme otravovat pokaždé, jen pokud je stav "default"
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        askNotificationPermission();
+      }
+    }
+  }, [me]);
 
   useEffect(() => {
     const hash = window.location.hash.slice(1);

@@ -21,6 +21,7 @@ const router = Router();
     profileComplete: user.profileComplete,
     onboardingDone: user.onboardingDone,
     experimentVariant: user.experimentVariant,
+    notificationsEnabled: user.notificationsEnabled,
   });
 });
 
