@@ -7,6 +7,12 @@ import { AddHabitModal } from "./AddHabitModal";
 import { useHabits, useWaterHabit } from "../hooks/useHabits";
 import { useMe } from "../hooks/useAuth";
 import { SparkleButton } from "./ui/sparkle-button";
+import {
+  getStageAndProgress,
+  type Stage,
+  type Frequency,
+} from "../lib/growth";
+import { useTranslation } from "react-i18next";
 
 /* stejné level křivce jako na BE */
 const levelMaxXp = (lvl: number) => (lvl + 1) ** 2 * 100;
@@ -23,22 +29,15 @@ function levelProgress(xp: number, level: number) {
   return { progress, xpToNext };
 }
 
-/* ---------- growth logic stejná jako v PlantCard ---------- */
+/* ---------- growth logic přes sdílený helper ---------- */
 
-type Stage = "seed" | "sprout" | "flower" | "tree";
-
-function getGrowthStage(streak: number, freq: "Daily" | "Weekly"): Stage {
-  if (freq === "Daily") {
-    if (streak >= 14) return "tree";
-    if (streak >= 7) return "flower";
-    if (streak >= 3) return "sprout";
-    return "seed";
-  }
-  // WEEKLY
-  if (streak >= 6) return "tree";
-  if (streak >= 4) return "flower";
-  if (streak >= 2) return "sprout";
-  return "seed";
+function getGrowthStage(
+  streak: number,
+  freq: Frequency,
+  bestStreak?: number
+): Stage {
+  const { stage } = getStageAndProgress(freq, streak, bestStreak ?? streak);
+  return stage;
 }
 
 /* ---------- typy pro filtry ---------- */
@@ -112,6 +111,8 @@ export function DashboardGarden({
   theme: "day" | "night";
 }) {
   const { data: me } = useMe();
+  const { t } = useTranslation();
+
   const theme = (me?.theme ?? fallbackTheme) as "day" | "night";
   const isDark = theme === "night";
 
@@ -144,15 +145,13 @@ export function DashboardGarden({
   const [leveledUp, setLeveledUp] = useState(false);
   const xpCardRef = useRef<HTMLDivElement | null>(null);
 
-
-    useEffect(() => {
-        if (!me?.notificationsEnabled) return;
+  useEffect(() => {
+    if (!me?.notificationsEnabled) return;
 
     // Notifications nemusí existovat (starý browser)
     if (typeof window === "undefined" || !("Notification" in window)) {
       return;
     }
-
 
     // pokud user explicitně zakázal notifikace, nedělej nic
     if (Notification.permission === "denied") {
@@ -187,16 +186,14 @@ export function DashboardGarden({
         );
 
         if (hasWaterable) {
-          const n = new Notification("Time to water your garden 🌱", {
-            body: "You still have habits waiting today.",
+          const n = new Notification(t("dashboard.notifications.title"), {
+            body: t("dashboard.notifications.body"),
             icon: "/icons/icon-192.png",
             badge: "/icons/icon-192.png",
           });
 
           n.onclick = () => {
-            // fokus na okno + přepnutí na Garden (kdybys měla routování)
             window.focus();
-            // můžeš si sem případně dát window.location.hash = "#garden";
           };
         }
 
@@ -213,7 +210,7 @@ export function DashboardGarden({
         clearTimeout(timeoutId);
       }
     };
-  }, [habits, me?.notificationsEnabled]);
+  }, [habits, me?.notificationsEnabled, t]);
 
   useEffect(() => {
     if (level > prevLevelRef.current) {
@@ -233,17 +230,25 @@ export function DashboardGarden({
       }
 
       prevLevelRef.current = level;
-      const t = setTimeout(() => setLeveledUp(false), 1100);
-      return () => clearTimeout(t);
+      const tId = setTimeout(() => setLeveledUp(false), 1100);
+      return () => clearTimeout(tId);
     }
     prevLevelRef.current = level;
   }, [level]);
 
   if (isLoading) {
-    return <div className="p-6">{isDark ? "Loading…" : "Loading…"}</div>;
+    return (
+      <div className="p-6">
+        {t("habits.list.loading")}
+      </div>
+    );
   }
   if (isError) {
-    return <div className="p-6 text-red-600">Failed to load habits.</div>;
+    return (
+      <div className="p-6 text-red-600">
+        {t("habits.list.error")}
+      </div>
+    );
   }
 
   const categories: CategoryFilter[] = [
@@ -255,6 +260,12 @@ export function DashboardGarden({
     "Creativity",
     "Custom",
   ];
+
+  const getCategoryLabel = (cat: CategoryFilter) => {
+    if (cat === "All") return t("habits.list.filters.all");
+    if (cat === "Custom") return t("habits.categories.Custom");
+    return t(`habits.categories.${cat}`);
+  };
 
   // helper MUSÍ být nadefinovaný před použitím v sortu
   const getSortStreak = (
@@ -273,7 +284,11 @@ export function DashboardGarden({
   const filteredAndSortedHabits = habits
     .filter((h) => {
       const streak = h.streak ?? 0;
-      const stage = getGrowthStage(streak, h.frequency);
+      const stage = getGrowthStage(
+        streak,
+        h.frequency as Frequency,
+        (h as any).bestStreak
+      );
       const waitingRaw = canWaterBackend(h.frequency, h.lastCompletedAt);
       const waiting = waitingRaw || !!recentlyWatered[h._id];
 
@@ -373,15 +388,17 @@ export function DashboardGarden({
               <div className="flex items-center gap-2 mb-3">
                 <Zap className="w-5 h-5 text-amber-500" />
                 <span className={isDark ? "text-gray-300" : "text-gray-600"}>
-                  XP Progress
+                  {t("dashboard.xp.title")}
                 </span>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className={isDark ? "text-white" : "text-gray-900"}>
-                    Level {level}
+                    {t("dashboard.xp.levelLabel", { level })}
                   </span>
-                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+                  <span
+                    className={isDark ? "text-gray-400" : "text-gray-500"}
+                  >
                     {progress.toFixed(0)}%
                   </span>
                 </div>
@@ -406,16 +423,18 @@ export function DashboardGarden({
                     isDark ? "text-gray-400" : "text-gray-500"
                   }`}
                 >
-                  {xpToNext} XP to next
+                  {t("dashboard.xp.toNext", { xpToNext })}
                 </div>
               </div>
             </div>
 
             <div>
               <p
-                className={`mb-2 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                className={`mb-2 ${
+                  isDark ? "text-gray-300" : "text-gray-600"
+                }`}
               >
-                Current Streak
+                {t("dashboard.streak.label")}
               </p>
               <div className="flex items-baseline gap-2">
                 <span
@@ -425,8 +444,10 @@ export function DashboardGarden({
                 >
                   {globalStreak}
                 </span>
-                <span className={isDark ? "text-gray-400" : "text-gray-500"}>
-                  days 🔥
+                <span
+                  className={isDark ? "text-gray-400" : "text-gray-500"}
+                >
+                  {t("dashboard.streak.suffix")}
                 </span>
               </div>
             </div>
@@ -438,14 +459,14 @@ export function DashboardGarden({
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className={isDark ? "text-white" : "text-gray-900"}>
-            Your Garden
+            {t("dashboard.header.title")}
           </h2>
           <p className={isDark ? "text-gray-400" : "text-gray-600"}>
-            Nurture your habits and watch them grow
+            {t("dashboard.header.subtitle")}
           </p>
         </div>
         <SparkleButton
-          label="Add New Habit"
+          label={t("dashboard.header.ctaAddHabit")}
           isDark={isDark}
           onClick={() => setShowModal(true)}
         />
@@ -473,7 +494,7 @@ export function DashboardGarden({
               isDark ? "text-gray-400" : "text-gray-500"
             }`}
           >
-            Filters
+            {t("dashboard.filters.title")}
           </span>
           <button
             onClick={() => setShowFilters((s) => !s)}
@@ -486,7 +507,9 @@ export function DashboardGarden({
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            {showFilters ? "Hide filters" : "Show filters"}
+            {showFilters
+              ? t("dashboard.filters.toggle.hide")
+              : t("dashboard.filters.toggle.show")}
           </button>
         </div>
       )}
@@ -509,7 +532,7 @@ export function DashboardGarden({
               {/* Kategorie */}
               <div className="flex flex-wrap gap-2 items-center">
                 <span className="text-xs uppercase tracking-wide opacity-70">
-                  Category:
+                  {t("dashboard.filters.categoryLabel")}
                 </span>
                 {categories.map((cat) => {
                   const active = categoryFilter === cat;
@@ -525,7 +548,7 @@ export function DashboardGarden({
                           : "border-gray-300 text-gray-700 hover:bg-gray-100"
                       }`}
                     >
-                      {cat}
+                      {getCategoryLabel(cat)}
                     </button>
                   );
                 })}
@@ -536,16 +559,16 @@ export function DashboardGarden({
                 {/* Stage */}
                 <div className="flex flex-wrap gap-2 items-center">
                   <span className="text-xs uppercase tracking-wide opacity-70">
-                    Stage:
+                    {t("dashboard.filters.stage.label")}
                   </span>
                   {(
                     [
-                      { id: "all", label: "All" },
-                      { id: "seed", label: "Seed" },
-                      { id: "sprout", label: "Sprout" },
-                      { id: "flower", label: "Flower" },
-                      { id: "tree", label: "Tree" },
-                    ] as { id: StageFilter; label: string }[]
+                      { id: "all", key: "all" },
+                      { id: "seed", key: "seed" },
+                      { id: "sprout", key: "sprout" },
+                      { id: "flower", key: "flower" },
+                      { id: "tree", key: "tree" },
+                    ] as { id: StageFilter; key: string }[]
                   ).map((s) => {
                     const active = stageFilter === s.id;
                     return (
@@ -560,7 +583,7 @@ export function DashboardGarden({
                             : "border-gray-300 text-gray-700 hover:bg-gray-100"
                         }`}
                       >
-                        {s.label}
+                        {t(`dashboard.filters.stage.options.${s.key}`)}
                       </button>
                     );
                   })}
@@ -569,14 +592,14 @@ export function DashboardGarden({
                 {/* Status */}
                 <div className="flex flex-wrap gap-2 items-center">
                   <span className="text-xs uppercase tracking-wide opacity-70">
-                    Status:
+                    {t("dashboard.filters.status.label")}
                   </span>
                   {(
                     [
-                      { id: "all", label: "All" },
-                      { id: "waiting", label: "Waiting" },
-                      { id: "done", label: "Done" },
-                    ] as { id: StatusFilter; label: string }[]
+                      { id: "all", key: "all" },
+                      { id: "waiting", key: "waiting" },
+                      { id: "done", key: "done" },
+                    ] as { id: StatusFilter; key: string }[]
                   ).map((s) => {
                     const active = statusFilter === s.id;
                     return (
@@ -591,7 +614,7 @@ export function DashboardGarden({
                             : "border-gray-300 text-gray-700 hover:bg-gray-100"
                         }`}
                       >
-                        {s.label}
+                        {t(`dashboard.filters.status.options.${s.key}`)}
                       </button>
                     );
                   })}
@@ -609,7 +632,7 @@ export function DashboardGarden({
             isDark ? "text-gray-400" : "text-gray-600"
           } text-center py-12`}
         >
-          No habits match your filters.
+          {t("dashboard.empty.filters")}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -620,16 +643,17 @@ export function DashboardGarden({
               h.lastCompletedAt
             );
 
-            const isWateringThis = water.isPending && water.variables === h._id;
+            const isWateringThis =
+              water.isPending && water.variables === h._id;
 
             const disabled = !backendAllowed || isWateringThis;
 
             const disabledLabel = !backendAllowed
               ? h.frequency === "Daily"
-                ? "Done today"
-                : "Done this week"
+                ? t("dashboard.card.doneToday")
+                : t("dashboard.card.doneThisWeek")
               : isWateringThis
-              ? "Updating…"
+              ? t("dashboard.card.updating")
               : undefined;
 
             return (

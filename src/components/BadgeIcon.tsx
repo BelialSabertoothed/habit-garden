@@ -1,20 +1,52 @@
 import { BADGES, type BadgeId } from "./badges/config";
+import { useTranslation } from "react-i18next";
 
 interface BadgeIconProps {
   type: BadgeId;
   unlocked: boolean;
   theme: "day" | "night";
-  name: string;
+  name?: string;
   description?: string;
   icon?: any;
   color?: string;
   colorDark?: string;
 }
 
-export function BadgeIcon({ type, unlocked, theme }: BadgeIconProps) {
+export function BadgeIcon({
+  type,
+  unlocked,
+  theme,
+  name,
+  description,
+  icon,
+  color,
+  colorDark,
+}: BadgeIconProps) {
+  const { t } = useTranslation();
+
   const cfg = BADGES[type] ?? BADGES.firstStep;
-  const Icon = cfg.icon;
+  const Icon = icon ?? cfg.icon;
   const isDark = theme === "night";
+
+  const cfgAny = cfg as any;
+
+  const displayName =
+    name ??
+    (cfgAny.nameKey ? t(cfgAny.nameKey) : cfgAny.name ?? type.toString());
+
+  const displayDescription =
+    description ??
+    (cfgAny.descriptionKey
+      ? t(cfgAny.descriptionKey)
+      : cfgAny.description ?? "");
+
+  const gradientClass = unlocked
+    ? `bg-gradient-to-br ${
+        isDark ? colorDark ?? cfgAny.colorDark : color ?? cfgAny.color
+      }`
+    : isDark
+    ? "bg-slate-700"
+    : "bg-gray-200";
 
   return (
     <div
@@ -28,13 +60,7 @@ export function BadgeIcon({ type, unlocked, theme }: BadgeIconProps) {
         <div
           className={`
             w-16 h-16 rounded-full flex items-center justify-center shadow-md transition-all duration-200
-            ${
-              unlocked
-                ? `bg-gradient-to-br ${isDark ? cfg.colorDark : cfg.color}`
-                : isDark
-                ? "bg-slate-700"
-                : "bg-gray-200"
-            }
+            ${gradientClass}
           `}
         >
           <Icon
@@ -49,13 +75,17 @@ export function BadgeIcon({ type, unlocked, theme }: BadgeIconProps) {
         </div>
         <div>
           <p className={`mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
-            {cfg.name}
+            {displayName}
           </p>
-          <p
-            className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
-          >
-            {cfg.description}
-          </p>
+          {displayDescription && (
+            <p
+              className={`text-sm ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              {displayDescription}
+            </p>
+          )}
         </div>
         {!unlocked && (
           <span
@@ -65,7 +95,7 @@ export function BadgeIcon({ type, unlocked, theme }: BadgeIconProps) {
                 : "bg-gray-100 text-gray-500"
             }`}
           >
-            Locked
+            {t("profile.badges.lockedLabel")}
           </span>
         )}
       </div>

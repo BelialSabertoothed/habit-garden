@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { BADGES, type BadgeId } from "./badges/config";
+import { useTranslation } from "react-i18next";
 
 type BadgeToastProps = {
   badgeId: BadgeId;
@@ -11,10 +12,19 @@ type BadgeToastProps = {
 export function BadgeToast({ badgeId, theme, visible }: BadgeToastProps) {
   const isDark = theme === "night";
   const cfg = BADGES[badgeId];
+  const { t } = useTranslation();
 
-  const name = cfg?.name ?? "New badge unlocked";
+  const cfgAny = cfg as any;
+
+  const name =
+    (cfgAny?.nameKey && t(cfgAny.nameKey)) ||
+    cfgAny?.name ||
+    t("profile.badgeToast.defaultName");
+
   const description =
-    cfg?.description ?? "You just unlocked a new achievement in your garden!";
+    (cfgAny?.descriptionKey && t(cfgAny.descriptionKey)) ||
+    cfgAny?.description ||
+    t("profile.badgeToast.defaultDescription");
 
   return (
     <AnimatePresence>
@@ -30,9 +40,11 @@ export function BadgeToast({ badgeId, theme, visible }: BadgeToastProps) {
             className={`
               relative overflow-hidden rounded-2xl shadow-2xl border
               max-w-sm w-[min(100vw-1.5rem,380px)] px-4 py-3 sm:px-5 sm:py-4
-              ${isDark
-                ? "bg-slate-900/95 border-emerald-500/50"
-                : "bg-white/95 border-emerald-400/70"}
+              ${
+                isDark
+                  ? "bg-slate-900/95 border-emerald-500/50"
+                  : "bg-white/95 border-emerald-400/70"
+              }
             `}
           >
             {/* Glow + gradient background accents */}
@@ -58,9 +70,11 @@ export function BadgeToast({ badgeId, theme, visible }: BadgeToastProps) {
                   flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2
                   flex items-center justify-center shadow-md
                   bg-gradient-to-br
-                  ${isDark
-                    ? "from-emerald-500 to-teal-400 border-emerald-300/80"
-                    : "from-emerald-400 to-lime-400 border-emerald-500/80"}
+                  ${
+                    isDark
+                      ? "from-emerald-500 to-teal-400 border-emerald-300/80"
+                      : "from-emerald-400 to-lime-400 border-emerald-500/80"
+                  }
                 `}
               >
                 <motion.span
@@ -87,7 +101,7 @@ export function BadgeToast({ badgeId, theme, visible }: BadgeToastProps) {
                       isDark ? "text-emerald-200" : "text-emerald-700"
                     }`}
                   >
-                    New badge unlocked
+                    {t("profile.badgeToast.label")}
                   </p>
                 </div>
 
@@ -112,8 +126,9 @@ export function BadgeToast({ badgeId, theme, visible }: BadgeToastProps) {
                     isDark ? "text-emerald-200/90" : "text-emerald-700"
                   }`}
                 >
-                  Check your <span className="font-semibold">Profile → Badges</span>{" "}
-                  to admire your shiny new trophy 🌱
+                  {t("profile.badgeToast.checkPrefix")}{" "}
+                  <span className="font-semibold">Profile → Badges</span>{" "}
+                  {t("profile.badgeToast.checkSuffix")}
                 </p>
               </div>
             </div>
@@ -125,7 +140,9 @@ export function BadgeToast({ badgeId, theme, visible }: BadgeToastProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
             >
-              <span className={isDark ? "text-emerald-200" : "text-emerald-600"}>
+              <span
+                className={isDark ? "text-emerald-200" : "text-emerald-600"}
+              >
                 ✨
               </span>
             </motion.div>

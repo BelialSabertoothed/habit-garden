@@ -1,5 +1,6 @@
 import { Heart, Leaf, Briefcase, Users, Palette } from "lucide-react";
 import type { Habit } from "../hooks/useHabits";
+import { useTranslation } from "react-i18next";
 
 type HabitCategory = Habit["category"]; // "Health" | "Eco" | ...
 type HabitIconId = Habit["icon"];       // "heart" | "leaf" | ...
@@ -25,7 +26,7 @@ interface HabitCardProps {
   category: HabitCategory | "Custom";
   frequency: "Daily" | "Weekly";
   theme: "day" | "night";
-  iconId?: HabitIconId; 
+  iconId?: HabitIconId;
 }
 
 export function HabitCard({
@@ -36,6 +37,7 @@ export function HabitCard({
   iconId,
 }: HabitCardProps) {
   const isDark = theme === "night";
+  const { t } = useTranslation();
 
   let resolvedIconId: HabitIconId;
 
@@ -44,10 +46,14 @@ export function HabitCard({
     resolvedIconId = iconId ?? "leaf";
   } else {
     // standardní kategorie → mapa category → icon
-    resolvedIconId = iconByCategory[category as Exclude<HabitCategory, "Custom">];
+    resolvedIconId =
+      iconByCategory[category as Exclude<HabitCategory, "Custom">];
   }
 
   const Icon = iconMap[resolvedIconId];
+
+  const translatedCategory = t(`habits.categories.${category}`);
+  const translatedFrequency = t(`habits.frequency.${frequency}`);
 
   return (
     <div
@@ -76,7 +82,7 @@ export function HabitCard({
             isDark ? "text-gray-400" : "text-gray-500"
           }`}
         >
-          {category} • {frequency}
+          {translatedCategory} • {translatedFrequency}
         </p>
       </div>
     </div>

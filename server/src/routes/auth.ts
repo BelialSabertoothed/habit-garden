@@ -2,9 +2,12 @@ import { Router, type Response } from "express";
 import { z } from "zod";
 import passport from "../lib/passport.js";
 import { User } from "../models/User.js";
+import { sendVerificationEmail } from "../services/email.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 import { hashPassword, verifyPassword } from "../lib/password.js";
 import { signAccessToken, signRefreshToken, verifyRefresh } from "../lib/jwt.js";
 import { trackEvent } from "../utils/trackEvent.js";
+
 import crypto from "node:crypto";
 import argon2 from "argon2";
 
@@ -23,7 +26,7 @@ function clearRefreshCookie(res: Response) {
   res.clearCookie("refresh_token", { path: "/api/auth/refresh" });
 }
 
-/* ---------- Email + heslo ---------- */
+/* ---------- Email + heslo registrace + verifikace ---------- */
 
 const RegisterInput = z.object({
   email: z.string().email(),
@@ -33,69 +36,133 @@ const RegisterInput = z.object({
 });
 
 type Variant = "gamified" | "control";
-const pickVariant = (): Variant => (Math.random() < 0.5 ? "gamified" : "control");
+const pickVariant = (): Variant =>
+  Math.random() < 0.5 ? "gamified" : "control";
+
+router.post(
+  "/register",
+  asyncHandler(async (req, res) => {
+    const { email, password, nickname, avatar } = RegisterInput.parse(req.body);
+
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return res.status(409).json({ error: "email already used" });
+    }
+
+    const passwordHash = await hashPassword(password);
+
+    // 🔑 verifikační token + expirace 24h
+    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
+    const emailVerificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const user = await User.create({
+      email: email.toLowerCase(),
+      passwordHash,
+      provider: "local",
+      emailVerified: false,
+      emailVerificationToken,
+      emailVerificationExpiresAt,
+      nickname: nickname ?? null,
+      avatar: avatar ?? null,
+      profileComplete: false,
+      lastLoginAt: null,
+      experimentVariant: pickVariant(),
+      notificationsEnabled: false,
+    });
+
+    // ✉️ Pošli verifikační email
+    await sendVerificationEmail({
+      to: user.email,
+      token: emailVerificationToken,
+    });
+
+    return res.status(201).json({
+      ok: true,
+      message: "Account created. Please check your email to verify.",
+    });
+  })
+);
 
 
-router.post("/register", async (req, res) => {
-  const { email, password, nickname } = RegisterInput.parse(req.body);
+/* ---------- Email verifikace ---------- */
 
-  const existing = await User.findOne({ email: email.toLowerCase() });
-  if (existing) return res.status(409).json({ error: "email already used" });
+router.get(
+  "/verify-email",
+  asyncHandler(async (req, res) => {
+    const token = req.query.token;
+    if (!token || typeof token !== "string") {
+      return res.status(400).send("Invalid verification link");
+    }
 
-  const passwordHash = await hashPassword(password);
-  const user = await User.create({
-    email: email.toLowerCase(),
-    passwordHash,
-    provider: "local",
-    verified: true, // v produkci bys poslala verifikační e-mail
-    nickname,
-    avatar: req.body.avatar,
-    lastLoginAt: new Date(),
-    profileComplete: true,
-    experimentVariant: pickVariant(), 
-    notificationsEnabled: false,
-  });
+    const user = await User.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpiresAt: { $gt: new Date() },
+    });
 
-  const access = signAccessToken(user._id.toString());
-  const refresh = signRefreshToken(user._id.toString(), crypto.randomUUID());
+    if (!user) {
+      return res.status(400).send("Verification link is invalid or expired");
+    }
 
-  user.refreshTokenHash = await hashPassword(refresh);
-  await user.save();
+    user.emailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpiresAt = null;
+    await user.save();
 
-  setRefreshCookie(res, refresh);
-  res.status(201).json({ accessToken: access });
-});
+    const clientUrl = process.env.CLIENT_URL ?? "http://localhost:5173";
+    return res.redirect(`${clientUrl}/verify-email-success`);
+  })
+);
+
+
+/* ---------- LOGIN ---------- */
 
 const LoginInput = z.object({
   email: z.string().email(),
   password: z.string().min(8),
 });
 
-router.post("/login", async (req, res) => {
-  const { email, password } = LoginInput.parse(req.body);
+router.post(
+  "/login",
+  asyncHandler(async (req, res) => {
+    const { email, password } = LoginInput.parse(req.body);
 
-  const user = await User.findOne({ email: email.toLowerCase() });
-  if (!user || !user.passwordHash) return res.status(401).json({ error: "invalid credentials" });
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user || !user.passwordHash) {
+      return res.status(401).json({ error: "invalid credentials" });
+    }
 
-  const ok = await verifyPassword(user.passwordHash, password);
-  if (!ok) return res.status(401).json({ error: "invalid credentials" });
+    // ❗ Blokace nepřihlášeného účtu
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        error: "email_not_verified",
+        message: "Please verify your email before logging in.",
+      });
+    }
 
-  user.lastLoginAt = new Date();
+    const ok = await verifyPassword(user.passwordHash, password);
+    if (!ok) {
+      return res.status(401).json({ error: "invalid credentials" });
+    }
 
-  await trackEvent({
-  userId: user._id,
-  type: "login",
-});
+    user.lastLoginAt = new Date();
 
-  const access = signAccessToken(user._id.toString());
-  const refresh = signRefreshToken(user._id.toString(), crypto.randomUUID());
+    await trackEvent({
+      userId: user._id,
+      type: "login",
+    });
 
-  user.refreshTokenHash = await hashPassword(refresh);
-  await user.save();
+    // Tokeny
+    const access = signAccessToken(user._id.toString());
+    const refresh = signRefreshToken(user._id.toString(), crypto.randomUUID());
 
-  setRefreshCookie(res, refresh);
-  res.json({ accessToken: access });
-});
+    user.refreshTokenHash = await hashPassword(refresh);
+    await user.save();
+
+    setRefreshCookie(res, refresh);
+
+    return res.json({ accessToken: access });
+  })
+);
 
 /* ---------- Google OAuth ---------- */
 

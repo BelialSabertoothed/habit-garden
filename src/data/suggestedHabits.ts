@@ -1,4 +1,3 @@
-
 export type SuggestedCategory =
   | "Health"
   | "Eco"
@@ -10,7 +9,8 @@ export type SuggestedFrequency = "Daily" | "Weekly";
 
 export type SuggestedHabit = {
   id: string;
-  title: string;
+  titleKey: string; // i18n klíč na titulek
+  title: string; // defaultní EN text (např. pro BE)
   category: SuggestedCategory;
   icon: "heart" | "leaf" | "briefcase" | "users" | "palette";
   frequency: SuggestedFrequency;
@@ -24,6 +24,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
   Health: [
     {
       id: "h1",
+      titleKey: "habits.suggestions.h1.title",
       title: "Drink 8 glasses of water",
       category: "Health",
       icon: "heart",
@@ -32,6 +33,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "h2",
+      titleKey: "habits.suggestions.h2.title",
       title: "Sleep 7–8 hours",
       category: "Health",
       icon: "heart",
@@ -40,6 +42,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "h3",
+      titleKey: "habits.suggestions.h3.title",
       title: "Stretch or move for 10 minutes",
       category: "Health",
       icon: "heart",
@@ -48,6 +51,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "h4",
+      titleKey: "habits.suggestions.h4.title",
       title: "Go for a walk outdoors",
       category: "Health",
       icon: "heart",
@@ -56,6 +60,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "h5",
+      titleKey: "habits.suggestions.h5.title",
       title: "Eat a balanced breakfast",
       category: "Health",
       icon: "heart",
@@ -66,6 +71,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
   Productivity: [
     {
       id: "p1",
+      titleKey: "habits.suggestions.p1.title",
       title: "Plan 3 priorities for the day",
       category: "Productivity",
       icon: "briefcase",
@@ -74,6 +80,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "p2",
+      titleKey: "habits.suggestions.p2.title",
       title: "Focus 25 minutes (Pomodoro)",
       category: "Productivity",
       icon: "briefcase",
@@ -82,6 +89,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "p3",
+      titleKey: "habits.suggestions.p3.title",
       title: "Check off one postponed task",
       category: "Productivity",
       icon: "briefcase",
@@ -90,6 +98,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "p4",
+      titleKey: "habits.suggestions.p4.title",
       title: "Organize workspace",
       category: "Productivity",
       icon: "briefcase",
@@ -98,6 +107,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "p5",
+      titleKey: "habits.suggestions.p5.title",
       title: "Review your week",
       category: "Productivity",
       icon: "briefcase",
@@ -108,6 +118,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
   Relationships: [
     {
       id: "r1",
+      titleKey: "habits.suggestions.r1.title",
       title: "Send a kind message",
       category: "Relationships",
       icon: "users",
@@ -116,6 +127,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "r2",
+      titleKey: "habits.suggestions.r2.title",
       title: "Call or visit family",
       category: "Relationships",
       icon: "users",
@@ -124,6 +136,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "r3",
+      titleKey: "habits.suggestions.r3.title",
       title: "Compliment someone",
       category: "Relationships",
       icon: "users",
@@ -132,6 +145,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "r4",
+      titleKey: "habits.suggestions.r4.title",
       title: "Meet a friend offline",
       category: "Relationships",
       icon: "users",
@@ -140,6 +154,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "r5",
+      titleKey: "habits.suggestions.r5.title",
       title: "Write 3 gratitudes",
       category: "Relationships",
       icon: "users",
@@ -150,6 +165,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
   Eco: [
     {
       id: "e1",
+      titleKey: "habits.suggestions.e1.title",
       title: "Sort your recycling",
       category: "Eco",
       icon: "leaf",
@@ -158,6 +174,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "e2",
+      titleKey: "habits.suggestions.e2.title",
       title: "Bring your own bottle/cup",
       category: "Eco",
       icon: "leaf",
@@ -166,6 +183,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "e3",
+      titleKey: "habits.suggestions.e3.title",
       title: "Turn off unused lights",
       category: "Eco",
       icon: "leaf",
@@ -174,6 +192,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "e4",
+      titleKey: "habits.suggestions.e4.title",
       title: "Buy local or seasonal food",
       category: "Eco",
       icon: "leaf",
@@ -184,6 +203,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
   Creativity: [
     {
       id: "c1",
+      titleKey: "habits.suggestions.c1.title",
       title: "Sketch or doodle for 10 minutes",
       category: "Creativity",
       icon: "palette",
@@ -192,6 +212,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "c2",
+      titleKey: "habits.suggestions.c2.title",
       title: "Write a short journal entry",
       category: "Creativity",
       icon: "palette",
@@ -200,6 +221,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "c3",
+      titleKey: "habits.suggestions.c3.title",
       title: "Take an inspiring photo",
       category: "Creativity",
       icon: "palette",
@@ -208,6 +230,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "c4",
+      titleKey: "habits.suggestions.c4.title",
       title: "Work on a creative hobby",
       category: "Creativity",
       icon: "palette",
@@ -216,6 +239,7 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
     {
       id: "c5",
+      titleKey: "habits.suggestions.c5.title",
       title: "Consume something inspiring",
       category: "Creativity",
       icon: "palette",

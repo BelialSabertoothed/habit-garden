@@ -4,6 +4,7 @@ import { Sprout, Mail, Sparkles, TrendingUp, Award } from "lucide-react";
 import { Button } from "./ui/button";
 import EmailLogin from "./EmailLogin";
 import { RegistrationModal } from "./RegistrationModal";
+import { useTranslation } from "react-i18next";
 
 interface LandingPageProps {
   onGoogleLogin: () => void;
@@ -11,27 +12,28 @@ interface LandingPageProps {
   emailLoginSlot?: React.ReactNode;
 }
 
-const features = [
+const featureItems = [
   {
     icon: Sprout,
-    title: "Watch Your Habits Grow",
-    description: "Each habit is a plant in your garden that grows with your consistency",
+    titleKey: "landing.features.grow.title",
+    descriptionKey: "landing.features.grow.description",
   },
   {
     icon: TrendingUp,
-    title: "Track Your Progress",
-    description: "Visualize your streaks and see your garden flourish over time",
+    titleKey: "landing.features.progress.title",
+    descriptionKey: "landing.features.progress.description",
   },
   {
     icon: Award,
-    title: "Earn Rewards",
-    description: "Unlock badges and achievements as you build lasting habits",
+    titleKey: "landing.features.rewards.title",
+    descriptionKey: "landing.features.rewards.description",
   },
 ];
 
 export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps) {
   const [showEmail, setShowEmail] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-100 via-emerald-50 to-teal-50 overflow-hidden">
@@ -42,20 +44,22 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm border border-green-200">
               <Sparkles className="w-4 h-4 text-green-600" />
-              <span className="text-green-800">Start your growth journey today</span>
+              <span className="text-green-800">
+                {t("landing.hero.pill")}
+              </span>
             </div>
 
             <div className="space-y-4">
               <h1 className="text-green-900">
-                Grow Better Habits,<br />
+                {t("landing.hero.title.line1")}
+                <br />
                 <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                  One Day at a Time
+                  {t("landing.hero.title.line2")}
                 </span>
               </h1>
 
               <p className="text-green-700 max-w-lg opacity-90">
-                Transform your daily routines into a thriving digital garden.
-                Watch your habits bloom as you build consistency and track your personal growth journey.
+                {t("landing.hero.subtitle")}
               </p>
             </div>
 
@@ -72,7 +76,7 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Continue with Google
+                {t("landing.actions.google")}
               </Button>
 
               {/* Toggle Email Login */}
@@ -81,7 +85,9 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
                 className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-full py-6 px-8 shadow-md transition-all duration-200"
               >
                 <Mail className="w-5 h-5 mr-2" />
-                {showEmail ? "Hide Email Login" : "Continue with Email"}
+                {showEmail
+                  ? t("landing.actions.hideEmail")
+                  : t("landing.actions.email")}
               </Button>
 
               {/* Email login panel */}
@@ -97,7 +103,7 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
                 className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-800 border-2 border-gray-200 rounded-full py-6 px-8 shadow-sm transition-all duration-200"
               >
                 <Sparkles className="w-5 h-5 mr-2 text-green-600" />
-                Register
+                {t("landing.actions.register")}
               </Button>
             </div>
           </div>
@@ -113,12 +119,14 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full shadow-lg">
                     <Sprout className="w-8 h-8 text-white" />
                   </div>
-                  <h2 className="text-green-900">Habit Garden</h2>
+                  <h2 className="text-green-900">
+                    {t("landing.brand")}
+                  </h2>
                 </div>
 
                 {/* Feature cards */}
                 <div className="space-y-3">
-                  {features.map((feature, index) => {
+                  {featureItems.map((feature, index) => {
                     const Icon = feature.icon;
                     return (
                       <div
@@ -130,8 +138,12 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
                             <Icon className="w-5 h-5 text-green-600" />
                           </div>
                           <div>
-                            <h4 className="text-gray-900 mb-1">{feature.title}</h4>
-                            <p className="text-sm text-gray-600">{feature.description}</p>
+                            <h4 className="text-gray-900 mb-1">
+                              {t(feature.titleKey)}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              {t(feature.descriptionKey)}
+                            </p>
                           </div>
                         </div>
                       </div>

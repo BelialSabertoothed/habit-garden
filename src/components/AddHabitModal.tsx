@@ -22,8 +22,9 @@ import {
   SUGGESTED_HABITS_BY_CATEGORY,
   type SuggestedHabit,
   type SuggestedCategory,
-} from "../data/SuggestedHabits";
+} from "../data/suggestedHabits";
 import type { Habit } from "../hooks/useHabits";
+import { useTranslation } from "react-i18next";
 
 interface AddHabitModalProps {
   open: boolean;
@@ -72,6 +73,7 @@ type SuggestCategory = SuggestedCategory;
 
 export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
   const isDark = theme === "night";
+  const { t } = useTranslation();
 
   const [title, setTitle] = useState("");
   const [selectedIcon, setSelectedIcon] = useState<HabitIconId>("heart");
@@ -145,10 +147,10 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
       >
         <DialogHeader>
           <DialogTitle className={isDark ? "text-white" : ""}>
-            Add Custom Habit
+            {t("habits.addModal.title")}
           </DialogTitle>
           <DialogDescription className={isDark ? "text-gray-400" : ""}>
-            Create a new habit to add to your garden.
+            {t("habits.addModal.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -160,11 +162,11 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
               htmlFor="habit-name"
               className={isDark ? "text-gray-300" : ""}
             >
-              Habit Name
+              {t("habits.addModal.field.name.label")}
             </Label>
             <Input
               id="habit-name"
-              placeholder="e.g., Morning yoga"
+              placeholder={t("habits.addModal.field.name.placeholder")}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className={`rounded-lg ${
@@ -177,7 +179,9 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
 
           {/* CATEGORY */}
           <div className="space-y-2">
-            <Label className={isDark ? "text-gray-300" : ""}>Category</Label>
+            <Label className={isDark ? "text-gray-300" : ""}>
+              {t("habits.addModal.field.category.label")}
+            </Label>
             <Select
               value={selectedCategory}
               onValueChange={(v) => setSelectedCategory(v as HabitCategory)}
@@ -200,7 +204,7 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
               >
                 {predefinedCategories.map((c) => (
                   <SelectItem key={c} value={c}>
-                    {c}
+                    {t(`habits.categories.${c}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -209,7 +213,9 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
 
           {/* FREQUENCY */}
           <div className="space-y-2">
-            <Label className={isDark ? "text-gray-300" : ""}>Frequency</Label>
+            <Label className={isDark ? "text-gray-300" : ""}>
+              {t("habits.addModal.field.frequency.label")}
+            </Label>
             <Select
               value={frequency}
               onValueChange={(v) => setFrequency(v as Frequency)}
@@ -230,8 +236,12 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
                     : "bg-white border border-gray-300 text-gray-900"
                 }`}
               >
-                <SelectItem value="Daily">Daily</SelectItem>
-                <SelectItem value="Weekly">Weekly</SelectItem>
+                <SelectItem value="Daily">
+                  {t("habits.frequency.Daily")}
+                </SelectItem>
+                <SelectItem value="Weekly">
+                  {t("habits.frequency.Weekly")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -239,7 +249,9 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
           {/* ICON – jen pro Custom */}
           {selectedCategory === "Custom" && (
             <div className="space-y-2">
-              <Label className={isDark ? "text-gray-300" : ""}>Icon</Label>
+              <Label className={isDark ? "text-gray-300" : ""}>
+                {t("habits.addModal.field.icon.label")}
+              </Label>
               <div className="grid grid-cols-5 gap-3">
                 {icons.map((item) => {
                   const Icon = item.icon;
@@ -287,7 +299,9 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
                 }`}
             >
               <Sparkles className="w-4 h-4" />
-              {showSuggestions ? "Hide habit ideas" : "Show habit ideas"}
+              {showSuggestions
+                ? t("habits.addModal.inspiration.hide")
+                : t("habits.addModal.inspiration.show")}
             </button>
 
             {showSuggestions && (
@@ -316,7 +330,7 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
                             : "border-gray-200 text-gray-700 hover:bg-gray-100"
                         }`}
                     >
-                      {cat}
+                      {t(`habits.categories.${cat}`)}
                     </button>
                   ))}
                 </div>
@@ -325,13 +339,14 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
                 <div className="space-y-2 max-h-52 overflow-y-auto -mx-1 px-1">
                   {suggestions.map((h) => {
                     const Icon = icons.find((i) => i.id === h.icon)?.icon;
-                    const active = title === h.title;
+                    const localizedTitle = t(h.titleKey);
+                    const active = title === localizedTitle;
                     return (
                       <button
                         key={h.id}
                         type="button"
                         onClick={() => {
-                          setTitle(h.title);
+                          setTitle(localizedTitle);
                           setSelectedCategory(h.category as HabitCategory);
                           setSelectedIcon(h.icon as HabitIconId);
                           setFrequency(h.frequency as Frequency);
@@ -367,14 +382,15 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
                                 : "text-gray-900 text-sm"
                             }
                           >
-                            {h.title}
+                            {localizedTitle}
                           </span>
                           <span
                             className={`text-[11px] mt-0.5 ${
                               isDark ? "text-gray-400" : "text-gray-600"
                             }`}
                           >
-                            {h.category} • {h.frequency}
+                            {t(`habits.categories.${h.category}`)} •{" "}
+                            {t(`habits.frequency.${h.frequency}`)}
                           </span>
                         </div>
                       </button>
@@ -397,7 +413,7 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
                 : "border-gray-300 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            Cancel
+            {t("habits.addModal.actions.cancel")}
           </Button>
 
           <Button
@@ -405,7 +421,9 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
             disabled={createHabit.isPending}
             className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-full"
           >
-            {createHabit.isPending ? "Creating…" : "Create Habit"}
+            {createHabit.isPending
+              ? t("habits.addModal.actions.creating")
+              : t("habits.addModal.actions.create")}
           </Button>
         </div>
       </DialogContent>

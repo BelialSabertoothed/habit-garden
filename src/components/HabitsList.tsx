@@ -36,6 +36,7 @@ import {
 } from "./ui/select";
 import { useHabits, useUpdateHabit, useDeleteHabit } from "../hooks/useHabits";
 import type { Habit } from "../hooks/useHabits";
+import { useTranslation } from "react-i18next";
 
 interface HabitsListProps {
   theme: "day" | "night";
@@ -51,7 +52,7 @@ type HabitItem = {
   category: string;
   frequency: "Daily" | "Weekly";
   iconId?: Habit["icon"]; // ← z BE
-  };
+};
 
 // základní BE kategorie – bez "Custom"
 const BASE_CATEGORIES: Habit["category"][] = [
@@ -72,6 +73,7 @@ const icons: { id: Habit["icon"]; icon: typeof Heart; label: string }[] = [
 
 export function HabitsList({ theme }: HabitsListProps) {
   const isDark = theme === "night";
+  const { t } = useTranslation();
 
   const { data: habits = [], isLoading, isError } = useHabits();
   const deleteHabit = useDeleteHabit();
@@ -118,6 +120,12 @@ export function HabitsList({ theme }: HabitsListProps) {
     });
   };
 
+  const getCategoryLabel = (category: Category) => {
+    if (category === "All") return t("habits.list.filters.all");
+    if (category === "Custom") return t("habits.categories.Custom");
+    return t(`habits.categories.${category}`);
+  };
+
   if (isLoading) {
     return (
       <div
@@ -125,7 +133,7 @@ export function HabitsList({ theme }: HabitsListProps) {
           isDark ? "text-gray-300" : "text-gray-700"
         }`}
       >
-        Loading habits…
+        {t("habits.list.loading")}
       </div>
     );
   }
@@ -133,7 +141,7 @@ export function HabitsList({ theme }: HabitsListProps) {
   if (isError) {
     return (
       <div className="py-10 text-center text-red-500">
-        Failed to load habits.
+        {t("habits.list.error")}
       </div>
     );
   }
@@ -144,10 +152,10 @@ export function HabitsList({ theme }: HabitsListProps) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className={isDark ? "text-white" : "text-gray-900"}>
-            All Habits
+            {t("habits.list.title")}
           </h2>
           <p className={isDark ? "text-gray-400" : "text-gray-600"}>
-            Manage and organize all the habits in your garden.
+            {t("habits.list.subtitle")}
           </p>
         </div>
         <Button
@@ -155,7 +163,7 @@ export function HabitsList({ theme }: HabitsListProps) {
           className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-full shadow-md"
         >
           <Plus className="w-5 h-5 mr-2" />
-          Add Custom Habit
+          {t("habits.list.actions.add")}
         </Button>
       </div>
 
@@ -169,7 +177,7 @@ export function HabitsList({ theme }: HabitsListProps) {
             }`}
           />
           <Input
-            placeholder="Search habits…"
+            placeholder={t("habits.list.search.placeholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={`pl-12 rounded-full ${
@@ -193,7 +201,7 @@ export function HabitsList({ theme }: HabitsListProps) {
                 isDark ? "text-gray-400" : "text-gray-500"
               }`}
             >
-              Category
+              {t("habits.list.filters.categoryLabel")}
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -213,7 +221,7 @@ export function HabitsList({ theme }: HabitsListProps) {
                   }
                 `}
               >
-                {category}
+                {getCategoryLabel(category)}
               </Badge>
             ))}
           </div>
@@ -227,7 +235,7 @@ export function HabitsList({ theme }: HabitsListProps) {
             isDark ? "text-gray-400" : "text-gray-500"
           }`}
         >
-          <p>No habits found matching your search.</p>
+          <p>{t("habits.list.empty")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -276,8 +284,8 @@ export function HabitsList({ theme }: HabitsListProps) {
                   }
                   frequency={habit.frequency}
                   theme={theme}
-                  iconId={habit.iconId}                  
-                  />
+                  iconId={habit.iconId}
+                />
               </motion.div>
             ))}
           </AnimatePresence>
@@ -331,6 +339,7 @@ function EditHabitModal({
 }) {
   const isDark = theme === "night";
   const updateHabit = useUpdateHabit();
+  const { t } = useTranslation();
 
   const [title, setTitle] = useState(habit.title);
   const [category, setCategory] = useState<string>(habit.category);
@@ -394,10 +403,10 @@ function EditHabitModal({
       >
         <DialogHeader>
           <DialogTitle className={isDark ? "text-white" : ""}>
-            Edit Habit
+            {t("habits.edit.title")}
           </DialogTitle>
           <DialogDescription className={isDark ? "text-gray-400" : ""}>
-            Update the details of your habit.
+            {t("habits.edit.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -408,11 +417,11 @@ function EditHabitModal({
               htmlFor="edit-habit-name"
               className={isDark ? "text-gray-300" : ""}
             >
-              Habit Name
+              {t("habits.edit.fields.name.label")}
             </Label>
             <Input
               id="edit-habit-name"
-              placeholder="e.g., Morning yoga"
+              placeholder={t("habits.edit.fields.name.placeholder")}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className={`rounded-lg ${
@@ -425,7 +434,9 @@ function EditHabitModal({
 
           {/* CATEGORY */}
           <div className="space-y-2">
-            <Label className={isDark ? "text-gray-300" : ""}>Category</Label>
+            <Label className={isDark ? "text-gray-300" : ""}>
+              {t("habits.edit.fields.category.label")}
+            </Label>
             <Select
               value={isPredefined ? (category as Habit["category"]) : "Custom"}
               onValueChange={(v) => {
@@ -439,7 +450,9 @@ function EditHabitModal({
               >
                 <SelectValue
                   placeholder={
-                    isPredefined ? category : "Custom category"
+                    isPredefined
+                      ? t(`habits.categories.${category}`)
+                      : t("habits.edit.fields.category.customPlaceholder")
                   }
                 />
               </SelectTrigger>
@@ -450,7 +463,7 @@ function EditHabitModal({
               >
                 {predefinedCategories.map((c) => (
                   <SelectItem key={c} value={c}>
-                    {c}
+                    {t(`habits.categories.${c}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -460,7 +473,9 @@ function EditHabitModal({
           {/* ICON – jen když je Custom */}
           {isCustomCategory && (
             <div className="space-y-2">
-              <Label className={isDark ? "text-gray-300" : ""}>Icon</Label>
+              <Label className={isDark ? "text-gray-300" : ""}>
+                {t("habits.edit.fields.icon.label")}
+              </Label>
               <div className="grid grid-cols-5 gap-3">
                 {icons.map((item) => {
                   const Icon = item.icon;
@@ -497,7 +512,9 @@ function EditHabitModal({
 
           {/* FREQUENCY */}
           <div className="space-y-2">
-            <Label className={isDark ? "text-gray-300" : ""}>Frequency</Label>
+            <Label className={isDark ? "text-gray-300" : ""}>
+              {t("habits.edit.fields.frequency.label")}
+            </Label>
             <Select
               value={frequency}
               onValueChange={(v) => setFrequency(v as "Daily" | "Weekly")}
@@ -514,8 +531,12 @@ function EditHabitModal({
                   isDark ? "bg-slate-700 border-slate-600 text-white" : ""
                 }
               >
-                <SelectItem value="Daily">Daily</SelectItem>
-                <SelectItem value="Weekly">Weekly</SelectItem>
+                <SelectItem value="Daily">
+                  {t("habits.frequency.Daily")}
+                </SelectItem>
+                <SelectItem value="Weekly">
+                  {t("habits.frequency.Weekly")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -533,7 +554,7 @@ function EditHabitModal({
                 : "border-gray-300 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            Cancel
+            {t("habits.edit.actions.cancel")}
           </Button>
 
           <Button
@@ -541,7 +562,9 @@ function EditHabitModal({
             disabled={updateHabit.isPending}
             className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-full"
           >
-            {updateHabit.isPending ? "Saving…" : "Save Changes"}
+            {updateHabit.isPending
+              ? t("habits.edit.actions.saving")
+              : t("habits.edit.actions.save")}
           </Button>
         </div>
       </DialogContent>
@@ -567,6 +590,7 @@ function DeleteHabitDialog({
   onConfirm: () => void;
 }) {
   const isDark = theme === "night";
+  const { t } = useTranslation();
 
   const handleChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -586,14 +610,19 @@ function DeleteHabitDialog({
             <span className={isDark ? "text-red-300" : "text-red-600"}>
               <AlertTriangle className="w-5 h-5" />
             </span>
-            <span className={isDark ? "text-white" : ""}>Delete habit</span>
+            <span className={isDark ? "text-white" : ""}>
+              {t("habits.delete.title")}
+            </span>
           </DialogTitle>
           <DialogDescription
             className={isDark ? "text-gray-400" : "text-gray-600"}
           >
-            Are you sure you want to delete{" "}
-            <span className="font-semibold">{habitName || "this habit"}</span>?
-            This action cannot be undone.
+            {t("habits.delete.confirmPrefix")}{" "}
+            <span className="font-semibold">
+              {habitName || t("habits.delete.defaultName")}
+            </span>
+            ?{" "}
+            {t("habits.delete.warning")}
           </DialogDescription>
         </DialogHeader>
 
@@ -608,14 +637,16 @@ function DeleteHabitDialog({
                 : "border-gray-300 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            Cancel
+            {t("habits.delete.actions.cancel")}
           </Button>
           <Button
             onClick={onConfirm}
             disabled={loading}
             className="flex-1 rounded-full bg-red-600 hover:bg-red-700 text-white"
           >
-            {loading ? "Deleting…" : "Delete"}
+            {loading
+              ? t("habits.delete.actions.deleting")
+              : t("habits.delete.actions.delete")}
           </Button>
         </div>
       </DialogContent>

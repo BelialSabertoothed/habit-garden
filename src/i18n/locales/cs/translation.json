@@ -1,0 +1,529 @@
+{
+  "badges": {
+    "firstStep": {
+      "name": "První krok",
+      "clue": "Dokonči svůj úplně první návyk.",
+      "description": "Každá cesta začíná jedním krokem."
+    },
+    "threeDayStreak": {
+      "name": "Odhodlaný",
+      "clue": "3 dny po sobě.",
+      "description": "3denní série! Tvoje zahrada se probouzí 🌱"
+    },
+    "fiveDayStreak": {
+      "name": "Mistr klíčků",
+      "clue": "5 dní po sobě.",
+      "description": "5denní série! Tvé klíčky jen kvetou 🌿"
+    },
+    "weekWarrior": {
+      "name": "Týdenní bojovník",
+      "clue": "7 dní po sobě.",
+      "description": "7denní série! Tvoje zahrada bují 🌳"
+    },
+    "powerUser": {
+      "name": "Power User",
+      "clue": "Dosáhni úrovně 10.",
+      "description": "Úroveň 10 dosažena! Tvoje zahrada ti salutuje ⚡"
+    },
+    "legendary": {
+      "name": "Legendární",
+      "clue": "100 dní po sobě.",
+      "description": "100denní série. Prakticky božstvo návyků."
+    },
+    "dedicated": {
+      "name": "Oddaný",
+      "clue": "Získej 10 000 XP.",
+      "description": "10 000 XP! Tvoje oddanost nemá obdoby."
+    }
+  },
+  "profile": {
+    "header": {
+      "titleGamified": "Profil a odměny",
+      "titleControl": "Profil",
+      "subtitleGamified": "Sleduj své úspěchy a uprav si prostředí podle sebe",
+      "subtitleControl": "Uprav si prostředí podle sebe"
+    },
+    "editButton": {
+      "aria": "Upravit profil",
+      "label": "Upravit"
+    },
+    "nickname": {
+      "label": "Přezdívka",
+      "placeholder": "např. BelSunflower"
+    },
+    "avatar": {
+      "label": "Avatar URL",
+      "placeholder": "https://…/avatar.png"
+    },
+    "starters": {
+      "selected": "Vybráno",
+      "select": "Vybrat",
+      "frequency": "Frekvence"
+    },
+    "fallbackNickname": "Zahradník návyků",
+    "metrics": {
+      "levelLabel": "Úroveň {{level}}",
+      "totalXp": "Celkem {{xp}} XP",
+      "streakLabel": "🔥 Série: {{current}} (nejdelší {{best}})",
+      "progressToNextLevel": "Postup k úrovni {{level}}",
+      "progressXp": "{{current}} / {{span}} XP"
+    },
+    "theme": {
+      "title": "Nastavení vzhledu",
+      "dayMode": "Světlý režim",
+      "nightMode": "Tmavý režim"
+    },
+    "notifications": {
+      "title": "Připomínky návyků",
+      "description": "Denní push notifikace okolo 20:00, pokud ti ještě zbývají návyky k zalití."
+    },
+    "badges": {
+      "title": "Odznaky",
+      "unlockedSummary": "{{unlocked}} z {{total}} odemčeno",
+      "hiddenTitle": "Skrytý odznak",
+      "lockedLabel": "Zamčeno"
+    },
+    "experiment": {
+      "title": "Experimentální varianta",
+      "description": "Přepínej mezi gamifikovanou verzí (XP, úrovně, odznaky) a minimalistickou verzí (bez gamifikace).",
+      "buttonGamified": "Gamifikovaná",
+      "buttonControl": "Bez gamifikace"
+    },
+    "badgeToast": {
+      "label": "Nový odznak odemčen",
+      "defaultName": "Nový odznak odemčen",
+      "defaultDescription": "Právě jsi odemkla nový úspěch ve své zahradě návyků!",
+      "checkPrefix": "Otevři si",
+      "checkSuffix": "a pokochej se svou novou trofejí 🌱"
+    }
+  },
+  "habits": {
+    "list": {
+      "title": "Všechny návyky",
+      "subtitle": "Spravuj a organizuj všechny návyky ve své zahradě.",
+      "loading": "Načítám návyky…",
+      "error": "Návyky se nepodařilo načíst.",
+      "actions": {
+        "add": "Přidat vlastní návyk"
+      },
+      "search": {
+        "placeholder": "Hledat návyky…"
+      },
+      "filters": {
+        "categoryLabel": "Kategorie",
+        "all": "Vše"
+      },
+      "empty": "Žádný návyk neodpovídá zadanému filtru."
+    },
+    "edit": {
+      "title": "Upravit návyk",
+      "description": "Uprav detaily svého návyku.",
+      "fields": {
+        "name": {
+          "label": "Název návyku",
+          "placeholder": "např. Ranní jóga"
+        },
+        "category": {
+          "label": "Kategorie",
+          "customPlaceholder": "Vlastní kategorie"
+        },
+        "icon": {
+          "label": "Ikona"
+        },
+        "frequency": {
+          "label": "Frekvence"
+        }
+      },
+      "actions": {
+        "cancel": "Zrušit",
+        "saving": "Ukládám…",
+        "save": "Uložit změny"
+      }
+    },
+    "delete": {
+      "title": "Smazat návyk",
+      "confirmPrefix": "Opravdu chceš smazat",
+      "defaultName": "tento návyk",
+      "warning": "Tuto akci nelze vrátit zpět.",
+      "actions": {
+        "cancel": "Nechat být",
+        "deleting": "Mažu…",
+        "delete": "Smazat"
+      }
+    },
+    "addModal": {
+      "title": "Přidat vlastní návyk",
+      "description": "Vytvoř nový návyk, který přidáš do své zahrady.",
+      "field": {
+        "name": {
+          "label": "Název návyku",
+          "placeholder": "např. Ranní jóga"
+        },
+        "category": {
+          "label": "Kategorie"
+        },
+        "frequency": {
+          "label": "Frekvence"
+        },
+        "icon": {
+          "label": "Ikona"
+        }
+      },
+      "inspiration": {
+        "show": "Zobrazit tipy na návyky",
+        "hide": "Skrýt tipy na návyky"
+      },
+      "actions": {
+        "cancel": "Zrušit",
+        "create": "Vytvořit návyk",
+        "creating": "Vytvářím…"
+      }
+    },
+    "categories": {
+      "Health": "Zdraví",
+      "Eco": "Eko",
+      "Productivity": "Produktivita",
+      "Relationships": "Vztahy",
+      "Creativity": "Kreativita",
+      "Custom": "Vlastní"
+    },
+    "frequency": {
+      "Daily": "Denně",
+      "Weekly": "Týdně"
+    },
+    "suggestions": {
+      "h1": { "title": "Vypij 8 sklenic vody" },
+      "h2": { "title": "Spi 7–8 hodin" },
+      "h3": { "title": "Protáhni se nebo se hýbej 10 minut" },
+      "h4": { "title": "Jdi se projít ven" },
+      "h5": { "title": "Dej si vyváženou snídani" },
+
+      "p1": { "title": "Naplánuj 3 priority dne" },
+      "p2": { "title": "Soustřeď se 25 minut (Pomodoro)" },
+      "p3": { "title": "Odškrtni jeden odkládaný úkol" },
+      "p4": { "title": "Uspořádej si pracovní místo" },
+      "p5": { "title": "Zhodnoť svůj týden" },
+
+      "r1": { "title": "Pošli milou zprávu" },
+      "r2": { "title": "Zavolej nebo navštiv rodinu" },
+      "r3": { "title": "Někdo pochval" },
+      "r4": { "title": "Setkej se s kamarádem offline" },
+      "r5": { "title": "Napiš si 3 vděčnosti" },
+
+      "e1": { "title": "Roztřiď odpad" },
+      "e2": { "title": "Vezmi si vlastní láhev/hrníček" },
+      "e3": { "title": "Zhasni zbytečně rozsvícená světla" },
+      "e4": { "title": "Kup lokální nebo sezónní jídlo" },
+
+      "c1": { "title": "Skicuj nebo čmárej 10 minut" },
+      "c2": { "title": "Napiš krátký zápisek do deníku" },
+      "c3": { "title": "Vyfoť něco inspirativního" },
+      "c4": { "title": "Věnuj se kreativnímu koníčku" },
+      "c5": { "title": "Dej si něco, co tě inspiruje" }
+    }
+  },
+  "auth": {
+    "emailLogin": {
+      "fields": {
+        "email": {
+          "placeholder": "E-mail"
+        },
+        "password": {
+          "placeholder": "Heslo"
+        }
+      },
+      "actions": {
+        "signIn": "Přihlásit se",
+        "signingIn": "Přihlašování…"
+      },
+      "errors": {
+        "invalidCredentials": "Neplatný e-mail nebo heslo."
+      },
+      "verify": {
+        "title": "Je potřeba ověřit e-mail",
+        "message": "Nejprve prosím ověř svůj e-mail. V mailu najdeš ověřovací odkaz.",
+        "button": "Rozumím"
+      }
+    },
+    "register": {
+      "dialog": {
+        "title": "Vytvoř si účet",
+        "description": "Přidej se do Habit Garden a začni pěstovat své návyky"
+      },
+      "success": {
+        "info": "Poslali jsme ti ověřovací e-mail.\nKlikni prosím na odkaz v mailu, abys účet aktivovala."
+      },
+      "fields": {
+        "email": {
+          "label": "E-mailová adresa",
+          "placeholder": "ty@example.com"
+        },
+        "password": {
+          "label": "Heslo",
+          "placeholder": "Vytvoř si heslo"
+        },
+        "confirm": {
+          "label": "Potvrzení hesla",
+          "placeholder": "Potvrď své heslo"
+        },
+        "nickname": {
+          "label": "Přezdívka",
+          "placeholder": "Vyber si přezdívku"
+        },
+        "avatar": {
+          "label": "Vyber si avatar"
+        }
+      },
+      "validation": {
+        "email": {
+          "required": "E-mail je povinný",
+          "invalid": "Zadej prosím platný e-mail"
+        },
+        "nickname": {
+          "required": "Přezdívka je povinná",
+          "tooShort": "Přezdívka musí mít alespoň 2 znaky",
+          "tooLong": "Přezdívka musí mít méně než 20 znaků"
+        },
+        "password": {
+          "required": "Heslo je povinné",
+          "tooShort": "Heslo musí mít alespoň 8 znaků"
+        },
+        "confirm": {
+          "mismatch": "Hesla se neshodují"
+        }
+      },
+      "errors": {
+        "generic": "Registrace se nezdařila. Zkus to prosím znovu."
+      },
+      "actions": {
+        "creating": "Vytvářím…",
+        "verificationSent": "Ověřovací e-mail odeslán",
+        "primary": "Vytvořit účet a začít růst"
+      }
+    }
+  },
+  "landing": {
+    "brand": "Habit Garden",
+    "hero": {
+      "pill": "Začni svou růstovou cestu ještě dnes",
+      "title": {
+        "line1": "Pěstuj lepší návyky,",
+        "line2": "den po dni"
+      },
+      "subtitle": "Proměň každodenní rutinu v rozkvetlou digitální zahradu. Sleduj, jak tvé návyky rostou, jakmile si buduješ konzistenci a zaznamenáváš vlastní pokrok."
+    },
+    "actions": {
+      "google": "Pokračovat přes Google",
+      "email": "Pokračovat přes e-mail",
+      "hideEmail": "Skrýt přihlášení e-mailem",
+      "register": "Vytvořit účet"
+    },
+    "features": {
+      "grow": {
+        "title": "Sleduj, jak tvé návyky rostou",
+        "description": "Každý návyk je rostlinka v tvé zahradě, která roste s tvojí konzistencí"
+      },
+      "progress": {
+        "title": "Měj přehled o svém pokroku",
+        "description": "Vizualizuj své série a sleduj, jak tvoje zahrada časem vzkvétá"
+      },
+      "rewards": {
+        "title": "Získávej odměny",
+        "description": "Odemkýhej odznaky a úspěchy, když si buduješ dlouhodobé návyky"
+      }
+    }
+  },
+  "dashboard": {
+    "notifications": {
+      "title": "Čas zalít tvoji zahradu 🌱",
+      "body": "Na dnešek ti ještě zbývají některé návyky."
+    },
+    "xp": {
+      "title": "XP postup",
+      "levelLabel": "Úroveň {{level}}",
+      "toNext": "Do další úrovně zbývá {{xpToNext}} XP"
+    },
+    "streak": {
+      "label": "Aktuální série",
+      "suffix": "dní 🔥"
+    },
+    "header": {
+      "title": "Tvoje zahrada",
+      "subtitle": "Pečuj o své návyky a sleduj, jak rostou",
+      "ctaAddHabit": "Přidat nový návyk"
+    },
+    "filters": {
+      "title": "Filtry",
+      "toggle": {
+        "show": "Zobrazit filtry",
+        "hide": "Skrýt filtry"
+      },
+      "categoryLabel": "Kategorie:",
+      "stage": {
+        "label": "Stádium:",
+        "options": {
+          "all": "Všechna",
+          "seed": "Semínko",
+          "sprout": "Klíček",
+          "flower": "Květ",
+          "tree": "Strom"
+        }
+      },
+      "status": {
+        "label": "Stav:",
+        "options": {
+          "all": "Vše",
+          "waiting": "Čeká na zalití",
+          "done": "Hotovo"
+        }
+      }
+    },
+    "empty": {
+      "filters": "Žádný návyk neodpovídá vybraným filtrům."
+    },
+    "card": {
+      "doneToday": "Dnes už hotovo",
+      "doneThisWeek": "Tento týden už hotovo",
+      "updating": "Aktualizuji…"
+    },
+    "plantCard": {
+      "streak": {
+        "daily": "{{count}} dní v řadě 🔥",
+        "weekly": "{{count}} týdnů v řadě 🔥"
+      },
+      "button": {
+        "water": "Zalít rostlinku",
+        "completed": "Hotovo"
+      }
+    },
+    "fullGarden": {
+      "title": "Tvoje zahrada",
+      "subtitle": "{{count, plural, one {# rostlina roste} few {# rostliny rostou} other {# rostlin roste}}} • průměrný růst {{avg}} %",
+      "healthLabel": "Zdraví zahrady",
+      "imageAlt": "Tvoje zahrada návyků",
+      "stats": {
+        "progressLabel": "Postup zahrady",
+        "emptyTitle": "Tvoje zahrada je zatím prázdná",
+        "emptyText": "Přidej svůj první návyk a zasaď úplně první semínko. 🌱",
+        "progressMessages": {
+          "veryLow": "🌱 Máš zasazeno – každý malý návrat pomáhá kořenům růst.",
+          "low": "🌿 Zahrada se probouzí. I malý krok dnes ji drží při životě.",
+          "medium": "🌸 Tvoje zahrada krásně kvete – buduješ opravdovou setrvačnost.",
+          "high": "🌳 Zahrada prospívá. Nezapomeň být na sebe pyšná, kam ses dostala."
+        }
+      },
+      "subtitleEmptyShort": "Zatím ti tu nic neroste",
+      "subtitleShort": "Roste ti {{count}} rostlin",
+      "stageShort": {
+        "seed": "Semínko",
+        "sprout": "Klíček",
+        "flower": "Květ",
+        "tree": "Strom"
+      },
+      "cta": {
+        "ready": "Připravená začít?",
+        "keepGoing": "Pokračuj dál!",
+        "doingGreat": "Vedeš si skvěle"
+      },
+      "encouragement": {
+        "stage": {
+          "empty": "Každý les začíná jedním semínkem. Přidej první návyk a začni. 🌱",
+          "veryLow": "Semínka už máš – teď stačí pár kapek pravidelnosti a začnou růst.",
+          "low": "Tvoje zahrada se probouzí. I drobný krok dnes udržuje růst.",
+          "medium": "Jsi v zóně rozkvětu – zalévej to, na čem ti opravdu záleží.",
+          "high": "Tvoje zahrada prospívá. Nezapomeň se ohlédnout a ocenit, jak daleko už jsi."
+        },
+        "pool": {
+          "0": "Dnešní malé kroky jsou zítřejší les.",
+          "1": "Nestavíš jen checklist, ale kořeny, o které se můžeš opřít.",
+          "2": "Tvoje budoucí já ti za každé zalití v tichosti tleská.",
+          "3": "Pravidelnost vyhrává nad intenzitou – a ty se pořád vracíš.",
+          "4": "I jeden splněný návyk dnes drží zahradu při životě.",
+          "5": "Zahrada nepotřebuje dokonalé dny, jen ty opečované.",
+          "6": "Pěstuješ si celou malou ekosoustavu dobrých návyků.",
+          "7": "Odpočinek je taky součást růstu – můžeš zpomalit.",
+          "8": "Pokaždé, když se vrátíš, tvoje návyky si toho všimnou. Jsou na tebe pyšné.",
+          "9": "Nezačínáš od nuly – začínáš se všemi zkušenostmi, které už máš."
+        }
+      }
+    }
+  },
+  "onboarding": {
+    "loading": "Načítám profil…",
+    "steps": {
+      "consent": {
+        "title": "O tomto projektu 🌿",
+        "description": "Tato aplikace je součástí bakalářské práce. Anonymizovaná data o používání jsou sbírána pro akademický výzkum."
+      },
+      "experiment": {
+        "title": "Dvě verze 🎮",
+        "description": "Existuje gamifikovaná a negamifikovaná verze. Byla jsi přiřazena náhodně – prosím nejdříve vyzkoušej přidělenou verzi a až poté případně přepni."
+      },
+      "notifications": {
+        "title": "Zůstaň v rytmu 🔔",
+        "description": "Zapni si denní připomínky, aby ses v 20:00 nezapomněla postarat o své návyky."
+      },
+      "profile": {
+        "title": "Vytvoř si profil 🌸",
+        "description": "Vyber si přezdívku a avatar, aby byla tvoje zahrada osobnější."
+      },
+      "garden": {
+        "title": "Tvoje Habit Garden 🌱",
+        "description": "Každý návyk je jedna rostlinka. Zalévej je, sbírej XP a sleduj, jak tvoje zahrada roste."
+      },
+      "simple": {
+        "title": "Drž si konzistenci 📅",
+        "description": "Sleduj své denní a týdenní návyky v přehledném a jednoduchém dashboardu."
+      },
+      "starters": {
+        "title": "Vyber si startovní návyky 🌟",
+        "description": "Vyfiltruj si kategorie a zvol pár návyků, na které se chceš zaměřit jako první."
+      }
+    },
+    "actions": {
+      "previous": "Zpět",
+      "next": "Další",
+      "letsGo": "Jdeme na to!"
+    },
+    "consent": {
+      "text": "Pokračováním souhlasíš, že anonymizovaná data o používání mohou být sbírána pro akademickou studii (bakalářskou práci) zaměřenou na dopad gamifikace. Data nebudou obsahovat osobní obsah a budou vyhodnocována pouze souhrnně.",
+      "checkbox": "Rozumím a souhlasím"
+    }
+  },
+  "stats": {
+    "growthLog": {
+      "title": "Přehled růstu",
+      "subtitle": "Sleduj svůj pokrok v čase",
+      "summary": {
+        "errorTitle": "Někde se něco pokazilo",
+        "successTitle": "Tento týden ti to jde skvěle!",
+        "loading": "Načítám tvůj průběh…",
+        "prefix": "Tvoje zahrada rozkvetla",
+        "daysOfWeek": "{{completedDays}} ze 7 dní",
+        "thisWeek": "v tomto týdnu.",
+        "earnedXpPrefix": "Získala jsi",
+        "earnedXpSuffix": "XP",
+        "andOnStreak": "a máš",
+        "streakOnlyPrefix": "Aktuálně máš",
+        "streakValue": "šňůru {{currentStreak}} dní",
+        "streakSuffixEmoji": "! 🌱",
+        "error": "Statistiky se teď nepodařilo načíst."
+      },
+      "weeklyChart": {
+        "title": "Týdenní XP progres",
+        "loading": "Načítám graf…",
+        "empty": "Tento týden tu zatím žádná aktivita není."
+      },
+      "heatmap": {
+        "title": "Streak heatmapa",
+        "rangeLabel": "Posledních 35 dní",
+        "loading": "Načítám heatmapu…",
+        "empty": "Zatím tu není žádná aktivita – jakmile začneš odškrtávat návyky, heatmapa se rozsvítí.",
+        "completed": "Splněno",
+        "missed": "Vynecháno",
+        "lessActive": "Méně aktivní",
+        "moreActive": "Více aktivní"
+      }
+    }
+  }
+}

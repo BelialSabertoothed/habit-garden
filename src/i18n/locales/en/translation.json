@@ -1,0 +1,529 @@
+{
+  "badges": {
+    "firstStep": {
+      "name": "First Step",
+      "clue": "Complete your very first habit.",
+      "description": "Every journey begins with a single step."
+    },
+    "threeDayStreak": {
+      "name": "Committed",
+      "clue": "3 days in a row.",
+      "description": "3-day streak! Your garden is waking up 🌱"
+    },
+    "fiveDayStreak": {
+      "name": "Sprout Master",
+      "clue": "5 days in a row.",
+      "description": "5-day streak! Your sprouts are thriving 🌿"
+    },
+    "weekWarrior": {
+      "name": "Week Warrior",
+      "clue": "7 days in a row.",
+      "description": "7-day streak! Your garden is flourishing 🌳"
+    },
+    "powerUser": {
+      "name": "Power User",
+      "clue": "Reach level 10.",
+      "description": "Level 10 achieved! Your garden salutes you ⚡"
+    },
+    "legendary": {
+      "name": "Legendary",
+      "clue": "100 days in a row.",
+      "description": "100-day streak. Basically a habit deity."
+    },
+    "dedicated": {
+      "name": "Dedicated",
+      "clue": "Earn 10,000 XP.",
+      "description": "10,000 XP! Your dedication is unmatched."
+    }
+  },
+  "profile": {
+    "header": {
+      "titleGamified": "Profile & Rewards",
+      "titleControl": "Profile",
+      "subtitleGamified": "Track your achievements and customize your experience",
+      "subtitleControl": "Customize your experience"
+    },
+    "nickname": {
+      "label": "Nickname",
+      "placeholder": "e.g., BelSunflower"
+    },
+    "avatar": {
+      "label": "Avatar URL",
+      "placeholder": "https://…/avatar.png"
+    },
+    "starters": {
+      "selected": "Selected",
+      "select": "Select",
+      "frequency": "Frequency"
+    },
+    "editButton": {
+      "aria": "Edit profile",
+      "label": "Edit"
+    },
+    "fallbackNickname": "Habit Gardener",
+    "metrics": {
+      "levelLabel": "Level {{level}}",
+      "totalXp": "{{xp}} XP total",
+      "streakLabel": "🔥 Streak: {{current}} (best {{best}})",
+      "progressToNextLevel": "Progress to Level {{level}}",
+      "progressXp": "{{current}} / {{span}} XP"
+    },
+    "theme": {
+      "title": "Theme Preferences",
+      "dayMode": "Day Mode",
+      "nightMode": "Night Mode"
+    },
+    "notifications": {
+      "title": "Habit reminders",
+      "description": "Daily push notification around 20:00 if you still have habits to water."
+    },
+    "badges": {
+      "title": "Badges",
+      "unlockedSummary": "{{unlocked}} of {{total}} unlocked",
+      "hiddenTitle": "Hidden badge",
+      "lockedLabel": "Locked"
+    },
+    "badgeToast": {
+      "label": "New badge unlocked",
+      "defaultName": "New badge unlocked",
+      "defaultDescription": "You just unlocked a new achievement in your garden!",
+      "checkPrefix": "Check your",
+      "checkSuffix": "to admire your shiny new trophy 🌱"
+    },
+    "experiment": {
+      "title": "Experiment Variant",
+      "description": "Switch between the gamified experience (XP, levels, badges) and the minimal experience (no gamification).",
+      "buttonGamified": "Gamified",
+      "buttonControl": "Control (No Gamification)"
+    }
+  },
+  "habits": {
+    "list": {
+      "title": "All Habits",
+      "subtitle": "Manage and organize all the habits in your garden.",
+      "loading": "Loading habits…",
+      "error": "Failed to load habits.",
+      "actions": {
+        "add": "Add Custom Habit"
+      },
+      "search": {
+        "placeholder": "Search habits…"
+      },
+      "filters": {
+        "categoryLabel": "Category",
+        "all": "All"
+      },
+      "empty": "No habits found matching your search."
+    },
+    "edit": {
+      "title": "Edit Habit",
+      "description": "Update the details of your habit.",
+      "fields": {
+        "name": {
+          "label": "Habit Name",
+          "placeholder": "e.g., Morning yoga"
+        },
+        "category": {
+          "label": "Category",
+          "customPlaceholder": "Custom category"
+        },
+        "icon": {
+          "label": "Icon"
+        },
+        "frequency": {
+          "label": "Frequency"
+        }
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "saving": "Saving…",
+        "save": "Save Changes"
+      }
+    },
+    "delete": {
+      "title": "Delete habit",
+      "confirmPrefix": "Are you sure you want to delete",
+      "defaultName": "this habit",
+      "warning": "This action cannot be undone.",
+      "actions": {
+        "cancel": "Cancel",
+        "deleting": "Deleting…",
+        "delete": "Delete"
+      }
+    },
+    "categories": {
+      "Health": "Health",
+      "Eco": "Eco",
+      "Productivity": "Productivity",
+      "Relationships": "Relationships",
+      "Creativity": "Creativity",
+      "Custom": "Custom"
+    },
+    "frequency": {
+      "Daily": "Daily",
+      "Weekly": "Weekly"
+    },
+    "addModal": {
+      "title": "Add Custom Habit",
+      "description": "Create a new habit to add to your garden.",
+      "field": {
+        "name": {
+          "label": "Habit Name",
+          "placeholder": "e.g., Morning yoga"
+        },
+        "category": {
+          "label": "Category"
+        },
+        "frequency": {
+          "label": "Frequency"
+        },
+        "icon": {
+          "label": "Icon"
+        }
+      },
+      "inspiration": {
+        "show": "Show habit ideas",
+        "hide": "Hide habit ideas"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "create": "Create Habit",
+        "creating": "Creating…"
+      }
+    },
+    "suggestions": {
+      "h1": { "title": "Drink 8 glasses of water" },
+      "h2": { "title": "Sleep 7–8 hours" },
+      "h3": { "title": "Stretch or move for 10 minutes" },
+      "h4": { "title": "Go for a walk outdoors" },
+      "h5": { "title": "Eat a balanced breakfast" },
+
+      "p1": { "title": "Plan 3 priorities for the day" },
+      "p2": { "title": "Focus 25 minutes (Pomodoro)" },
+      "p3": { "title": "Check off one postponed task" },
+      "p4": { "title": "Organize workspace" },
+      "p5": { "title": "Review your week" },
+
+      "r1": { "title": "Send a kind message" },
+      "r2": { "title": "Call or visit family" },
+      "r3": { "title": "Compliment someone" },
+      "r4": { "title": "Meet a friend offline" },
+      "r5": { "title": "Write 3 gratitudes" },
+
+      "e1": { "title": "Sort your recycling" },
+      "e2": { "title": "Bring your own bottle/cup" },
+      "e3": { "title": "Turn off unused lights" },
+      "e4": { "title": "Buy local or seasonal food" },
+
+      "c1": { "title": "Sketch or doodle for 10 minutes" },
+      "c2": { "title": "Write a short journal entry" },
+      "c3": { "title": "Take an inspiring photo" },
+      "c4": { "title": "Work on a creative hobby" },
+      "c5": { "title": "Consume something inspiring" }
+    }
+  },
+  "auth": {
+    "emailLogin": {
+      "fields": {
+        "email": {
+          "placeholder": "E-mail"
+        },
+        "password": {
+          "placeholder": "Password"
+        }
+      },
+      "actions": {
+        "signIn": "Sign In",
+        "signingIn": "Signing in..."
+      },
+      "errors": {
+        "invalidCredentials": "Invalid email or password."
+      },
+      "verify": {
+        "title": "Email verification required",
+        "message": "Please verify your email first. Check your inbox for the verification link.",
+        "button": "OK"
+      }
+    },
+    "register": {
+      "dialog": {
+        "title": "Create Your Account",
+        "description": "Join Habit Garden and start growing your habits today"
+      },
+      "success": {
+        "info": "We've sent you a verification email.\nPlease click the link in your inbox to activate your account."
+      },
+      "fields": {
+        "email": {
+          "label": "Email address",
+          "placeholder": "you@example.com"
+        },
+        "password": {
+          "label": "Password",
+          "placeholder": "Create a password"
+        },
+        "confirm": {
+          "label": "Confirm password",
+          "placeholder": "Confirm your password"
+        },
+        "nickname": {
+          "label": "Nickname",
+          "placeholder": "Choose a nickname"
+        },
+        "avatar": {
+          "label": "Choose your avatar"
+        }
+      },
+      "validation": {
+        "email": {
+          "required": "Email is required",
+          "invalid": "Please enter a valid email"
+        },
+        "nickname": {
+          "required": "Nickname is required",
+          "tooShort": "Nickname must be at least 2 characters",
+          "tooLong": "Nickname must be less than 20 characters"
+        },
+        "password": {
+          "required": "Password is required",
+          "tooShort": "Password must be at least 8 characters"
+        },
+        "confirm": {
+          "mismatch": "Passwords do not match"
+        }
+      },
+      "errors": {
+        "generic": "Registration failed. Please try again."
+      },
+      "actions": {
+        "creating": "Creating…",
+        "verificationSent": "Verification email sent",
+        "primary": "Create Account & Start Growing"
+      }
+    }
+  },
+  "landing": {
+    "brand": "Habit Garden",
+    "hero": {
+      "pill": "Start your growth journey today",
+      "title": {
+        "line1": "Grow Better Habits,",
+        "line2": "One Day at a Time"
+      },
+      "subtitle": "Transform your daily routines into a thriving digital garden. Watch your habits bloom as you build consistency and track your personal growth journey."
+    },
+    "actions": {
+      "google": "Continue with Google",
+      "email": "Continue with Email",
+      "hideEmail": "Hide Email Login",
+      "register": "Register"
+    },
+    "features": {
+      "grow": {
+        "title": "Watch Your Habits Grow",
+        "description": "Each habit is a plant in your garden that grows with your consistency"
+      },
+      "progress": {
+        "title": "Track Your Progress",
+        "description": "Visualize your streaks and see your garden flourish over time"
+      },
+      "rewards": {
+        "title": "Earn Rewards",
+        "description": "Unlock badges and achievements as you build lasting habits"
+      }
+    }
+  },
+  "dashboard": {
+    "notifications": {
+      "title": "Time to water your garden 🌱",
+      "body": "You still have habits waiting today."
+    },
+    "xp": {
+      "title": "XP Progress",
+      "levelLabel": "Level {{level}}",
+      "toNext": "{{xpToNext}} XP to next level"
+    },
+    "streak": {
+      "label": "Current Streak",
+      "suffix": "days 🔥"
+    },
+    "header": {
+      "title": "Your Garden",
+      "subtitle": "Nurture your habits and watch them grow",
+      "ctaAddHabit": "Add New Habit"
+    },
+    "filters": {
+      "title": "Filters",
+      "toggle": {
+        "show": "Show filters",
+        "hide": "Hide filters"
+      },
+      "categoryLabel": "Category:",
+      "stage": {
+        "label": "Stage:",
+        "options": {
+          "all": "All",
+          "seed": "Seed",
+          "sprout": "Sprout",
+          "flower": "Flower",
+          "tree": "Tree"
+        }
+      },
+      "status": {
+        "label": "Status:",
+        "options": {
+          "all": "All",
+          "waiting": "Waiting",
+          "done": "Done"
+        }
+      }
+    },
+    "empty": {
+      "filters": "No habits match your filters."
+    },
+    "card": {
+      "doneToday": "Done today",
+      "doneThisWeek": "Done this week",
+      "updating": "Updating…"
+    },
+    "plantCard": {
+      "streak": {
+        "daily": "{{count}} day streak 🔥",
+        "weekly": "{{count}} week streak 🔥"
+      },
+      "button": {
+        "water": "Water Plant",
+        "completed": "Completed"
+      }
+    },
+    "fullGarden": {
+      "title": "Your Complete Garden",
+      "subtitle": "{{count, plural, one {# plant growing} other {# plants growing}}} • {{avg}}% average growth",
+      "healthLabel": "Garden Health",
+      "imageAlt": "Your habit garden",
+      "stats": {
+        "progressLabel": "Garden Progress",
+        "emptyTitle": "Your garden is empty",
+        "emptyText": "Add your first habit to plant the very first seed. 🌱",
+        "progressMessages": {
+          "veryLow": "🌱 Just planted – every check-in helps roots grow.",
+          "low": "🌿 Sprouting nicely – your habits are waking up.",
+          "medium": "🌸 Blooming beautifully – you’re building real momentum.",
+          "high": "🌳 Flourishing garden – this is what consistency looks like."
+        }
+      },
+      "subtitleEmptyShort": "No plants growing yet",
+      "subtitleShort": "You have {{count}} plants growing",
+      "stageShort": {
+        "seed": "Seed",
+        "sprout": "Sprout",
+        "flower": "Flower",
+        "tree": "Tree"
+      },
+      "cta": {
+        "ready": "Ready to start?",
+        "keepGoing": "Keep going!",
+        "doingGreat": "You’re doing great"
+      },
+      "encouragement": {
+        "stage": {
+          "empty": "Every forest starts with a single seed. Add your first habit to begin. 🌱",
+          "veryLow": "You’ve planted the seeds, now a few drops of consistency will do the magic.",
+          "low": "Your garden is waking up. Even a tiny action today keeps it growing.",
+          "medium": "You’re in the blooming zone, keep watering what matters to you.",
+          "high": "Your garden is thriving. Don’t forget to be proud of how far you’ve come."
+        },
+        "pool": {
+          "0": "Tiny drops today grow tomorrow’s forest.",
+          "1": "You’re building roots, not just checking boxes.",
+          "2": "Future you is quietly cheering for every tiny habit you water.",
+          "3": "Consistency beats intensity – and you’re showing up.",
+          "4": "Even one small habit keeps your garden alive today.",
+          "5": "Your garden doesn’t need perfect days, just cared-for ones.",
+          "6": "Look at you, growing a whole ecosystem of good habits.",
+          "7": "Rest is also part of growth – you’re allowed to go slow.",
+          "8": "Every time you come back, your habits notice. They’re proud of you.",
+          "9": "You’re not starting from zero – you’re starting from experience."
+        }
+      }
+    }
+  },
+  "onboarding": {
+    "loading": "Loading profile…",
+    "steps": {
+      "consent": {
+        "title": "About this project 🌿",
+        "description": "This app is part of a bachelor thesis. Anonymous usage data is collected for academic research."
+      },
+      "experiment": {
+        "title": "Two versions 🎮",
+        "description": "There is a gamified and a non-gamified version. You were assigned randomly — please try the assigned version first, then you can switch."
+      },
+      "notifications": {
+        "title": "Stay on track 🔔",
+        "description": "Enable daily reminders so you don’t forget to water your habits at 20:00."
+      },
+      "profile": {
+        "title": "Create Your Profile 🌸",
+        "description": "Pick a nickname and avatar to personalize your experience."
+      },
+      "garden": {
+        "title": "Your Habit Garden 🌱",
+        "description": "Each habit becomes a plant. Water them to earn XP and watch your garden grow."
+      },
+      "simple": {
+        "title": "Stay Consistent 📅",
+        "description": "Track your daily and weekly habits easily with a clean, simple dashboard."
+      },
+      "starters": {
+        "title": "Pick Starter Habits 🌟",
+        "description": "Filter categories and select a few habits you’d like to focus on first."
+      }
+    },
+    "actions": {
+      "previous": "Previous",
+      "next": "Next",
+      "letsGo": "Let's Go!"
+    },
+    "consent": {
+      "text": "By continuing, you agree that anonymous usage data may be collected for an academic study (Bachelor’s thesis) to evaluate the impact of gamification. Data will not include personal content and will be used only in aggregate.",
+      "checkbox": "I understand and agree"
+    }
+  },
+  "stats": {
+    "growthLog": {
+      "title": "Growth Log",
+      "subtitle": "Track your progress over time",
+      "summary": {
+        "errorTitle": "Something went wrong",
+        "successTitle": "Great work this week!",
+        "loading": "Loading your progress…",
+        "prefix": "Your garden flourished",
+        "daysOfWeek": "{{completedDays}} of 7 days",
+        "thisWeek": "this week.",
+        "earnedXpPrefix": "You earned",
+        "earnedXpSuffix": "XP",
+        "andOnStreak": "and are on a",
+        "streakOnlyPrefix": "You are on a",
+        "streakValue": "{{currentStreak}}-day streak",
+        "streakSuffixEmoji": "! 🌱",
+        "error": "We couldn’t load your stats right now."
+      },
+      "weeklyChart": {
+        "title": "Weekly XP Progress",
+        "loading": "Loading chart…",
+        "empty": "No activity this week yet."
+      },
+      "heatmap": {
+        "title": "Streak Heatmap",
+        "rangeLabel": "Last 35 days",
+        "loading": "Loading heatmap…",
+        "empty": "No activity yet – your heatmap will light up once you start ticking habits.",
+        "completed": "Completed",
+        "missed": "Missed",
+        "lessActive": "Less active",
+        "moreActive": "More active"
+      }
+    }
+  }
+}

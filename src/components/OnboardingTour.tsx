@@ -27,10 +27,7 @@ import {
   SUGGESTED_HABITS_BY_CATEGORY,
   type SuggestedHabit,
 } from "../data/suggestedHabits";
-import {
-  enableNotificationsOnClient,
-  disableNotificationsOnClient,
-} from "../lib/notification";
+import { useTranslation } from "react-i18next";
 
 /* -------------------------------- utils -------------------------------- */
 function cn(...classes: Array<string | undefined | false>) {
@@ -74,6 +71,7 @@ export function OnboardingTour({
   const { data: me, isLoading } = useMe();
   const qc = useQueryClient();
   const isDark = theme === "night";
+  const { t } = useTranslation();
 
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [nick, setNick] = useState(me?.nickname ?? "");
@@ -100,22 +98,19 @@ export function OnboardingTour({
     const intro = [
       {
         key: "consent",
-        title: "About this project 🌿",
-        description:
-          "This app is part of a bachelor thesis. Anonymous usage data is collected for academic research.",
+        title: t("onboarding.steps.consent.title"),
+        description: t("onboarding.steps.consent.description"),
         isConsent: true,
       },
       {
         key: "experiment",
-        title: "Two versions 🎮",
-        description:
-          "There is a gamified and a non-gamified version. You were assigned randomly — please try the assigned version first, then you can switch.",
+        title: t("onboarding.steps.experiment.title"),
+        description: t("onboarding.steps.experiment.description"),
       },
       {
         key: "notifications",
-        title: "Stay on track 🔔",
-        description:
-          "Enable daily reminders so you don’t forget to water your habits at 20:00.",
+        title: t("onboarding.steps.notifications.title"),
+        description: t("onboarding.steps.notifications.description"),
         isNotifications: true,
       },
     ] as const;
@@ -125,9 +120,8 @@ export function OnboardingTour({
       : [
           {
             key: "profile",
-            title: "Create Your Profile 🌸",
-            description:
-              "Pick a nickname and avatar to personalize your experience.",
+            title: t("onboarding.steps.profile.title"),
+            description: t("onboarding.steps.profile.description"),
             isProfileStep: true,
           },
         ];
@@ -136,32 +130,29 @@ export function OnboardingTour({
       ? [
           {
             key: "garden",
-            title: "Your Habit Garden 🌱",
-            description:
-              "Each habit becomes a plant. Water them to earn XP and watch your garden grow.",
+            title: t("onboarding.steps.garden.title"),
+            description: t("onboarding.steps.garden.description"),
           },
         ]
       : [
           {
             key: "simple",
-            title: "Stay Consistent 📅",
-            description:
-              "Track your daily and weekly habits easily with a clean, simple dashboard.",
+            title: t("onboarding.steps.simple.title"),
+            description: t("onboarding.steps.simple.description"),
           },
         ];
 
     const starters = [
       {
         key: "starters",
-        title: "Pick Starter Habits 🌟",
-        description:
-          "Filter categories and select a few habits you’d like to focus on first.",
+        title: t("onboarding.steps.starters.title"),
+        description: t("onboarding.steps.starters.description"),
         isStarter: true,
       },
     ];
 
     return [...intro, ...maybeProfile, ...productIntro, ...starters];
-  }, [hasProfile, isGamified]);
+  }, [hasProfile, isGamified, t]);
 
   /* ---------- current step ---------- */
   const [currentStep, setCurrentStep] = useState(() =>
@@ -212,18 +203,13 @@ export function OnboardingTour({
   };
 
   const handleNext = async () => {
+    // consent krok – bez checkboxu nepouštíme dál
     if ((current as any).isConsent && !consentAccepted) return;
 
+    // notifications krok – jen uložit preferenci do BE, neblokovat
     if ((current as any).isNotifications) {
-      try {
-        if (notificationsEnabled) {
-          await enableNotificationsOnClient();
-        } else {
-          await disableNotificationsOnClient();
-        }
-      } catch (err) {
-        console.error("notifications client setup failed:", err);
-      }
+      const prev = qc.getQueryData(["me"]);
+      qc.setQueryData(["me"], { ...me, notificationsEnabled });
 
       try {
         await api.post("profile/notifications", {
@@ -231,15 +217,19 @@ export function OnboardingTour({
         });
         await qc.invalidateQueries({ queryKey: ["me"] });
       } catch (err) {
-        console.error("profile/notifications failed:", err);
+        console.error("profile/notifications in onboarding failed:", err);
+        qc.setQueryData(["me"], prev);
+        // ale NEvracíme – uživatele to dál pustíme
       }
     }
 
+    // profil krok – musí být vyplněno
     if ((current as any).isProfileStep) {
       if (!nick.trim() || !avatar.trim()) return;
       await saveProfile();
     }
 
+    // poslední krok – založení startovacích habitů (volitelné)
     if (isLast) {
       if ((current as any).isStarter) {
         const selected = habits.filter((h) => h.selected);
@@ -282,7 +272,9 @@ export function OnboardingTour({
   if (isLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
-        <div className="text-white text-lg font-medium">Loading profile…</div>
+        <div className="text-white text-lg font-medium">
+          {t("onboarding.loading")}
+        </div>
       </div>
     );
   }
@@ -372,7 +364,7 @@ export function OnboardingTour({
         )}
 
         {/* nav */}
-        <div className="flex items-center justify_between mt-8">
+        <div className="flex items-center justify-between mt-8">
           <Button
             onClick={handlePrev}
             disabled={isFirst}
@@ -382,7 +374,8 @@ export function OnboardingTour({
               isDark ? "border-slate-600 text-gray-300 hover:bg-slate-700" : ""
             )}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" /> Previous
+            <ArrowLeft className="w-4 h-4 mr-2" />{" "}
+            {t("onboarding.actions.previous")}
           </Button>
 
           <Button
@@ -390,7 +383,9 @@ export function OnboardingTour({
             disabled={(current as any).isConsent && !consentAccepted}
             className="rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
           >
-            {isLast ? "Let's Go!" : "Next"}
+            {isLast
+              ? t("onboarding.actions.letsGo")
+              : t("onboarding.actions.next")}
             {!isLast && <ArrowRight className="w-4 h-4 ml-2" />}
           </Button>
         </div>
@@ -409,6 +404,8 @@ function ConsentStep({
   accepted: boolean;
   setAccepted: (v: boolean) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div
       className={cn(
@@ -418,12 +415,7 @@ function ConsentStep({
           : "border-green-200 bg-green-50/60 text-gray-800"
       )}
     >
-      <p className="mb-3">
-        By continuing, you agree that <b>anonymous usage data</b> may be
-        collected for an academic study (Bachelor’s thesis) to evaluate the
-        impact of gamification. Data will not include personal content and will
-        be used only in aggregate.
-      </p>
+      <p className="mb-3">{t("onboarding.consent.text")}</p>
       <label className="inline-flex items-center gap-2 cursor-pointer">
         <input
           type="checkbox"
@@ -431,7 +423,7 @@ function ConsentStep({
           onChange={(e) => setAccepted(e.target.checked)}
           className="w-4 h-4 accent-emerald-600"
         />
-        <span>I understand and agree</span>
+        <span>{t("onboarding.consent.checkbox")}</span>
       </label>
     </div>
   );
@@ -451,6 +443,8 @@ function ProfileStep({
   avatar: string;
   setAvatar: (v: string) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-4">
       <div>
@@ -460,7 +454,7 @@ function ProfileStep({
             isDark ? "text-gray-300" : "text-gray-700"
           )}
         >
-          Nickname
+          {t("onboarding.profile.nickname.label")}
         </label>
         <input
           value={nick}
@@ -472,7 +466,7 @@ function ProfileStep({
               ? "bg-slate-700 border-slate-600 text-white"
               : "bg-white border-green-200"
           )}
-          placeholder="e.g., BelSunflower"
+          placeholder={t("onboarding.profile.nickname.placeholder")}
         />
       </div>
 
@@ -483,7 +477,7 @@ function ProfileStep({
             isDark ? "text-gray-300" : "text-gray-700"
           )}
         >
-          Avatar URL
+          {t("onboarding.profile.avatar.label")}
         </label>
         <input
           value={avatar}
@@ -494,7 +488,7 @@ function ProfileStep({
               ? "bg-slate-700 border-slate-600 text-white"
               : "bg-white border-green-200"
           )}
-          placeholder="https://…/avatar.png"
+          placeholder={t("onboarding.profile.avatar.placeholder")}
         />
       </div>
     </div>
@@ -511,6 +505,8 @@ function NotificationsStep({
   enabled: boolean;
   setEnabled: (v: boolean) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div
       className={cn(
@@ -521,10 +517,11 @@ function NotificationsStep({
       )}
     >
       <div className="max-w-[75%]">
-        <p className="font-medium mb-1">Daily Reminder</p>
+        <p className="font-medium mb-1">
+          {t("onboarding.notifications.titleInline")}
+        </p>
         <p className="text-sm opacity-80">
-          Enable a helpful reminder at <b>20:00</b> if you still have habits
-          left to water.
+          {t("onboarding.notifications.text")}
         </p>
       </div>
 
@@ -550,19 +547,21 @@ function StarterPicker({
   setFreq: (id: string, f: Freq) => void;
 }) {
   const isDark = theme === "night";
-  const CATS: { id: Category; label: string; icon: any }[] = [
-    { id: "Health", label: "Health", icon: Heart },
-    { id: "Eco", label: "Eco", icon: Leaf },
-    { id: "Productivity", label: "Productivity", icon: Briefcase },
-    { id: "Relationships", label: "Relationships", icon: Users },
-    { id: "Creativity", label: "Creativity", icon: Palette },
+  const { t } = useTranslation();
+
+  const CATS: { id: Category; labelKey: string; icon: any }[] = [
+    { id: "Health", labelKey: "Health", icon: Heart },
+    { id: "Eco", labelKey: "Eco", icon: Leaf },
+    { id: "Productivity", labelKey: "Productivity", icon: Briefcase },
+    { id: "Relationships", labelKey: "Relationships", icon: Users },
+    { id: "Creativity", labelKey: "Creativity", icon: Palette },
   ];
 
   return (
     <div className="space-y-5">
       {/* categories */}
       <div className="flex flex-wrap justify-center gap-2">
-        {CATS.map(({ id, label, icon: Icon }) => {
+        {CATS.map(({ id, labelKey, icon: Icon }) => {
           const on = active.includes(id);
           return (
             <button
@@ -578,7 +577,7 @@ function StarterPicker({
               )}
             >
               <Icon className="w-4 h-4" />
-              {label}
+              {t(`habits.categories.${labelKey}`)}
             </button>
           );
         })}
@@ -620,7 +619,9 @@ function StarterPicker({
                   )}
                 >
                   {selected && <Check className="w-3.5 h-3.5" />}
-                  {selected ? "Selected" : "Select"}
+                  {selected
+                    ? t("onboarding.starters.selected")
+                    : t("onboarding.starters.select")}
                 </div>
 
                 {/* top */}
@@ -653,7 +654,7 @@ function StarterPicker({
                         isDark ? "text-gray-400" : "text-gray-500"
                       )}
                     >
-                      {h.category}
+                      {t(`habits.categories.${h.category}`)}
                     </span>
                   </div>
                 </div>
@@ -667,10 +668,14 @@ function StarterPicker({
                     <SelectTrigger
                       className={cn(
                         "h-10 rounded-md text-sm w-full",
-                        isDark ? "bg-slate-700 border-slate-600 text-white" : ""
+                        isDark
+                          ? "bg-slate-700 border-slate-600 text-white"
+                          : ""
                       )}
                     >
-                      <SelectValue placeholder="Frequency" />
+                      <SelectValue
+                        placeholder={t("onboarding.starters.frequency")}
+                      />
                     </SelectTrigger>
                     <SelectContent
                       position="popper"
@@ -681,8 +686,12 @@ function StarterPicker({
                           : ""
                       )}
                     >
-                      <SelectItem value="Daily">Daily</SelectItem>
-                      <SelectItem value="Weekly">Weekly</SelectItem>
+                      <SelectItem value="Daily">
+                        {t("habits.frequency.Daily")}
+                      </SelectItem>
+                      <SelectItem value="Weekly">
+                        {t("habits.frequency.Weekly")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

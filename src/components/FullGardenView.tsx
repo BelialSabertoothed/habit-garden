@@ -1,7 +1,7 @@
 import { Sprout, Leaf, Flower2, TreeDeciduous } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-
-type Stage = "seed" | "sprout" | "flower" | "tree";
+import { getStageAndProgress, type Stage } from "../lib/growth";
+import { useTranslation } from "react-i18next";
 
 interface HabitView {
   id: string | number;
@@ -14,48 +14,6 @@ interface HabitView {
 interface FullGardenViewProps {
   habits?: HabitView[];
   theme: "day" | "night";
-}
-
-/* ---------------- STAGE + PROGRESS LOGIC (stejná jako karty) ---------------- */
-
-const stageOrder: Stage[] = ["seed", "sprout", "flower", "tree"];
-
-// 0–2 = seed, 3–6 = sprout, 7–13 = flower, 14+ = tree
-const DAILY_THRESHOLDS = [0, 3, 7, 14];
-// 0–1 = seed, 2–3 = sprout, 4–5 = flower, 6+ = tree
-const WEEKLY_THRESHOLDS = [0, 2, 4, 6];
-
-function getStageAndProgress(
-  freq: "Daily" | "Weekly",
-  currentStreak: number,
-  bestStreak: number
-): { stage: Stage; progress: number } {
-  const thresholds = freq === "Daily" ? DAILY_THRESHOLDS : WEEKLY_THRESHOLDS;
-
-  const safeBest = Math.max(0, bestStreak || 0);
-  const safeCurrent = Math.max(0, currentStreak || 0);
-
-  // 1) Stage podle nejlepšího streaku
-  let stageIndex = 0;
-  for (let i = 0; i < thresholds.length; i++) {
-    if (safeBest >= thresholds[i]) stageIndex = i;
-  }
-  const stage = stageOrder[stageIndex];
-
-  // 2) Progress podle aktuálního streaku v rámci té stage
-  const lower = thresholds[stageIndex];
-  const upper =
-    stageIndex < thresholds.length - 1
-      ? thresholds[stageIndex + 1]
-      : thresholds[stageIndex] + (freq === "Daily" ? 7 : 2); // cap pro poslední stage
-
-  if (safeCurrent <= lower) return { stage, progress: 0 };
-
-  const span = Math.max(1, upper - lower);
-  const raw = ((safeCurrent - lower) / span) * 100;
-  const progress = Math.max(0, Math.min(100, raw));
-
-  return { stage, progress };
 }
 
 /* ---------------- UI CONFIG ---------------- */
@@ -157,54 +115,59 @@ const gardenImageConfig: Record<GardenStage, { day: string; night: string }> = {
   },
 };
 
-const encouragementPool = [
-  "Tiny drops today grow tomorrow’s forest.",
-  "You’re building roots, not just checking boxes.",
-  "Future you is quietly cheering for every tiny habit you water.",
-  "Consistency beats intensity – and you’re showing up.",
-  "Even one small habit keeps your garden alive today.",
-  "Your garden doesn’t need perfect days, just cared-for ones.",
-  "Look at you, growing a whole ecosystem of good habits.",
-  "Rest is also part of growth – you’re allowed to go slow.",
-  "Every time you come back, your habits notice. They’re proud of you.",
-  "You’re not starting from zero – you’re starting from experience.",
-];
+/** klíče pro “extraEncouragement” – texty jsou v i18n JSONu */
+const encouragementPoolKeys = [
+  "dashboard.fullGarden.encouragement.pool.0",
+  "dashboard.fullGarden.encouragement.pool.1",
+  "dashboard.fullGarden.encouragement.pool.2",
+  "dashboard.fullGarden.encouragement.pool.3",
+  "dashboard.fullGarden.encouragement.pool.4",
+  "dashboard.fullGarden.encouragement.pool.5",
+  "dashboard.fullGarden.encouragement.pool.6",
+  "dashboard.fullGarden.encouragement.pool.7",
+  "dashboard.fullGarden.encouragement.pool.8",
+  "dashboard.fullGarden.encouragement.pool.9",
+] as const;
 
-function pickEncouragement(avg: number, plantCount: number) {
+function pickStageEncouragementKey(avg: number, plantCount: number): string {
   if (plantCount === 0) {
-    return "Every forest starts with a single seed. Add your first habit to begin. 🌱";
+    return "dashboard.fullGarden.encouragement.stage.empty";
   }
-  if (avg < 25)
-    return "You’ve planted the seeds, now a few drops of consistency will do the magic.";
-  if (avg < 50)
-    return "Your garden is waking up. Even a tiny action today keeps it growing.";
-  if (avg < 75)
-    return "You’re in the blooming zone, keep watering what matters to you.";
-  return "Your garden is thriving. Don’t forget to be proud of how far you’ve come.";
+  if (avg < 25) {
+    return "dashboard.fullGarden.encouragement.stage.veryLow";
+  }
+  if (avg < 50) {
+    return "dashboard.fullGarden.encouragement.stage.low";
+  }
+  if (avg < 75) {
+    return "dashboard.fullGarden.encouragement.stage.medium";
+  }
+  return "dashboard.fullGarden.encouragement.stage.high";
 }
 
 /* ---------------- COMPONENT ---------------- */
 
 export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
   const isDark = theme === "night";
+  const { t } = useTranslation();
 
   const safe = Array.isArray(habits) ? habits : [];
 
-  const STAGE_BASE = {
+  const STAGE_BASE: Record<Stage, number> = {
     seed: 10,
     sprout: 35,
     flower: 70,
     tree: 95,
-  } as const;
+  };
 
-  const STAGE_TOP = {
+  const STAGE_TOP: Record<Stage, number> = {
     seed: 35, // range 10–35
     sprout: 70, // range 35–70
     flower: 95, // range 70–95
     tree: 100, // range 95–100
-  } as const;
+  };
 
-  // ⚙️ stage + progress už máš:
+  // ⚙️ stage + progress sdílené s PlantCard (helper getStageAndProgress)
   const enriched = safe.map((h) => {
     const { stage, progress } = getStageAndProgress(
       h.frequency,
@@ -240,13 +203,18 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
 
   const idx =
     (new Date().getDate() + enriched.length + averageProgress) %
-    encouragementPool.length;
+    encouragementPoolKeys.length;
 
-  const extraEncouragement = encouragementPool[idx];
-  const stageEncouragement = pickEncouragement(
-    averageProgress,
-    enriched.length
+  const extraEncouragement = t(encouragementPoolKeys[idx]);
+  const stageEncouragement = t(
+    pickStageEncouragementKey(averageProgress, enriched.length)
   );
+
+  // 🔹 nový, jednoduchý subtitle – jen počet rostlin, bez %
+  const subtitleText =
+    enriched.length === 0
+      ? t("dashboard.fullGarden.subtitleEmptyShort")
+      : t("dashboard.fullGarden.subtitleShort", { count: enriched.length });
 
   return (
     <div
@@ -265,7 +233,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                 isDark ? "text-white" : "text-gray-900"
               }`}
             >
-              Your Complete Garden
+              {t("dashboard.fullGarden.title")}
             </h3>
 
             <p
@@ -273,8 +241,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                 isDark ? "text-gray-400" : "text-gray-600"
               }`}
             >
-              {enriched.length} {enriched.length === 1 ? "plant" : "plants"}{" "}
-              growing • {averageProgress}% average growth
+              {subtitleText}
             </p>
           </div>
 
@@ -290,7 +257,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                 isDark ? "text-gray-300" : "text-gray-700"
               } flex items-center gap-1`}
             >
-              🌱 Garden Health:{" "}
+              🌱 {t("dashboard.fullGarden.healthLabel")}:{" "}
               <span className="font-semibold">{averageProgress}%</span>
             </span>
           </div>
@@ -339,7 +306,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
           <div className="relative h-[220px] sm:h-[260px] lg:h-[280px]">
             <ImageWithFallback
               src={bgImageSrc}
-              alt="Your habit garden"
+              alt={t("dashboard.fullGarden.imageAlt")}
               className={`w-full h-full object-cover transition-all duration-700 ${
                 isDark ? "opacity-35" : "opacity-70"
               }`}
@@ -369,7 +336,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                         isDark ? "text-gray-300" : "text-gray-600"
                       }`}
                     >
-                      Garden Progress
+                      {t("dashboard.fullGarden.stats.progressLabel")}
                     </div>
 
                     <div className="flex items-baseline gap-2 justify-center">
@@ -395,15 +362,19 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                       }`}
                     >
                       {averageProgress < 25 &&
-                        "🌱 Just planted – every check-in helps roots grow."}
+                        t(
+                          "dashboard.fullGarden.stats.progressMessages.veryLow"
+                        )}
                       {averageProgress >= 25 &&
                         averageProgress < 50 &&
-                        "🌿 Sprouting nicely – your habits are waking up."}
+                        t("dashboard.fullGarden.stats.progressMessages.low")}
                       {averageProgress >= 50 &&
                         averageProgress < 75 &&
-                        "🌸 Blooming beautifully – you’re building real momentum."}
+                        t(
+                          "dashboard.fullGarden.stats.progressMessages.medium"
+                        )}
                       {averageProgress >= 75 &&
-                        "🌳 Flourishing garden – this is what consistency looks like."}
+                        t("dashboard.fullGarden.stats.progressMessages.high")}
                     </div>
                   </div>
                 ) : (
@@ -413,14 +384,14 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                         isDark ? "text-gray-300" : "text-gray-600"
                       }`}
                     >
-                      Your garden is empty
+                      {t("dashboard.fullGarden.stats.emptyTitle")}
                     </div>
                     <p
                       className={`${
                         isDark ? "text-gray-400" : "text-gray-500"
                       } text-sm`}
                     >
-                      Add your first habit to plant the very first seed. 🌱
+                      {t("dashboard.fullGarden.stats.emptyText")}
                     </p>
                   </div>
                 )}
@@ -454,10 +425,9 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                 <p
                   className={`text-xs ${
                     isDark ? "text-gray-400" : "text-gray-500"
-                  } capitalize`}
+                  }`}
                 >
-                  {stage}
-                  {count !== 1 ? "s" : ""}
+                  {t(`dashboard.fullGarden.stageShort.${stage}`)}
                 </p>
               </div>
             );
@@ -476,10 +446,10 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
         >
           <p className="font-medium mb-1">
             {gardenStage === "empty"
-              ? "Ready to start?"
+              ? t("dashboard.fullGarden.cta.ready")
               : averageProgress >= 75
-              ? "Keep going!"
-              : "You’re doing great"}
+              ? t("dashboard.fullGarden.cta.keepGoing")
+              : t("dashboard.fullGarden.cta.doingGreat")}
           </p>
           <p className="text-xs sm:text-sm opacity-90">
             {stageEncouragement}{" "}

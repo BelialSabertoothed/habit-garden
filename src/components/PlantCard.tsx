@@ -2,54 +2,10 @@ import { Droplet, Sprout, Leaf, Flower2, TreeDeciduous } from "lucide-react";
 import { Button } from "./ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
-/* -------------------------------- Logic -------------------------------- */
-
-type Stage = "seed" | "sprout" | "flower" | "tree";
-
-const stageOrder: Stage[] = ["seed", "sprout", "flower", "tree"];
-
-// hranice pro jednotlivé stage
-const DAILY_THRESHOLDS = [0, 3, 7, 14]; // 0–2 seed, 3–6 sprout, 7–13 flower, 14+ tree
-const WEEKLY_THRESHOLDS = [0, 2, 4, 6]; // 0–1 seed, 2–3 sprout, 4–5 flower, 6+ tree
-
-function getStageAndProgress(
-  freq: "Daily" | "Weekly",
-  streak: number,
-  bestStreak: number
-): { stage: Stage; progress: number } {
-  const thresholds = freq === "Daily" ? DAILY_THRESHOLDS : WEEKLY_THRESHOLDS;
-
-  const safeBest = Math.max(0, bestStreak || 0);
-  const safeCurrent = Math.max(0, streak || 0);
-
-  // 1) Stage podle NEJLEPŠÍHO streaku
-  let stageIndex = 0;
-  for (let i = 0; i < thresholds.length; i++) {
-    if (safeBest >= thresholds[i]) {
-      stageIndex = i;
-    }
-  }
-  const stage = stageOrder[stageIndex];
-
-  // 2) Progress podle AKTUÁLNÍHO streaku v rámci rozsahu té stage
-  const lower = thresholds[stageIndex];
-  const upper =
-    stageIndex < thresholds.length - 1
-      ? thresholds[stageIndex + 1]
-      : thresholds[stageIndex] + (freq === "Daily" ? 7 : 2); // poslední stage – libovolný „cap“
-
-  // pokud je current menší než dolní hranice stage, progress = 0
-  if (safeCurrent <= lower) {
-    return { stage, progress: 0 };
-  }
-
-  const span = Math.max(1, upper - lower);
-  const raw = ((safeCurrent - lower) / span) * 100;
-  const progress = Math.max(0, Math.min(100, raw));
-
-  return { stage, progress };
-}
+// ⭐ NÁŠ NOVÝ HELPER
+import { getStageAndProgress } from "../lib/growth";
 
 /* -------------------------------- UI Config -------------------------------- */
 
@@ -104,17 +60,20 @@ export function PlantCard({
   disabledLabel,
 }: PlantCardProps) {
   const isDark = theme === "night";
-  
+  const { t } = useTranslation();
 
+  // ⭐ helper z growth
   const { stage, progress } = getStageAndProgress(
     frequency,
     streak,
     bestStreak ?? 0
   );
+
   const config = stageConfig[stage];
   const Icon = config.icon;
 
   /* ---------------- WATERING ANIMATION ---------------- */
+
   const [watering, setWatering] = useState(false);
 
   const handleWater = async () => {
@@ -125,6 +84,7 @@ export function PlantCard({
   };
 
   /* ---------------- EVOLUTION AURA ---------------- */
+
   const prevStage = useRef(stage);
   const [evolving, setEvolving] = useState(false);
 
@@ -132,10 +92,15 @@ export function PlantCard({
     if (prevStage.current !== stage) {
       setEvolving(true);
       prevStage.current = stage;
-
       setTimeout(() => setEvolving(false), 1200);
     }
   }, [stage]);
+
+  // streak text – zvlášť pro daily/weekly kvůli správnému plurálu
+  const streakText =
+    frequency === "Daily"
+      ? t("dashboard.plantCard.streak.daily", { count: streak })
+      : t("dashboard.plantCard.streak.weekly", { count: streak });
 
   return (
     <div
@@ -211,7 +176,7 @@ export function PlantCard({
 
       {/* ---------------- CONTENT ---------------- */}
       <div className="flex flex-col items-center gap-4 relative z-10">
-        {/* 🌱 Plant Icon with evolution pop */}
+        {/* 🌱 Plant icon + pop */}
         <motion.div
           animate={
             watering || evolving ? { scale: [1, 1.15, 1] } : { scale: 1 }
@@ -224,14 +189,13 @@ export function PlantCard({
             style={{
               width: config.size,
               height: config.size,
-              transition: "all 0.3s",
             }}
           >
             <Icon className="text-white" size={config.size * 0.45} />
           </div>
         </motion.div>
 
-        {/* 📊 Progress Bar with stage-based gradient */}
+        {/* 📊 Progress bar */}
         <div className="w-full">
           <div
             className={`h-2 rounded-full overflow-hidden mb-2 ${
@@ -259,7 +223,7 @@ export function PlantCard({
               isDark ? "text-gray-400" : "text-gray-500"
             }`}
           >
-            🔥 {streak} {frequency === "Daily" ? "days" : "weeks"} streak
+            {streakText}
           </p>
         </div>
 
@@ -276,7 +240,9 @@ export function PlantCard({
           }`}
         >
           <Droplet className="w-4 h-4 mr-2" />
-          {disabled ? disabledLabel ?? "Completed" : "Water Plant"}
+          {disabled
+            ? disabledLabel ?? t("dashboard.plantCard.button.completed")
+            : t("dashboard.plantCard.button.water")}
         </Button>
       </div>
     </div>

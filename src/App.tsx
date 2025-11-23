@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { setAccessToken, clearAccessToken } from "./lib/authToken";
+
 import { LandingPage } from "./components/LandingPage";
-import { RegistrationPage } from "./components/FinishRegistrationModal";
 import { OnboardingTour } from "./components/OnboardingTour";
 import { DashboardGarden } from "./components/DashboardGarden";
 import { HabitsList } from "./components/HabitsList";
@@ -13,6 +13,7 @@ import { api } from "./lib/api";
 import { Navigation } from "./components/Navigation";
 import { useBadgeToasts } from "./hooks/useBadgeToasts";
 import { askNotificationPermission } from "./lib/notificationPermission";
+import "./i18n/i18n"; 
 
 type Page = "garden" | "habits" | "stats" | "profile";
 
@@ -23,17 +24,19 @@ export default function App() {
 
   const [currentPage, setCurrentPage] = useState<Page>("garden");
 
-  // theme můžeme odvodit i když ještě řešíme onboarding apod.
+  // theme taháme rovnou z /me (fallback na "day")
   const theme = (me?.theme ?? "day") as "day" | "night";
 
+  // badge toasty jen pro gamified variantu
   const badgeToastsEnabled = me?.experimentVariant === "gamified";
   useBadgeToasts(theme, badgeToastsEnabled);
 
-   useEffect(() => {
+  // Po dokončení onboardingu jemně poprosíme o Notification permission,
+  // pokud je pořád v "default" – nechceme to dělat už při prvním načtení appky
+  useEffect(() => {
     if (!me) return;
     if (!me.onboardingDone) return;
 
-    // nechceme otravovat pokaždé, jen pokud je stav "default"
     if (typeof window !== "undefined" && "Notification" in window) {
       if (Notification.permission === "default") {
         askNotificationPermission();
@@ -41,41 +44,41 @@ export default function App() {
     }
   }, [me]);
 
+  // Google OAuth callback – access_token v URL hash
   useEffect(() => {
     const hash = window.location.hash.slice(1);
     if (!hash) return;
+
     const params = new URLSearchParams(hash);
     const token = params.get("access_token");
     if (token) {
       setAccessToken(token);
+
+      // vyčistit URL (zahodíme hash s tokenem)
       history.replaceState(
         null,
         "",
         window.location.pathname + window.location.search
       );
+
       qc.invalidateQueries({ queryKey: ["me"] });
     }
   }, [qc]);
+
+  /* ---------------------- LOADING / NO USER ---------------------- */
 
   if (isLoading) {
     return <div className="p-6">Načítám…</div>;
   }
 
+  // Nepřihlášený user → landing (login + registrační modal)
   if (!me) {
     return <LandingPage onGoogleLogin={loginWithGoogle} />;
   }
 
-  if (!me.profileComplete) {
-    return (
-      <RegistrationPage
-        onComplete={async ({ nickname, avatar }) => {
-          await api.post("profile/init", { json: { nickname, avatar } });
-          await qc.invalidateQueries({ queryKey: ["me"] });
-        }}
-      />
-    );
-  }
+  /* ---------------------- ONBOARDING ---------------------- */
 
+  // OnboardingTour běží po prvním přihlášení, dokud neproběhne POST /profile/onboarding
   if (!me.onboardingDone) {
     return (
       <OnboardingTour
@@ -87,6 +90,8 @@ export default function App() {
       />
     );
   }
+
+  /* ---------------------- HLAVNÍ APLIKACE ---------------------- */
 
   return (
     <div

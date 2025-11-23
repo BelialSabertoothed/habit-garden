@@ -10,6 +10,7 @@ import { api } from "../lib/api";
 import EditProfileModal from "./UpdateProfileModal";
 import { useRewards } from "../hooks/useRewards";
 import { BADGES, type BadgeId } from "./badges/config";
+import { useTranslation } from "react-i18next";
 import { Bell } from "lucide-react";
 import {
   enableNotificationsOnClient,
@@ -39,6 +40,7 @@ export function ProfileRewards() {
   const { data: me, isLoading } = useMe();
   const { data: rewardsRaw } = useRewards();
   const qc = useQueryClient();
+  const { t } = useTranslation();
 
   if (isLoading || !me) {
     return (
@@ -77,9 +79,9 @@ export function ProfileRewards() {
   ).map(([id, cfg]) => ({
     id,
     unlocked: unlockedIds.has(id),
-    name: cfg.name,
-    description: cfg.description,
-    clue: cfg.clue,
+    name: t(cfg.nameKey),
+    description: t(cfg.descriptionKey),
+    clue: cfg.clueKey ? t(cfg.clueKey) : undefined,
   }));
 
   /* ---------- Actions ---------- */
@@ -145,12 +147,14 @@ export function ProfileRewards() {
       {/* Page Header */}
       <div>
         <h2 className={isDark ? "text-white" : "text-gray-900"}>
-          {isGamified ? "Profile & Rewards" : "Profile"}
+          {isGamified
+            ? t("profile.header.titleGamified")
+            : t("profile.header.titleControl")}
         </h2>
         <p className={isDark ? "text-gray-400" : "text-gray-600"}>
           {isGamified
-            ? "Track your achievements and customize your experience"
-            : "Customize your experience"}
+            ? t("profile.header.subtitleGamified")
+            : t("profile.header.subtitleControl")}
         </p>
       </div>
 
@@ -169,11 +173,11 @@ export function ProfileRewards() {
                 ? "border-slate-600 text-slate-200 hover:bg-slate-700"
                 : "border-gray-200 text-gray-700 hover:bg-gray-50"
             }`}
-          aria-label="Edit profile"
-          title="Edit profile"
+          aria-label={t("profile.editButton.aria")}
+          title={t("profile.editButton.aria")}
         >
           <Pencil className="w-4 h-4" />
-          Edit
+          {t("profile.editButton.label")}
         </button>
 
         <div className="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-6">
@@ -196,7 +200,7 @@ export function ProfileRewards() {
                 isDark ? "text-white" : "text-gray-900"
               }`}
             >
-              {me.nickname ?? "Habit Gardener"}
+              {me.nickname ?? t("profile.fallbackNickname")}
             </h3>
             <p
               className={`mb-4 text-sm ${
@@ -217,13 +221,13 @@ export function ProfileRewards() {
                         : "bg-gradient-to-r from-green-500 to-emerald-500"
                     }`}
                   >
-                    Level {level}
+                    {t("profile.metrics.levelLabel", { level })}
                   </div>
 
                   <div className="flex items-center justify-center md:justify-start gap-2 text-sm">
                     <Zap className="w-5 h-5 text-amber-500" />
                     <span className={isDark ? "text-white" : "text-gray-900"}>
-                      {totalXP} XP total
+                      {t("profile.metrics.totalXp", { xp: totalXP })}
                     </span>
                   </div>
 
@@ -232,8 +236,10 @@ export function ProfileRewards() {
                       isDark ? "text-gray-300" : "text-gray-700"
                     }`}
                   >
-                    🔥 Streak: {me.currentStreak ?? 0} (best{" "}
-                    {me.longestStreak ?? 0})
+                    {t("profile.metrics.streakLabel", {
+                      current: me.currentStreak ?? 0,
+                      best: me.longestStreak ?? 0,
+                    })}
                   </div>
                 </div>
 
@@ -242,12 +248,17 @@ export function ProfileRewards() {
                     <span
                       className={isDark ? "text-gray-300" : "text-gray-600"}
                     >
-                      Progress to Level {level + 1}
+                      {t("profile.metrics.progressToNextLevel", {
+                        level: level + 1,
+                      })}
                     </span>
                     <span
                       className={isDark ? "text-gray-400" : "text-gray-500"}
                     >
-                      {inLevel} / {span} XP
+                      {t("profile.metrics.progressXp", {
+                        current: inLevel,
+                        span,
+                      })}
                     </span>
                   </div>
                   <div
@@ -277,7 +288,7 @@ export function ProfileRewards() {
         } rounded-2xl p-6 shadow-md border`}
       >
         <h3 className={`mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>
-          Theme Preferences
+          {t("profile.theme.title")}
         </h3>
 
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -291,7 +302,9 @@ export function ProfileRewards() {
               htmlFor="theme-switch"
               className={isDark ? "text-gray-300" : "text-gray-700"}
             >
-              {theme === "day" ? "Day Mode" : "Night Mode"}
+              {theme === "day"
+                ? t("profile.theme.dayMode")
+                : t("profile.theme.nightMode")}
             </Label>
             <Moon
               className={`w-5 h-5 ${
@@ -323,15 +336,14 @@ export function ProfileRewards() {
             />
             <div>
               <p className={isDark ? "text-white" : "text-gray-900"}>
-                Habit reminders
+                {t("profile.notifications.title")}
               </p>
               <p
                 className={`text-sm ${
                   isDark ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                Daily push notification around 20:00 if you still have habits to
-                water.
+                {t("profile.notifications.description")}
               </p>
             </div>
           </div>
@@ -355,14 +367,18 @@ export function ProfileRewards() {
         >
           <div className="flex items-center gap-2 mb-6">
             <Award className="w-5 h-5 text-purple-500" />
-            <h3 className={isDark ? "text-white" : "text-gray-900"}>Badges</h3>
+            <h3 className={isDark ? "text-white" : "text-gray-900"}>
+              {t("profile.badges.title")}
+            </h3>
             <span
               className={`ml-auto text-sm ${
                 isDark ? "text-gray-400" : "text-gray-500"
               }`}
             >
-              {badges.filter((b) => b.unlocked).length} of {badges.length}{" "}
-              unlocked
+              {t("profile.badges.unlockedSummary", {
+                unlocked: badges.filter((b) => b.unlocked).length,
+                total: badges.length,
+              })}
             </span>
           </div>
 
@@ -419,7 +435,7 @@ export function ProfileRewards() {
                       isDark ? "text-gray-200" : "text-gray-800"
                     }`}
                   >
-                    Hidden badge
+                    {t("profile.badges.hiddenTitle")}
                   </p>
                   <p
                     className={`text-xs ${
@@ -442,11 +458,10 @@ export function ProfileRewards() {
         } rounded-2xl p-6 shadow-md border`}
       >
         <h3 className={`mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
-          Experiment Variant
+          {t("profile.experiment.title")}
         </h3>
         <p className={isDark ? "text-gray-400 mb-4" : "text-gray-600 mb-4"}>
-          Switch between the gamified experience (XP, levels, badges) and the
-          minimal experience (no gamification).
+          {t("profile.experiment.description")}
         </p>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -460,7 +475,7 @@ export function ProfileRewards() {
                 : "border-gray-200 text-gray-700 hover:bg-gray-50"
             }`}
           >
-            Gamified
+            {t("profile.experiment.buttonGamified")}
           </button>
 
           <button
@@ -473,7 +488,7 @@ export function ProfileRewards() {
                 : "border-gray-200 text-gray-700 hover:bg-gray-50"
             }`}
           >
-            Control (No Gamification)
+            {t("profile.experiment.buttonControl")}
           </button>
         </div>
       </div>
