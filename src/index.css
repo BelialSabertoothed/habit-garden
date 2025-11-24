@@ -189,3 +189,119 @@
 html {
   font-size: var(--font-size);
 }
+/* =============== GARDEN ANIMATIONS =============== */
+
+/* Bloby v pozadí */
+@keyframes gardenBlob {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(20px, -10px, 0) scale(1.05);
+  }
+  66% {
+    transform: translate3d(-15px, 10px, 0) scale(0.95);
+  }
+}
+
+@keyframes gardenBlobReverse {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(-20px, 10px, 0) scale(1.05);
+  }
+  66% {
+    transform: translate3d(15px, -10px, 0) scale(0.95);
+  }
+}
+
+@keyframes gardenBlobSlow {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(10px, -10px, 0) scale(1.08);
+  }
+}
+
+/* Utility třídy odpovídající tomu, co používáš v komponentě */
+.animate-blob-animate {
+  animation: gardenBlob 8s ease-in-out infinite;
+}
+
+.animate-blob-animate-reverse {
+  animation: gardenBlobReverse 10s ease-in-out infinite;
+}
+
+.animate-blob-animate-slow {
+  animation: gardenBlobSlow 12s ease-in-out infinite;
+}
+
+/* Padající lístky */
+@keyframes gardenPetalFall {
+  0% {
+    transform: translate3d(0, -10%, 0) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(-10px, 40%, 0) rotate(20deg);
+  }
+  80% {
+    transform: translate3d(8px, 85%, 0) rotate(-10deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(0, 110%, 0) rotate(-25deg);
+    opacity: 0;
+  }
+}
+
+.animate-petalFall {
+  animation: gardenPetalFall 8s linear infinite;
+}
+
+/* Světlušky */
+@keyframes gardenFireflyFloat {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate3d(6px, -12px, 0);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-4px, 6px, 0);
+    opacity: 0;
+  }
+}
+
+.animate-fireflyFloat {
+  animation: gardenFireflyFloat 9s ease-in-out infinite;
+}
+
+/* Zpoždění (používané v komponentě na petals/fireflies) */
+.delay-1500 {
+  animation-delay: 1.5s;
+}
+
+.delay-2000 {
+  animation-delay: 2s;
+}
+
+.delay-3000 {
+  animation-delay: 3s;
+}
+
+.delay-3500 {
+  animation-delay: 3.5s;
+}
