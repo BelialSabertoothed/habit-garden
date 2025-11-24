@@ -42,7 +42,7 @@ async function rawFetch(path: string, method: Method, opts: Opts = {}) {
 async function request<T>(path: string, method: Method, opts: Opts = {}): Promise<T> {
   let { res, data } = await rawFetch(path, method, opts);
 
-   if (res.status === 401 && !opts._retry) {
+  if (res.status === 401 && !opts._retry) {
     const r = await fetch(new URL("auth/refresh", API_URL).toString(), {
       method: "POST",
       credentials: WITH_CREDENTIALS ? "include" : "same-origin",
@@ -54,14 +54,22 @@ async function request<T>(path: string, method: Method, opts: Opts = {}): Promis
         ({ res, data } = await rawFetch(path, method, { ...opts, _retry: true }));
       }
     } else {
-        // ⬇️ jen vyčisti token – invalidujeme lokální cache uživatele přes qcRef pokud existuje
-        clearAccessToken();
-        qcRef?.invalidateQueries({ queryKey: ["me"] });
-      }
+      // ⬇️ jen smaž token a nech useMe, ať si s 401 poradí sama
+      clearAccessToken();
+      // NEvolat invalidateQueries(["me"]) – to dělalo smyčku
+    }
   }
-  if (!res.ok) throw new ApiError(res.status, data, (data as any)?.message || (data as any)?.error);
+
+  if (!res.ok) {
+    throw new ApiError(
+      res.status,
+      data,
+      (data as any)?.message || (data as any)?.error
+    );
+  }
   return data as T;
 }
+
 
 export const api = {
   get:  <T>(p: string, o?: Opts) => request<T>(p, "GET", o),
