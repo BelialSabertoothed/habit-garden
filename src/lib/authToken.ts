@@ -1,19 +1,36 @@
-const KEY = "hg_access_token";
+const ACCESS_TOKEN_KEY = "hg_access_token";
+
 type Listener = (token: string | null) => void;
 const listeners = new Set<Listener>();
 
+function isBrowser() {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
+
 export function getAccessToken(): string | null {
-  return localStorage.getItem(KEY);
+  if (!isBrowser()) return null;
+  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
 }
+
 export function setAccessToken(token: string) {
-  localStorage.setItem(KEY, token);
-  listeners.forEach((l) => l(token));
+  if (!isBrowser()) return;
+  window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  // upozorni posluchače
+  for (const fn of listeners) fn(token);
 }
+
 export function clearAccessToken() {
-  localStorage.removeItem(KEY);
-  listeners.forEach((l) => l(null));
+  if (!isBrowser()) return;
+  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  for (const fn of listeners) fn(null);
 }
-export function onTokenChange(listener: Listener) {
+
+export function onTokenChange(listener: Listener): () => void {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  // inicializační zavolání – dá aktuální stav
+  listener(getAccessToken());
+  return () => {
+    listeners.delete(listener);
+    return true;
+  };
 }
