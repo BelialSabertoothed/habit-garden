@@ -344,14 +344,6 @@ export function OnboardingTour({
     }
   };
 
-  // auto-skip profile step, pokud už je profil mezitím hotový
-  useEffect(() => {
-    if (hasProfile && current?.isProfileStep) {
-      setCurrentStep((s) => Math.min(s + 1, Math.max(steps.length - 1, 0)));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasProfile]);
-
   if (isLoading) {
     return <FlowerLoader theme={theme} />;
   }
