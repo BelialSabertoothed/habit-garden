@@ -31,6 +31,28 @@ export default function App() {
   const badgeToastsEnabled = me?.experimentVariant === "gamified";
   useBadgeToasts(theme, badgeToastsEnabled);
 
+  // Google OAuth callback – access_token v URL hash
+useEffect(() => {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return;
+
+  const params = new URLSearchParams(hash);
+  const token = params.get("access_token");
+  if (token) {
+    setAccessToken(token);
+
+    // vyčistit URL (zahodíme hash s tokenem)
+    history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search
+    );
+
+    qc.invalidateQueries({ queryKey: ["me"] });
+  }
+}, [qc]);
+
+
   // Po dokončení onboardingu jemně poprosíme o Notification permission,
   // pokud je pořád v "default" – nechceme to dělat už při prvním načtení appky
   useEffect(() => {
