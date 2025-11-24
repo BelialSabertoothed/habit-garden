@@ -189,18 +189,19 @@
 html {
   font-size: var(--font-size);
 }
-/* =============== GARDEN ANIMATIONS =============== */
+/* ======================================================
+    GARDEN — FINAL ANIMATIONS (full container coverage)
+   ====================================================== */
 
-/* Bloby v pozadí */
 @keyframes gardenBlob {
   0%, 100% {
     transform: translate3d(0, 0, 0) scale(1);
   }
   33% {
-    transform: translate3d(20px, -10px, 0) scale(1.05);
+    transform: translate3d(40px, -30px, 0) scale(1.1);
   }
   66% {
-    transform: translate3d(-15px, 10px, 0) scale(0.95);
+    transform: translate3d(-30px, 35px, 0) scale(0.95);
   }
 }
 
@@ -209,10 +210,10 @@ html {
     transform: translate3d(0, 0, 0) scale(1);
   }
   33% {
-    transform: translate3d(-20px, 10px, 0) scale(1.05);
+    transform: translate3d(-35px, 25px, 0) scale(1.05);
   }
   66% {
-    transform: translate3d(15px, -10px, 0) scale(0.95);
+    transform: translate3d(35px, -25px, 0) scale(1.12);
   }
 }
 
@@ -221,75 +222,73 @@ html {
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(10px, -10px, 0) scale(1.08);
+    transform: translate3d(20px, -20px, 0) scale(1.08);
   }
 }
 
-/* Utility třídy odpovídající tomu, co používáš v komponentě */
 .animate-blob-animate {
-  animation: gardenBlob 8s ease-in-out infinite;
+  animation: gardenBlob 16s ease-in-out infinite;
 }
 
 .animate-blob-animate-reverse {
-  animation: gardenBlobReverse 10s ease-in-out infinite;
+  animation: gardenBlobReverse 20s ease-in-out infinite;
 }
 
 .animate-blob-animate-slow {
-  animation: gardenBlobSlow 12s ease-in-out infinite;
+  animation: gardenBlobSlow 24s ease-in-out infinite;
 }
 
-/* Padající lístky */
 @keyframes gardenPetalFall {
   0% {
-    transform: translate3d(0, -10%, 0) rotate(0deg);
+    transform: translate3d(0, -20%, 0) rotate(0deg);
     opacity: 0;
   }
-  20% {
-    opacity: 0.9;
+  10% {
+    opacity: 1;
   }
-  50% {
-    transform: translate3d(-10px, 40%, 0) rotate(20deg);
+  40% {
+    transform: translate3d(-30px, 40%, 0) rotate(25deg);
   }
-  80% {
-    transform: translate3d(8px, 85%, 0) rotate(-10deg);
+  70% {
+    transform: translate3d(25px, 90%, 0) rotate(-20deg);
     opacity: 0.9;
   }
   100% {
-    transform: translate3d(0, 110%, 0) rotate(-25deg);
+    transform: translate3d(0, 130%, 0) rotate(-35deg);
     opacity: 0;
   }
 }
 
 .animate-petalFall {
-  animation: gardenPetalFall 8s linear infinite;
+  animation: gardenPetalFall 9s linear infinite;
 }
 
-/* Světlušky */
 @keyframes gardenFireflyFloat {
   0% {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0) scale(0.7);
     opacity: 0;
   }
   20% {
     opacity: 1;
   }
   50% {
-    transform: translate3d(6px, -12px, 0);
+    transform: translate3d(20px, -35px, 0) scale(1.2);
+    opacity: 0.9;
   }
   80% {
     opacity: 1;
+    transform: translate3d(-15px, 25px, 0) scale(1);
   }
   100% {
-    transform: translate3d(-4px, 6px, 0);
+    transform: translate3d(5px, 40px, 0) scale(0.8);
     opacity: 0;
   }
 }
 
 .animate-fireflyFloat {
-  animation: gardenFireflyFloat 9s ease-in-out infinite;
+  animation: gardenFireflyFloat 11s ease-in-out infinite;
 }
 
-/* Zpoždění (používané v komponentě na petals/fireflies) */
 .delay-1500 {
   animation-delay: 1.5s;
 }
