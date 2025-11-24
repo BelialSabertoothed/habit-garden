@@ -203,7 +203,10 @@ export function OnboardingTour({
 
   // když se steps změní (např. hasProfile), ořízni index
   useEffect(() => {
-    setCurrentStep((i) => Math.min(i, Math.max(steps.length - 1, 0)));
+    setCurrentStep((i) => {
+      if (i > steps.length - 1) return steps.length - 1;
+      return i;
+    });
   }, [steps.length]);
 
   // bezpečný index + current step – tady už nikdy nebude undefined

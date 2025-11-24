@@ -10,39 +10,29 @@ type Theme = "day" | "night";
 export function useBadgeToasts(theme: Theme, enabled: boolean) {
   const { data: rewardsRaw } = useRewards();
 
+  // IDs rewardů, pro které už toast v TÉTO session proběhl
   const shownRewardIdsRef = useRef<Set<string>>(new Set());
-  const initialisedRef = useRef(false);
 
   useEffect(() => {
-    console.log("[BadgeToasts] enabled =", enabled, "raw =", rewardsRaw);
-
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
 
     const rewards = Array.isArray(rewardsRaw)
       ? rewardsRaw
       : (rewardsRaw as any)?.items ?? [];
 
-    console.log("[BadgeToasts] normalized rewards =", rewards);
-
     if (!rewards || rewards.length === 0) return;
-
-    if (!initialisedRef.current) {
-      console.log("[BadgeToasts] first run, marking existing as shown");
-      rewards.forEach((r: any) => {
-        if (r?._id) shownRewardIdsRef.current.add(r._id);
-      });
-      initialisedRef.current = true;
-      return;
-    }
 
     rewards.forEach((r: any) => {
       if (!r?._id || !r?.badge) return;
-      if (shownRewardIdsRef.current.has(r._id)) return;
+
+      if (shownRewardIdsRef.current.has(r._id)) {
+        return;
+      }
 
       const id = r.badge as BadgeId;
-      if (!BADGES[id]) return;
-
-      console.log("[BadgeToasts] NEW reward → toast", r);
+      if (!BADGES[id]) return; // safety
 
       shownRewardIdsRef.current.add(r._id);
 

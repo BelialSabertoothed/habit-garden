@@ -15,7 +15,6 @@ import { useBadgeToasts } from "./hooks/useBadgeToasts";
 import { askNotificationPermission } from "./lib/notificationPermission";
 import { FlowerLoader } from "./components/FlowerLoader";
 import "./i18n/i18n";
-import toast from "react-hot-toast";
 
 type Page = "garden" | "habits" | "stats" | "profile";
 
@@ -32,11 +31,6 @@ export default function App() {
   // badge toasty jen pro gamified variantu
   const badgeToastsEnabled = me?.experimentVariant === "gamified";
   useBadgeToasts(theme, badgeToastsEnabled);
-
-  useEffect(() => {
-    // jen na test – po načtení stránky by měl vyskočit toast
-    toast("Debug toast – měl bys mě vidět 👀");
-  }, []);
 
   useEffect(() => {
     if (!me) return;

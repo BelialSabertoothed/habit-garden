@@ -88,7 +88,7 @@ export function PlantCard({
   const [evolving, setEvolving] = useState(false);
 
   const visualProgress =
-    stage === "tree" ? progress : Math.min(progress, 95);
+    stage === "tree" ? progress : Math.min(progress, 85);
 
   useEffect(() => {
     if (prevStage.current !== stage) {
