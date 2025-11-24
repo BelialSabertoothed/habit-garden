@@ -1,7 +1,10 @@
 import { getAccessToken, setAccessToken, clearAccessToken } from "./authToken";
 
-const API_URL = import.meta.env.VITE_API_URL as string;
-const WITH_CREDENTIALS = (import.meta.env.VITE_API_WITH_CREDENTIALS ?? "false") === "true";
+const RAW_API_URL = import.meta.env.VITE_API_URL ?? "";
+const API_URL = RAW_API_URL.replace(/\/+$/, "") + "/";
+
+const WITH_CREDENTIALS =
+  (import.meta.env.VITE_API_WITH_CREDENTIALS ?? "false") === "true";
 
 export class ApiError extends Error {
   status: number;
@@ -14,14 +17,30 @@ export class ApiError extends Error {
 }
 
 type Method = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
-type Opts = { json?: unknown; headers?: Record<string,string>; signal?: AbortSignal; _retry?: boolean };
+type Opts = {
+  json?: unknown;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+  _retry?: boolean;
+};
 
 async function rawFetch(path: string, method: Method, opts: Opts = {}) {
-  const headers: Record<string,string> = { ...(opts.json ? { "Content-Type": "application/json" } : {}), ...(opts.headers ?? {}) };
-  const token = getAccessToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const headers: Record<string, string> = {
+    ...(opts.json ? { "Content-Type": "application/json" } : {}),
+    ...(opts.headers ?? {}),
+  };
 
-  const res = await fetch(new URL(path, API_URL).toString(), {
+  const token = getAccessToken();
+  console.log("[api] rawFetch path:", path, "token:", token); // 👈 debug
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const url = new URL(path, API_URL).toString();
+  console.log("[api] final URL:", url); // 👈 debug
+
+  const res = await fetch(url, {
     method,
     headers,
     body: opts.json ? JSON.stringify(opts.json) : undefined,
@@ -30,28 +49,46 @@ async function rawFetch(path: string, method: Method, opts: Opts = {}) {
   });
 
   const text = await res.text();
-  const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
+  const data = text
+    ? (() => {
+        try {
+          return JSON.parse(text);
+        } catch {
+          return text;
+        }
+      })()
+    : null;
+
   return { res, data };
 }
 
-async function request<T>(path: string, method: Method, opts: Opts = {}): Promise<T> {
+async function request<T>(
+  path: string,
+  method: Method,
+  opts: Opts = {}
+): Promise<T> {
   let { res, data } = await rawFetch(path, method, opts);
 
   if (res.status === 401 && !opts._retry) {
+    // pokus o refresh – zůstává, ale bez další invalidace query
     const r = await fetch(new URL("auth/refresh", API_URL).toString(), {
       method: "POST",
       credentials: WITH_CREDENTIALS ? "include" : "same-origin",
     });
+
     if (r.ok) {
-      const { accessToken } = await r.json();
+      const body = await r.json();
+      const accessToken = (body as any)?.accessToken;
       if (typeof accessToken === "string") {
         setAccessToken(accessToken);
-        ({ res, data } = await rawFetch(path, method, { ...opts, _retry: true }));
+        ({ res, data } = await rawFetch(path, method, {
+          ...opts,
+          _retry: true,
+        }));
       }
     } else {
-      // ⬇️ jen smaž token a nech useMe, ať si s 401 poradí sama
+      // refresh selhal → prostě smažeme token a dál necháme 401 dojít až do useMe
       clearAccessToken();
-      // NEvolat invalidateQueries(["me"]) – to dělalo smyčku
     }
   }
 
@@ -62,14 +99,14 @@ async function request<T>(path: string, method: Method, opts: Opts = {}): Promis
       (data as any)?.message || (data as any)?.error
     );
   }
+
   return data as T;
 }
 
-
 export const api = {
-  get:  <T>(p: string, o?: Opts) => request<T>(p, "GET", o),
+  get: <T>(p: string, o?: Opts) => request<T>(p, "GET", o),
   post: <T>(p: string, o?: Opts) => request<T>(p, "POST", o),
-  patch:<T>(p: string, o?: Opts) => request<T>(p, "PATCH", o),
-  put:  <T>(p: string, o?: Opts) => request<T>(p, "PUT", o),
-  del:  <T>(p: string, o?: Opts) => request<T>(p, "DELETE", o),
+  patch: <T>(p: string, o?: Opts) => request<T>(p, "PATCH", o),
+  put: <T>(p: string, o?: Opts) => request<T>(p, "PUT", o),
+  del: <T>(p: string, o?: Opts) => request<T>(p, "DELETE", o),
 };

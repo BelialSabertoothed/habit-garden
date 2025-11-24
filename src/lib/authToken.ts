@@ -15,7 +15,6 @@ export function getAccessToken(): string | null {
 export function setAccessToken(token: string) {
   if (!isBrowser()) return;
   window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
-  // upozorni posluchače
   for (const fn of listeners) fn(token);
 }
 
@@ -27,7 +26,6 @@ export function clearAccessToken() {
 
 export function onTokenChange(listener: Listener): () => void {
   listeners.add(listener);
-  // inicializační zavolání – dá aktuální stav
   listener(getAccessToken());
   return () => {
     listeners.delete(listener);
