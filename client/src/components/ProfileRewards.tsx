@@ -68,9 +68,15 @@ export function ProfileRewards() {
     ? rewardsRaw
     : (rewardsRaw as any)?.items ?? [];
 
+  interface RewardItem {
+    badge?: BadgeId | null;
+    [key: string]: unknown;
+  }
+  const typedRewards = rewards as RewardItem[];
+
   const unlockedIds = new Set<BadgeId>(
-    rewards
-      .map((r: any) => r.badge as string | null | undefined)
+    typedRewards
+      .map((r) => r.badge)
       .filter((b): b is BadgeId => !!b)
   );
 

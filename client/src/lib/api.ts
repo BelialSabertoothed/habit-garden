@@ -54,10 +54,10 @@ async function request<T>(path: string, method: Method, opts: Opts = {}): Promis
         ({ res, data } = await rawFetch(path, method, { ...opts, _retry: true }));
       }
     } else {
-      // ⬇️ jen vyčisti token – žádné invalidate tady!
-      clearAccessToken();
-      // ✖️ qcRef?.invalidateQueries({ queryKey: ["me"] });  // pryč
-    }
+        // ⬇️ jen vyčisti token – invalidujeme lokální cache uživatele přes qcRef pokud existuje
+        clearAccessToken();
+        qcRef?.invalidateQueries({ queryKey: ["me"] });
+      }
   }
   if (!res.ok) throw new ApiError(res.status, data, (data as any)?.message || (data as any)?.error);
   return data as T;
