@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Input } from "./ui/input";
+import { FlowerLoader } from "./FlowerLoader";
 import {
   SUGGESTED_HABITS_BY_CATEGORY,
   type SuggestedHabit,
