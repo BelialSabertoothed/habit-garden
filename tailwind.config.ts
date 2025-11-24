@@ -1,17 +1,15 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+import type { Config } from "tailwindcss";
+
+const config: Config = {
   darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       keyframes: {
-        // 🌸 loader (pokud ho používáš)
         flower: {
           "0%, 100%": { transform: "scale(1)" },
           "50%": { transform: "scale(1.35)" },
         },
-
-        // 🌈 background blob Animations
         blob: {
           "0%, 100%": { transform: "translate(0px,0px) scale(1)" },
           "33%": { transform: "translate(20px,-10px) scale(1.05)" },
@@ -26,8 +24,6 @@ module.exports = {
           "0%, 100%": { transform: "translate(0px,0px) scale(1)" },
           "50%": { transform: "translate(10px,-10px) scale(1.08)" },
         },
-
-        // 🌸 padající lístky
         petalFall: {
           "0%": { transform: "translateY(-20px) rotate(0deg)", opacity: 1 },
           "100%": {
@@ -35,8 +31,6 @@ module.exports = {
             opacity: 0,
           },
         },
-
-        // 🔆 světlušky
         fireflyFloat: {
           "0%, 100%": {
             transform: "translate(0,0) scale(1)",
@@ -60,3 +54,5 @@ module.exports = {
   },
   plugins: [],
 };
+
+export default config;

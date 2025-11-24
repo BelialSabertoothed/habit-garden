@@ -101,13 +101,19 @@ export function OnboardingTour({
   startOnStarter,
 }: OnboardingTourProps) {
   const { data: me, isLoading } = useMe();
+  const qc = useQueryClient();
+  const isDark = theme === "night";
+  const { t } = useTranslation();
+
+  // zamrazit experiment variantu v okamžiku mountu
   const initialGamified = useRef(
     (me?.experimentVariant ?? "gamified") === "gamified"
   ).current;
 
-  const qc = useQueryClient();
-  const isDark = theme === "night";
-  const { t } = useTranslation();
+  // zamrazit, jestli měl user profil už před spuštěním onboarding flow
+  const initialHasProfile = useRef(
+    Boolean(me?.nickname && me?.avatar)
+  ).current;
 
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [nick, setNick] = useState(me?.nickname ?? "");
@@ -125,8 +131,6 @@ export function OnboardingTour({
       Object.values(SUGGESTED_HABITS_BY_CATEGORY).flat() as SuggestedHabit[]
     ).map((h) => ({ ...h, selected: false }))
   );
-
-  const hasProfile = Boolean(me?.nickname && me?.avatar);
 
   const canSaveProfile = useMemo(
     () => nick.trim().length >= 2 && avatar.trim().length > 0,
@@ -155,7 +159,8 @@ export function OnboardingTour({
       },
     ];
 
-    const maybeProfile: Step[] = hasProfile
+    // používáme "initialHasProfile" – steps se během flow už nemění
+    const maybeProfile: Step[] = initialHasProfile
       ? []
       : [
           {
@@ -192,7 +197,7 @@ export function OnboardingTour({
     ];
 
     return [...intro, ...maybeProfile, ...productIntro, ...starters];
-  }, [hasProfile, t, initialGamified]);
+  }, [initialHasProfile, initialGamified, t]);
 
   /* ---------- current step ---------- */
   const [currentStep, setCurrentStep] = useState(0);
@@ -204,7 +209,7 @@ export function OnboardingTour({
     }
   }, [startOnStarter, steps.length]);
 
-  // když se steps změní (např. hasProfile), ořízni index
+  // když se steps změní (teď už prakticky jen kvůli překladu), ořízni index
   useEffect(() => {
     setCurrentStep((i) => {
       if (i > steps.length - 1) return steps.length - 1;
@@ -212,13 +217,13 @@ export function OnboardingTour({
     });
   }, [steps.length]);
 
-  // bezpečný index + current step – tady už nikdy nebude undefined
+  // bezpečný index + current step
   const currentStepIndex = Math.min(currentStep, Math.max(steps.length - 1, 0));
   const current = steps[currentStepIndex];
   const isFirst = currentStepIndex === 0;
   const isLast = currentStepIndex === steps.length - 1;
 
-  // sync z /me do lokálního stavu
+  // sync z /me do lokálního stavu (ale už nemění strukturu steps)
   useEffect(() => {
     if (me?.nickname) setNick(me.nickname);
     if (me?.avatar) setAvatar(me.avatar);
