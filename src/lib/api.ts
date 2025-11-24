@@ -1,12 +1,7 @@
 import { getAccessToken, setAccessToken, clearAccessToken } from "./authToken";
-import { QueryClient } from "@tanstack/react-query";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 const WITH_CREDENTIALS = (import.meta.env.VITE_API_WITH_CREDENTIALS ?? "false") === "true";
-
-// Sdílený queryClient je fajn předat zvenku; pro jednoduchost vytvoříme lokální fallback:
-let qcRef: QueryClient | null = null;
-export function attachQueryClient(qc: QueryClient) { qcRef = qc; }
 
 export class ApiError extends Error {
   status: number;
