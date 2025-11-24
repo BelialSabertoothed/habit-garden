@@ -13,7 +13,7 @@ import { api } from "./lib/api";
 import { Navigation } from "./components/Navigation";
 import { useBadgeToasts } from "./hooks/useBadgeToasts";
 import { askNotificationPermission } from "./lib/notificationPermission";
-import "./i18n/i18n"; 
+import "./i18n/i18n";
 
 type Page = "garden" | "habits" | "stats" | "profile";
 

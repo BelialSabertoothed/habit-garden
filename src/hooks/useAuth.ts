@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "../lib/api";
 import type { User } from "../types";
 
-// Pomocná funkce na detekci 401
 export const isUnauthorized = (e: unknown) =>
   e instanceof ApiError && e.status === 401;
 
@@ -14,7 +13,6 @@ export function useMe() {
         const user = await api.get<User>("auth/me");
         return user;
       } catch (e) {
-        // 401 = nepřihlášený → vrátíme null místo chyby
         if (isUnauthorized(e)) {
           return null;
         }
