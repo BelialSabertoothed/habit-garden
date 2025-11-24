@@ -11,6 +11,7 @@ import {
   Users,
   Palette,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Switch } from "./ui/switch";
 import { useMe } from "../hooks/useAuth";
@@ -56,7 +57,20 @@ interface OnboardingTourProps {
   startOnStarter?: boolean;
 }
 
-const ICONS = {
+type Step = {
+  key: string;
+  title: string;
+  description: string;
+  isConsent?: boolean;
+  isNotifications?: boolean;
+  isProfileStep?: boolean;
+  isStarter?: boolean;
+};
+
+const ICONS: Record<
+  "heart" | "leaf" | "briefcase" | "users" | "palette",
+  LucideIcon
+> = {
   heart: Heart,
   leaf: Leaf,
   briefcase: Briefcase,
@@ -117,8 +131,8 @@ export function OnboardingTour({
   );
 
   /* ---------- steps definition ---------- */
-  const steps = useMemo(() => {
-    const intro = [
+  const steps = useMemo<Step[]>(() => {
+    const intro: Step[] = [
       {
         key: "consent",
         title: t("onboarding.steps.consent.title"),
@@ -136,9 +150,9 @@ export function OnboardingTour({
         description: t("onboarding.steps.notifications.description"),
         isNotifications: true,
       },
-    ] as const;
+    ];
 
-    const maybeProfile = hasProfile
+    const maybeProfile: Step[] = hasProfile
       ? []
       : [
           {
@@ -149,7 +163,7 @@ export function OnboardingTour({
           },
         ];
 
-    const productIntro = isGamified
+    const productIntro: Step[] = isGamified
       ? [
           {
             key: "garden",
@@ -165,7 +179,7 @@ export function OnboardingTour({
           },
         ];
 
-    const starters = [
+    const starters: Step[] = [
       {
         key: "starters",
         title: t("onboarding.steps.starters.title"),
@@ -178,13 +192,25 @@ export function OnboardingTour({
   }, [hasProfile, isGamified, t]);
 
   /* ---------- current step ---------- */
-  const [currentStep, setCurrentStep] = useState(() =>
-    startOnStarter ? steps.length - 1 : 0
-  );
+  const [currentStep, setCurrentStep] = useState(0);
 
+  // pokud máme startOnStarter, přepneme až po prvním spočítání steps
   useEffect(() => {
-    setCurrentStep((i) => Math.min(i, steps.length - 1));
+    if (startOnStarter) {
+      setCurrentStep(Math.max(steps.length - 1, 0));
+    }
+  }, [startOnStarter, steps.length]);
+
+  // když se steps změní (např. hasProfile), ořízni index
+  useEffect(() => {
+    setCurrentStep((i) => Math.min(i, Math.max(steps.length - 1, 0)));
   }, [steps.length]);
+
+  // bezpečný index + current step – tady už nikdy nebude undefined
+  const currentStepIndex = Math.min(currentStep, Math.max(steps.length - 1, 0));
+  const current = steps[currentStepIndex];
+  const isFirst = currentStepIndex === 0;
+  const isLast = currentStepIndex === steps.length - 1;
 
   // sync z /me do lokálního stavu
   useEffect(() => {
@@ -199,10 +225,6 @@ export function OnboardingTour({
     () => habits.filter((h) => activeCats.includes(h.category)),
     [habits, activeCats]
   );
-
-  const current = steps[currentStep];
-  const isFirst = currentStep === 0;
-  const isLast = currentStep === steps.length - 1;
 
   /* ---------- helpers ---------- */
   const toggleCat = (c: Category) =>
@@ -226,8 +248,10 @@ export function OnboardingTour({
     const nickname = nick.trim();
     const prev = qc.getQueryData(["me"]);
 
-    qc.setQueryData(["me"], (curr: any) =>
-      curr ? { ...curr, nickname, avatar } : curr
+    qc.setQueryData(["me"], (curr: unknown) =>
+      curr && typeof curr === "object"
+        ? { ...(curr as any), nickname, avatar }
+        : curr
     );
 
     try {
@@ -239,75 +263,96 @@ export function OnboardingTour({
     }
   };
 
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const handleNext = async () => {
+    if (!current) return;
+
     // consent krok – bez checkboxu nepouštíme dál
-    if ((current as any).isConsent && !consentAccepted) return;
+    if (current.isConsent && !consentAccepted) return;
+    if (isProcessing) return;
 
-    // notifications krok – jen uložit preferenci do BE, neblokovat
-    if ((current as any).isNotifications) {
-      const prev = qc.getQueryData(["me"]);
-      qc.setQueryData(["me"], { ...me, notificationsEnabled });
+    setIsProcessing(true);
+    try {
+      // notifications krok – uložit preferenci do BE
+      if (current.isNotifications) {
+        const prev = qc.getQueryData(["me"]);
+        qc.setQueryData(["me"], (curr: unknown) =>
+          curr && typeof curr === "object"
+            ? { ...(curr as any), notificationsEnabled }
+            : curr
+        );
 
-      try {
-        await api.post("profile/notifications", {
-          json: { notificationsEnabled },
-        });
-        await qc.invalidateQueries({ queryKey: ["me"] });
-      } catch (err) {
-        console.error("profile/notifications in onboarding failed:", err);
-        qc.setQueryData(["me"], prev);
-        // ale NEvracíme – uživatele to dál pustíme
-      }
-    }
-
-    // profil krok – musí být vyplněno
-    if ((current as any).isProfileStep) {
-      if (!canSaveProfile) return;
-      await saveProfile();
-    }
-
-    // poslední krok – založení startovacích habitů (volitelné)
-    if (isLast) {
-      if ((current as any).isStarter) {
-        const selected = habits.filter((h) => h.selected);
-        if (selected.length) {
-          await api.post("habits/bulk", {
-            json: {
-              habits: selected.map((h) => ({
-                title: h.title,
-                category: h.category,
-                icon: h.icon,
-                frequency: h.frequency,
-                worth: h.worth ?? 10,
-              })),
-            },
+        try {
+          await api.post("profile/notifications", {
+            json: { notificationsEnabled },
           });
-
-          await qc.invalidateQueries({ queryKey: ["habits", "mine"] });
           await qc.invalidateQueries({ queryKey: ["me"] });
+        } catch (err) {
+          console.error("profile/notifications in onboarding failed:", err);
+          qc.setQueryData(["me"], prev);
+          // uživatele dál pustíme
         }
       }
-      onComplete();
-      return;
-    }
 
-    setCurrentStep((s) => s + 1);
+      // profil krok – musí být validní
+      if (current.isProfileStep) {
+        if (!canSaveProfile) return;
+        await saveProfile();
+      }
+
+      // poslední krok – založení startovacích habitů (volitelné)
+      if (isLast) {
+        if (current.isStarter) {
+          const selected = habits.filter((h) => h.selected);
+          if (selected.length) {
+            await api.post("habits/bulk", {
+              json: {
+                habits: selected.map((h) => ({
+                  title: h.title,
+                  category: h.category,
+                  icon: h.icon,
+                  frequency: h.frequency,
+                  worth: h.worth ?? 10,
+                })),
+              },
+            });
+
+            await qc.invalidateQueries({ queryKey: ["habits", "mine"] });
+            await qc.invalidateQueries({ queryKey: ["me"] });
+          }
+        }
+        onComplete();
+        return;
+      }
+
+      setCurrentStep((s) => Math.min(s + 1, Math.max(steps.length - 1, 0)));
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handlePrev = () => {
-    if (!isFirst) setCurrentStep((s) => s - 1);
+    if (!isFirst) {
+      setCurrentStep((s) => Math.max(s - 1, 0));
+    }
   };
 
   // auto-skip profile step, pokud už je profil mezitím hotový
   useEffect(() => {
-    if (hasProfile && (current as any)?.isProfileStep) {
-      setCurrentStep((s) => Math.min(s + 1, steps.length - 1));
+    if (hasProfile && current?.isProfileStep) {
+      setCurrentStep((s) => Math.min(s + 1, Math.max(steps.length - 1, 0)));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasProfile]);
 
   if (isLoading) {
     return <FlowerLoader theme={theme} />;
+  }
+
+  if (!current) {
+    // fallback – teoreticky by se nemělo stát, ale pro jistotu
+    return null;
   }
 
   return (
@@ -346,15 +391,15 @@ export function OnboardingTour({
         {/* title & description */}
         <div className="text-center mb-6">
           <h3 className={cn("mb-2", isDark ? "text-white" : "text-gray-900")}>
-            {(current as any).title}
+            {current.title}
           </h3>
           <p className={cn(isDark ? "text-gray-300" : "text-gray-600")}>
-            {(current as any).description}
+            {current.description}
           </p>
         </div>
 
         {/* consent step */}
-        {(current as any).isConsent && (
+        {current.isConsent && (
           <ConsentStep
             isDark={isDark}
             accepted={consentAccepted}
@@ -363,7 +408,7 @@ export function OnboardingTour({
         )}
 
         {/* profile step */}
-        {(current as any).isProfileStep && (
+        {current.isProfileStep && (
           <ProfileStep
             isDark={isDark}
             nick={nick}
@@ -374,7 +419,7 @@ export function OnboardingTour({
         )}
 
         {/* notifications step */}
-        {(current as any).isNotifications && (
+        {current.isNotifications && (
           <NotificationsStep
             isDark={isDark}
             enabled={notificationsEnabled}
@@ -383,7 +428,7 @@ export function OnboardingTour({
         )}
 
         {/* starters */}
-        {(current as any).isStarter && (
+        {current.isStarter && (
           <StarterPicker
             theme={theme}
             active={activeCats}
@@ -396,24 +441,31 @@ export function OnboardingTour({
 
         {/* nav */}
         <div className="flex items-center justify-between mt-8">
-          <Button
-            onClick={handlePrev}
-            disabled={isFirst}
-            variant="outline"
-            className={cn(
-              "rounded-xl",
-              isDark ? "border-slate-600 text-gray-300 hover:bg-slate-700" : ""
+          <div>
+            {!isFirst && (
+              <Button
+                onClick={handlePrev}
+                disabled={isFirst || isProcessing}
+                variant="outline"
+                className={cn(
+                  "rounded-xl",
+                  isDark
+                    ? "border-slate-600 text-gray-300 hover:bg-slate-700"
+                    : ""
+                )}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                {t("onboarding.actions.previous")}
+              </Button>
             )}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />{" "}
-            {t("onboarding.actions.previous")}
-          </Button>
+          </div>
 
           <Button
             onClick={handleNext}
             disabled={
-              ((current as any).isConsent && !consentAccepted) ||
-              ((current as any).isProfileStep && !canSaveProfile)
+              isProcessing ||
+              (current.isConsent && !consentAccepted) ||
+              (current.isProfileStep && !canSaveProfile)
             }
             className="rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
           >
@@ -562,9 +614,7 @@ function NotificationsStep({
       )}
     >
       <div className="max-w-[75%]">
-        <p className="font-medium mb-1">
-          {t("profile.notifications.title")}
-        </p>
+        <p className="font-medium mb-1">{t("profile.notifications.title")}</p>
         <p className="text-sm opacity-80">
           {t("profile.notifications.description")}
         </p>
@@ -594,7 +644,7 @@ function StarterPicker({
   const isDark = theme === "night";
   const { t } = useTranslation();
 
-  const CATS: { id: Category; labelKey: string; icon: any }[] = [
+  const CATS: { id: Category; labelKey: string; icon: LucideIcon }[] = [
     { id: "Health", labelKey: "Health", icon: Heart },
     { id: "Eco", labelKey: "Eco", icon: Leaf },
     { id: "Productivity", labelKey: "Productivity", icon: Briefcase },
@@ -630,8 +680,9 @@ function StarterPicker({
 
       {/* list – one column, whole card clickable */}
       <div className="grid grid-cols-1 gap-4">
-        {active.flatMap((cat) =>
-          SUGGESTED_HABITS_BY_CATEGORY[cat].map((h) => {
+        {active.flatMap((cat) => {
+          const catHabits = SUGGESTED_HABITS_BY_CATEGORY[cat] ?? [];
+          return catHabits.map((h) => {
             const Icon = ICONS[h.icon];
             const item = items.find((x) => x.id === h.id);
             const selected = item?.selected ?? false;
@@ -713,9 +764,7 @@ function StarterPicker({
                     <SelectTrigger
                       className={cn(
                         "h-10 rounded-md text-sm w-full",
-                        isDark
-                          ? "bg-slate-700 border-slate-600 text-white"
-                          : ""
+                        isDark ? "bg-slate-700 border-slate-600 text-white" : ""
                       )}
                     >
                       <SelectValue
@@ -726,9 +775,7 @@ function StarterPicker({
                       position="popper"
                       className={cn(
                         "z-[60]",
-                        isDark
-                          ? "bg-slate-700 border-slate-600 text-white"
-                          : ""
+                        isDark ? "bg-slate-700 border-slate-600 text-white" : ""
                       )}
                     >
                       <SelectItem value="Daily">
@@ -742,8 +789,8 @@ function StarterPicker({
                 </div>
               </div>
             );
-          })
-        )}
+          });
+        })}
       </div>
     </div>
   );

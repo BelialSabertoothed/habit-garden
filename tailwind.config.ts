@@ -1,25 +1,17 @@
-export default {
-  darkMode: "class",
-};
+/** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: "class",
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       keyframes: {
+        // 🌸 loader (pokud ho používáš)
         flower: {
           "0%, 100%": { transform: "scale(1)" },
           "50%": { transform: "scale(1.35)" },
         },
-      },
-      animation: {
-        "flower-pulse": "flower 1.2s ease-in-out infinite",
-      },
-    },
-  },
-};
-module.exports = {
-  theme: {
-    extend: {
-      keyframes: {
+
+        // 🌈 background blob Animations
         blob: {
           "0%, 100%": { transform: "translate(0px,0px) scale(1)" },
           "33%": { transform: "translate(20px,-10px) scale(1.05)" },
@@ -34,6 +26,8 @@ module.exports = {
           "0%, 100%": { transform: "translate(0px,0px) scale(1)" },
           "50%": { transform: "translate(10px,-10px) scale(1.08)" },
         },
+
+        // 🌸 padající lístky
         petalFall: {
           "0%": { transform: "translateY(-20px) rotate(0deg)", opacity: 1 },
           "100%": {
@@ -41,6 +35,8 @@ module.exports = {
             opacity: 0,
           },
         },
+
+        // 🔆 světlušky
         fireflyFloat: {
           "0%, 100%": {
             transform: "translate(0,0) scale(1)",
@@ -53,6 +49,7 @@ module.exports = {
         },
       },
       animation: {
+        "flower-pulse": "flower 1.2s ease-in-out infinite",
         "blob-animate": "blob 8s infinite ease-in-out",
         "blob-animate-reverse": "blobReverse 10s infinite ease-in-out",
         "blob-animate-slow": "blobSlow 12s infinite ease-in-out",

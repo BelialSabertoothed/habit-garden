@@ -1,5 +1,8 @@
 import passport from "passport";
-import { Strategy as GoogleStrategy, type Profile } from "passport-google-oauth20";
+import {
+  Strategy as GoogleStrategy,
+  type Profile,
+} from "passport-google-oauth20";
 import type { VerifyCallback } from "passport-oauth2";
 import { User } from "../models/User.js";
 
@@ -20,7 +23,12 @@ export function initPassport() {
         clientSecret: CLIENT_SECRET,
         callbackURL: CALLBACK_URL,
       },
-      async (_accessToken: string, _refreshToken: string, profile: Profile, done: VerifyCallback) => {
+      async (
+        _accessToken: string,
+        _refreshToken: string,
+        profile: Profile,
+        done: VerifyCallback
+      ) => {
         try {
           const email = profile.emails?.[0]?.value?.toLowerCase();
           const googleId = profile.id;
@@ -33,9 +41,11 @@ export function initPassport() {
               email,
               googleId,
               provider: "google",
-              verified: true,
+              emailVerified: true,
               nickname: profile.displayName,
               lastLoginAt: new Date(),
+              experimentVariant: Math.random() < 0.5 ? "gamified" : "control",
+              notificationsEnabled: false,
             });
           } else {
             user.googleId ||= googleId;
@@ -43,6 +53,10 @@ export function initPassport() {
             user.verified = true;
             user.lastLoginAt = new Date();
             await user.save();
+            if (!user.experimentVariant) {
+              user.experimentVariant =
+                Math.random() < 0.5 ? "gamified" : "control";
+            }
           }
 
           return done(null, { id: user._id.toString() });
