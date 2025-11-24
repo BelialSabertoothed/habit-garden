@@ -306,13 +306,7 @@ export function OnboardingTour({
   }, [hasProfile]);
 
   if (isLoading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
-        <div className="text-white text-lg font-medium">
-          {t("onboarding.loading")}
-        </div>
-      </div>
-    );
+    return <FlowerLoader theme={theme} />;
   }
 
   return (

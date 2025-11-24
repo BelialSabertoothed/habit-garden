@@ -7,6 +7,7 @@ import { AddHabitModal } from "./AddHabitModal";
 import { useHabits, useWaterHabit } from "../hooks/useHabits";
 import { useMe } from "../hooks/useAuth";
 import { SparkleButton } from "./ui/sparkle-button";
+import { FlowerLoader } from "./FlowerLoader";
 import {
   getStageAndProgress,
   type Stage,
@@ -237,11 +238,7 @@ export function DashboardGarden({
   }, [level]);
 
   if (isLoading) {
-    return (
-      <div className="p-6">
-        {t("habits.list.loading")}
-      </div>
-    );
+    return <FlowerLoader theme={theme} />;
   }
   if (isError) {
     return (

@@ -59,29 +59,32 @@ export function getStageAndProgress(
 ): { stage: Stage; progress: number } {
   const thresholds = getThresholds(freq);
 
-  const safeBest = Math.max(bestStreak, 0);
-  const safeCurrent = Math.max(currentStreak, 0);
+  const safeBest = Math.max(0, bestStreak || 0);
+  const safeCurrent = Math.max(0, currentStreak || 0);
 
+  // 1) Stage je daná jen podle bestStreak
   const stageIndex = getStageIndexFromBestStreak(freq, safeBest);
   const stage = STAGE_ORDER[stageIndex];
 
-  const lower = thresholds[stageIndex];
-  const upper =
-    stageIndex < thresholds.length - 1
-      ? thresholds[stageIndex + 1]
-      : thresholds[stageIndex] +
-        (freq === "Daily" ? LAST_STAGE_EXTRA.Daily : LAST_STAGE_EXTRA.Weekly);
+  // 2) Span = kolik streaků je potřeba v rámci téhle stage na postup dál
+  let span: number;
+  if (stageIndex < thresholds.length - 1) {
+    // např. flower: 7–14 → span = 7
+    span = thresholds[stageIndex + 1] - thresholds[stageIndex];
+  } else {
+    // poslední stage – „virtuální“ span, aby bar žil dál
+    span =
+      freq === "Daily" ? LAST_STAGE_EXTRA.Daily : LAST_STAGE_EXTRA.Weekly;
+  }
+  span = Math.max(1, span);
 
-  const span = Math.max(1, upper - lower);
-
-  // 👉 progress počítáme relativně k aktuální stage
-  const raw = ((safeCurrent - lower) / span) * 100;
-
+  // 3) Progress uvnitř stage – jen podle currentStreak, oříznutý na span
+  const stageStreak = Math.min(safeCurrent, span); // 0..span
+  const raw = (stageStreak / span) * 100;
   const progress = Math.max(0, Math.min(100, raw));
 
   return { stage, progress };
 }
-
 
 export function getStageForStreak(
   freq: Frequency,

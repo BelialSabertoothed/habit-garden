@@ -13,6 +13,8 @@ import {
   Palette,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { FlowerLoader } from "./FlowerLoader";
+
 
 import { HabitCard } from "./HabitCard";
 import { AddHabitModal } from "./AddHabitModal";
@@ -127,15 +129,7 @@ export function HabitsList({ theme }: HabitsListProps) {
   };
 
   if (isLoading) {
-    return (
-      <div
-        className={`py-10 text-center ${
-          isDark ? "text-gray-300" : "text-gray-700"
-        }`}
-      >
-        {t("habits.list.loading")}
-      </div>
-    );
+    return <FlowerLoader theme={theme} />;
   }
 
   if (isError) {
