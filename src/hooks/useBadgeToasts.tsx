@@ -42,9 +42,6 @@ export function useBadgeToasts(theme: Theme, enabled: boolean) {
 
       shownRewardIdsRef.current.add(r._id);
 
-      // DEBUG: můžeš si klidně nechat:
-      // console.log("New reward → toast:", r);
-
       toast.custom(
         (t) => (
           <BadgeToast

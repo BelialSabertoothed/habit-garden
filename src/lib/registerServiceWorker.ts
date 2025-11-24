@@ -1,6 +1,5 @@
 export function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) {
-    console.log("[SW] Service workers are not supported in this browser.");
     return;
   }
 
@@ -9,7 +8,6 @@ export function registerServiceWorker() {
     window.location.hostname === "127.0.0.1";
 
   if (!isLocalhost && window.location.protocol !== "https:") {
-    console.log("[SW] Needs HTTPS or localhost.");
     return;
   }
 

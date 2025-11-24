@@ -65,7 +65,6 @@ export function getStageAndProgress(
   const stageIndex = getStageIndexFromBestStreak(freq, safeBest);
   const stage = STAGE_ORDER[stageIndex];
 
-  // SPAN = kolik streaků potřebuješ do další stage
   const lower = thresholds[stageIndex];
   const upper =
     stageIndex < thresholds.length - 1
@@ -75,13 +74,14 @@ export function getStageAndProgress(
 
   const span = Math.max(1, upper - lower);
 
-  // NEpočítáme progress od lowerBound — místo toho resetujeme bar
-  const raw = (safeCurrent / span) * 100;
+  // 👉 progress počítáme relativně k aktuální stage
+  const raw = ((safeCurrent - lower) / span) * 100;
 
   const progress = Math.max(0, Math.min(100, raw));
 
   return { stage, progress };
 }
+
 
 export function getStageForStreak(
   freq: Frequency,

@@ -31,14 +31,12 @@ async function rawFetch(path: string, method: Method, opts: Opts = {}) {
   };
 
   const token = getAccessToken();
-  console.log("[api] rawFetch path:", path, "token:", token); // 👈 debug
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
   const url = new URL(path, API_URL).toString();
-  console.log("[api] final URL:", url); // 👈 debug
 
   const res = await fetch(url, {
     method,

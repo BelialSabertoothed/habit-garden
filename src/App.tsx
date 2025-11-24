@@ -13,6 +13,7 @@ import { api } from "./lib/api";
 import { Navigation } from "./components/Navigation";
 import { useBadgeToasts } from "./hooks/useBadgeToasts";
 import { askNotificationPermission } from "./lib/notificationPermission";
+import { FlowerLoader } from "./components/FlowerLoader";
 import "./i18n/i18n";
 
 type Page = "garden" | "habits" | "stats" | "profile";
@@ -31,8 +32,6 @@ export default function App() {
   const badgeToastsEnabled = me?.experimentVariant === "gamified";
   useBadgeToasts(theme, badgeToastsEnabled);
 
-  // Po dokončení onboardingu jemně poprosíme o Notification permission,
-  // pokud je pořád v "default" – nechceme to dělat už při prvním načtení appky
   useEffect(() => {
     if (!me) return;
     if (!me.onboardingDone) return;
@@ -51,23 +50,18 @@ export default function App() {
 
     const params = new URLSearchParams(hash);
     const token = params.get("access_token");
-    console.log("OAUTH hash:", hash);
-    console.log("OAUTH token from hash:", token);
 
     if (token) {
       setAccessToken(token);
-      console.log("Saved token to storage:", token);
 
-      // po uložení tokenu prostě přesměrujeme na root
-      // appka se načte znovu, useMe poběží už s tokenem
       window.location.replace("/");
     }
-  }, []); // 👈 žádný qc v deps, efekt pustíme jen jednou po mountu
+  }, []);
 
   /* ---------------------- LOADING / NO USER ---------------------- */
 
   if (isLoading) {
-    return <div className="p-6">Načítám…</div>;
+    return <FlowerLoader theme={theme} />;
   }
 
   // Nepřihlášený user → landing (login + registrační modal)

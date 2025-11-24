@@ -52,8 +52,7 @@
       "placeholder": "např. BelSunflower"
     },
     "avatar": {
-      "label": "Avatar URL",
-      "placeholder": "https://…/avatar.png"
+      "label": "Avatar"
     },
     "starters": {
       "selected": "Vybráno",

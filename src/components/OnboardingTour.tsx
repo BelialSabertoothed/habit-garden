@@ -520,14 +520,6 @@ function ProfileStep({
         >
           {t("profile.avatar.label")}
         </div>
-        <p
-          className={cn(
-            "text-xs",
-            isDark ? "text-gray-400" : "text-gray-500"
-          )}
-        >
-          {t("profile.avatar.placeholder")}
-        </p>
         <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
           {EMOJIS.map((e) => (
             <button

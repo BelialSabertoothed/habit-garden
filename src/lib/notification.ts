@@ -79,7 +79,6 @@ export async function enableNotificationsOnClient(): Promise<boolean> {
       json: { notificationsEnabled: true },
     });
 
-    console.log("[notifications] Enabled successfully");
     return true;
   } catch (err) {
     console.error("[notifications] enable failed:", err);
@@ -106,7 +105,6 @@ export async function disableNotificationsOnClient(): Promise<void> {
       json: { notificationsEnabled: false },
     });
 
-    console.log("[notifications] Disabled successfully");
   } catch (err) {
     console.warn("[notifications] disable failed:", err);
   }
