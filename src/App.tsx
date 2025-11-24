@@ -44,27 +44,25 @@ export default function App() {
     }
   }, [me]);
 
+  // Google OAuth callback – access_token v URL hash
   useEffect(() => {
     const hash = window.location.hash.slice(1);
-    console.log("OAUTH hash:", hash);
     if (!hash) return;
 
     const params = new URLSearchParams(hash);
     const token = params.get("access_token");
+    console.log("OAUTH hash:", hash);
     console.log("OAUTH token from hash:", token);
+
     if (token) {
       setAccessToken(token);
       console.log("Saved token to storage:", token);
 
-      history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search
-      );
-
-      qc.invalidateQueries({ queryKey: ["me"] });
+      // po uložení tokenu prostě přesměrujeme na root
+      // appka se načte znovu, useMe poběží už s tokenem
+      window.location.replace("/");
     }
-  }, [qc]);
+  }, []); // 👈 žádný qc v deps, efekt pustíme jen jednou po mountu
 
   /* ---------------------- LOADING / NO USER ---------------------- */
 
