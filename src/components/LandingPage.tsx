@@ -1,14 +1,13 @@
-// src/components/LandingPage.tsx
 import { useState } from "react";
 import { Sprout, Mail, Sparkles, TrendingUp, Award } from "lucide-react";
 import { Button } from "./ui/button";
 import EmailLogin from "./EmailLogin";
 import { RegistrationModal } from "./RegistrationModal";
 import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "./LanguageSwitcher"; 
 
 interface LandingPageProps {
   onGoogleLogin: () => void;
-  /** Volitelný override panelu pro e-mail přihlášení */
   emailLoginSlot?: React.ReactNode;
 }
 
@@ -37,8 +36,13 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-100 via-emerald-50 to-teal-50 overflow-hidden">
+      {/* Top bar s jazykem */}
+      <div className="max-w-6xl mx-auto px-6 pt-6 flex justify-end">
+        <LanguageSwitcher />
+      </div>
+
       {/* Hero Section */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-6xl mx-auto px-6 pb-12 pt-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-6rem)]">
           {/* Left side - Content */}
           <div className="space-y-8">
@@ -162,7 +166,6 @@ export function LandingPage({ onGoogleLogin, emailLoginSlot }: LandingPageProps)
         open={showRegister}
         onOpenChange={setShowRegister}
         onComplete={() => {
-          // volitelné: po registraci můžeš skrýt email panel, spustit onboarding apod.
           setShowEmail(false);
         }}
       />
