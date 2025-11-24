@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Sprout, Leaf, Flower2, TreeDeciduous } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { getStageAndProgress, type Stage } from "../lib/growth";
@@ -55,15 +56,7 @@ function resolveGardenStage(avg: number, plantCount: number): GardenStage {
   return "seed";
 }
 
-// backgrounds
-const gardenBackgroundConfig: Record<
-  GardenStage,
-  {
-    light: string;
-    dark: string;
-    blob: string;
-  }
-> = {
+const gardenBackgroundConfig = {
   empty: {
     light: "from-sky-50 via-slate-50 to-emerald-50",
     dark: "from-slate-950 via-slate-900 to-slate-950",
@@ -89,33 +82,16 @@ const gardenBackgroundConfig: Record<
     dark: "from-slate-900 via-emerald-900/40 to-slate-950",
     blob: "bg-emerald-400/40",
   },
-};
+} as const;
 
-// LOCAL IMAGES in /public
-const gardenImageConfig: Record<GardenStage, { day: string; night: string }> = {
-  empty: {
-    day: "/no-habit.png",
-    night: "/no-habit.png",
-  },
-  seed: {
-    day: "/seed-day.png",
-    night: "/seed-night.png",
-  },
-  sprout: {
-    day: "/sprout-day.png",
-    night: "/sprout-night.png",
-  },
-  flower: {
-    day: "/flower-day.png",
-    night: "/flower-night.png",
-  },
-  tree: {
-    day: "/tree-day.png",
-    night: "/tree-night.png",
-  },
-};
+const gardenImageConfig = {
+  empty: { day: "/no-habit.png", night: "/no-habit.png" },
+  seed: { day: "/seed-day.png", night: "/seed-night.png" },
+  sprout: { day: "/sprout-day.png", night: "/sprout-night.png" },
+  flower: { day: "/flower-day.png", night: "/flower-night.png" },
+  tree: { day: "/tree-day.png", night: "/tree-night.png" },
+} as const;
 
-/** klíče pro “extraEncouragement” – texty jsou v i18n JSONu */
 const encouragementPoolKeys = [
   "dashboard.fullGarden.encouragement.pool.0",
   "dashboard.fullGarden.encouragement.pool.1",
@@ -130,22 +106,12 @@ const encouragementPoolKeys = [
 ] as const;
 
 function pickStageEncouragementKey(avg: number, plantCount: number): string {
-  if (plantCount === 0) {
-    return "dashboard.fullGarden.encouragement.stage.empty";
-  }
-  if (avg < 25) {
-    return "dashboard.fullGarden.encouragement.stage.veryLow";
-  }
-  if (avg < 50) {
-    return "dashboard.fullGarden.encouragement.stage.low";
-  }
-  if (avg < 75) {
-    return "dashboard.fullGarden.encouragement.stage.medium";
-  }
+  if (plantCount === 0) return "dashboard.fullGarden.encouragement.stage.empty";
+  if (avg < 25) return "dashboard.fullGarden.encouragement.stage.veryLow";
+  if (avg < 50) return "dashboard.fullGarden.encouragement.stage.low";
+  if (avg < 75) return "dashboard.fullGarden.encouragement.stage.medium";
   return "dashboard.fullGarden.encouragement.stage.high";
 }
-
-/* ---------------- COMPONENT ---------------- */
 
 export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
   const isDark = theme === "night";
@@ -161,37 +127,26 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
   };
 
   const STAGE_TOP: Record<Stage, number> = {
-    seed: 35, // range 10–35
-    sprout: 70, // range 35–70
-    flower: 95, // range 70–95
-    tree: 100, // range 95–100
+    seed: 35,
+    sprout: 70,
+    flower: 95,
+    tree: 100,
   };
 
-  // ⚙️ stage + progress sdílené s PlantCard (helper getStageAndProgress)
   const enriched = safe.map((h) => {
     const { stage, progress } = getStageAndProgress(
       h.frequency,
       h.currentStreak,
       h.bestStreak
     );
-
-    // progress = 0–100 uvnitř stage
     const base = STAGE_BASE[stage];
     const top = STAGE_TOP[stage];
     const span = Math.max(1, top - base);
-
-    // přepočet: 0–100% -> base–top
     const score = base + (span * progress) / 100;
 
-    return {
-      ...h,
-      stage,
-      progressInStage: progress,
-      score,
-    };
+    return { ...h, stage, progressInStage: progress, score };
   });
 
-  // 🌿 Garden health = průměr ze score (ne z „progress“)
   const totalScore = enriched.reduce((acc, h) => acc + h.score, 0);
   const averageProgress =
     enriched.length > 0 ? Math.round(totalScore / enriched.length) : 0;
@@ -200,6 +155,83 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
   const bgCfg = gardenBackgroundConfig[gardenStage];
   const imgCfg = gardenImageConfig[gardenStage];
   const bgImageSrc = isDark ? imgCfg.night : imgCfg.day;
+
+  const randomBlobs = useMemo(
+    () =>
+      Array.from({ length: 3 }, (_, i) => {
+        const size = 110 + Math.random() * 80;
+        const x = Math.random() * 80;
+        const y = Math.random() * 70;
+        const opacity = 0.3 + Math.random() * 0.4;
+
+        const variants = [
+          "animate-blob-animate",
+          "animate-blob-animate-reverse",
+          "animate-blob-animate-slow",
+        ] as const;
+
+        return {
+          id: i,
+          size,
+          x,
+          y,
+          opacity,
+          variant: variants[i % variants.length],
+        };
+      }),
+    []
+  );
+
+  const randomPetals = useMemo(
+    () =>
+      Array.from({ length: 9 }, (_, i) => {
+        const size = 6 + Math.random() * 10;
+        const x = Math.random() * 100;
+        const delay = Math.random() * 8;
+
+        const colors = [
+          "bg-rose-200/80",
+          "bg-pink-200/80",
+          "bg-amber-100/80",
+          "bg-rose-100/80",
+        ] as const;
+
+        return {
+          id: i,
+          size,
+          x,
+          delay,
+          colorClass: colors[i % colors.length],
+        };
+      }),
+    []
+  );
+
+  const randomFireflies = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => {
+        const size = 3 + Math.random() * 4;
+        const x = 5 + Math.random() * 90;
+        const y = 5 + Math.random() * 80;
+        const delay = Math.random() * 10;
+
+        const colors = [
+          "bg-emerald-200/90 shadow-[0_0_10px_rgba(110,231,183,0.9)]",
+          "bg-lime-200/90 shadow-[0_0_10px_rgba(190,242,100,0.9)]",
+          "bg-teal-200/90 shadow-[0_0_10px_rgba(45,212,191,0.9)]",
+        ] as const;
+
+        return {
+          id: i,
+          size,
+          x,
+          y,
+          delay,
+          colorClass: colors[i % colors.length],
+        };
+      }),
+    []
+  );
 
   const idx =
     (new Date().getDate() + enriched.length + averageProgress) %
@@ -210,7 +242,6 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
     pickStageEncouragementKey(averageProgress, enriched.length)
   );
 
-  // 🔹 nový, jednoduchý subtitle – jen počet rostlin, bez %
   const subtitleText =
     enriched.length === 0
       ? t("dashboard.fullGarden.subtitleEmptyShort")
@@ -271,38 +302,62 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
             isDark ? bgCfg.dark : bgCfg.light
           } transition-colors duration-700`}
         >
-          {/* blobs */}
+          {/* 🌈 RANDOM BLOBS */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div
-              className={`absolute -left-10 bottom-0 w-32 h-32 rounded-full blur-3xl ${bgCfg.blob} animate-blob-animate`}
-            />
-            <div
-              className={`absolute right-[-2rem] top-6 w-28 h-28 rounded-full blur-3xl ${bgCfg.blob} opacity-70 animate-blob-animate-reverse`}
-            />
-            <div
-              className={`absolute left-1/3 -top-10 w-24 h-24 rounded-full blur-3xl ${bgCfg.blob} opacity-40 animate-blob-animate-slow`}
-            />
+            {randomBlobs.map((blob) => (
+              <div
+                key={blob.id}
+                className={`absolute rounded-full blur-3xl ${bgCfg.blob} ${blob.variant}`}
+                style={{
+                  width: `${blob.size}px`,
+                  height: `${blob.size}px`,
+                  left: `${blob.x}%`,
+                  top: `${blob.y}%`,
+                  opacity: blob.opacity,
+                }}
+              />
+            ))}
           </div>
 
-          {/* falling petals */}
+          {/* 🌸 RANDOM PETALS */}
           {gardenStage === "flower" && (
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              <div className="absolute left-6 top-0 w-4 h-4 bg-rose-200/80 rounded-full animate-petalFall" />
-              <div className="absolute right-10 top-[-8px] w-3 h-3 bg-pink-200/80 rounded-full animate-petalFall delay-1500" />
-              <div className="absolute left-1/2 top-[-6px] w-3 h-3 bg-amber-100/80 rounded-full animate-petalFall delay-3000" />
+              {randomPetals.map((p) => (
+                <div
+                  key={p.id}
+                  className={`absolute rounded-full animate-petalFall ${p.colorClass}`}
+                  style={{
+                    left: `${p.x}%`,
+                    top: "-12%",
+                    width: `${p.size}px`,
+                    height: `${p.size}px`,
+                    animationDelay: `${p.delay}s`,
+                  }}
+                />
+              ))}
             </div>
           )}
 
-          {/* fireflies */}
+          {/* 🔆 RANDOM FIREFLIES (only in tree + night) */}
           {gardenStage === "tree" && isDark && (
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              <div className="absolute left-10 bottom-12 w-1.5 h-1.5 rounded-full bg-emerald-200/90 shadow-[0_0_10px_rgba(110,231,183,0.9)] animate-fireflyFloat" />
-              <div className="absolute right-16 top-10 w-1.5 h-1.5 rounded-full bg-lime-200/90 shadow-[0_0_10px_rgba(190,242,100,0.9)] animate-fireflyFloat delay-2000" />
-              <div className="absolute left-1/2 top-16 w-1.5 h-1.5 rounded-full bg-teal-200/90 shadow-[0_0_10px_rgba(45,212,191,0.9)] animate-fireflyFloat delay-3500" />
+              {randomFireflies.map((f) => (
+                <div
+                  key={f.id}
+                  className={`absolute rounded-full animate-fireflyFloat ${f.colorClass}`}
+                  style={{
+                    left: `${f.x}%`,
+                    top: `${f.y}%`,
+                    width: `${f.size}px`,
+                    height: `${f.size}px`,
+                    animationDelay: `${f.delay}s`,
+                  }}
+                />
+              ))}
             </div>
           )}
 
-          {/* background */}
+          {/* Actual background image */}
           <div className="relative h-[220px] sm:h-[260px] lg:h-[280px]">
             <ImageWithFallback
               src={bgImageSrc}
@@ -311,7 +366,6 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                 isDark ? "opacity-35" : "opacity-70"
               }`}
             />
-
             <div
               className={`absolute inset-0 ${
                 isDark
@@ -320,7 +374,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
               }`}
             />
 
-            {/* white card */}
+            {/* White info card */}
             <div className="absolute inset-0 flex items-center justify-center px-4">
               <div
                 className={`${
@@ -398,7 +452,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* STATS */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {(["seed", "sprout", "flower", "tree"] as const).map((stage) => {
             const count = enriched.filter((h) => h.stage === stage).length;
@@ -432,7 +486,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
           })}
         </div>
 
-        {/* Encouragement */}
+        {/* ENCOURAGEMENT */}
         <div
           className={`mt-2 text-sm sm:text-base rounded-xl px-4 py-3 ${
             isDark
