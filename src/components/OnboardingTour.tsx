@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import {
   X,
   ArrowRight,
@@ -101,6 +101,10 @@ export function OnboardingTour({
   startOnStarter,
 }: OnboardingTourProps) {
   const { data: me, isLoading } = useMe();
+  const initialGamified = useRef(
+    (me?.experimentVariant ?? "gamified") === "gamified"
+  ).current;
+
   const qc = useQueryClient();
   const isDark = theme === "night";
   const { t } = useTranslation();
@@ -123,7 +127,6 @@ export function OnboardingTour({
   );
 
   const hasProfile = Boolean(me?.nickname && me?.avatar);
-  const isGamified = (me?.experimentVariant ?? "gamified") === "gamified";
 
   const canSaveProfile = useMemo(
     () => nick.trim().length >= 2 && avatar.trim().length > 0,
@@ -163,7 +166,7 @@ export function OnboardingTour({
           },
         ];
 
-    const productIntro: Step[] = isGamified
+    const productIntro: Step[] = initialGamified
       ? [
           {
             key: "garden",
@@ -189,7 +192,7 @@ export function OnboardingTour({
     ];
 
     return [...intro, ...maybeProfile, ...productIntro, ...starters];
-  }, [hasProfile, isGamified, t]);
+  }, [hasProfile, t, initialGamified]);
 
   /* ---------- current step ---------- */
   const [currentStep, setCurrentStep] = useState(0);

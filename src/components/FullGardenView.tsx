@@ -274,13 +274,13 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
           {/* blobs */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div
-              className={`absolute -left-10 bottom-0 w-32 h-32 rounded-full blur-3xl ${bgCfg.blob} blob-animate`}
+              className={`absolute -left-10 bottom-0 w-32 h-32 rounded-full blur-3xl ${bgCfg.blob} animate-blob-animate`}
             />
             <div
-              className={`absolute right-[-2rem] top-6 w-28 h-28 rounded-full blur-3xl ${bgCfg.blob} opacity-70 blob-animate-reverse`}
+              className={`absolute right-[-2rem] top-6 w-28 h-28 rounded-full blur-3xl ${bgCfg.blob} opacity-70 animate-blob-animate-reverse`}
             />
             <div
-              className={`absolute left-1/3 -top-10 w-24 h-24 rounded-full blur-3xl ${bgCfg.blob} opacity-40 blob-animate-slow`}
+              className={`absolute left-1/3 -top-10 w-24 h-24 rounded-full blur-3xl ${bgCfg.blob} opacity-40 animate-blob-animate-slow`}
             />
           </div>
 
@@ -370,9 +370,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                         t("dashboard.fullGarden.stats.progressMessages.low")}
                       {averageProgress >= 50 &&
                         averageProgress < 75 &&
-                        t(
-                          "dashboard.fullGarden.stats.progressMessages.medium"
-                        )}
+                        t("dashboard.fullGarden.stats.progressMessages.medium")}
                       {averageProgress >= 75 &&
                         t("dashboard.fullGarden.stats.progressMessages.high")}
                     </div>
