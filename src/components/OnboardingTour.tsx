@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { Input } from "./ui/input";
 import {
   SUGGESTED_HABITS_BY_CATEGORY,
   type SuggestedHabit,
@@ -62,6 +63,22 @@ const ICONS = {
   palette: Palette,
 };
 
+// stejné emodži jako v EditProfileModal
+const EMOJIS = [
+  { id: "🌱", emoji: "🌱", name: "Seedling" },
+  { id: "🌿", emoji: "🌿", name: "Herb" },
+  { id: "🌸", emoji: "🌸", name: "Blossom" },
+  { id: "🌻", emoji: "🌻", name: "Sunflower" },
+  { id: "🌺", emoji: "🌺", name: "Hibiscus" },
+  { id: "🌹", emoji: "🌹", name: "Rose" },
+  { id: "🌵", emoji: "🌵", name: "Cactus" },
+  { id: "🌳", emoji: "🌳", name: "Tree" },
+  { id: "🍀", emoji: "🍀", name: "Clover" },
+  { id: "🌾", emoji: "🌾", name: "Grain" },
+  { id: "🪴", emoji: "🪴", name: "Potted Plant" },
+  { id: "🌼", emoji: "🌼", name: "Daisy" },
+];
+
 /* ================================ main ================================= */
 export function OnboardingTour({
   onComplete,
@@ -92,6 +109,11 @@ export function OnboardingTour({
 
   const hasProfile = Boolean(me?.nickname && me?.avatar);
   const isGamified = (me?.experimentVariant ?? "gamified") === "gamified";
+
+  const canSaveProfile = useMemo(
+    () => nick.trim().length >= 2 && avatar.trim().length > 0,
+    [nick, avatar]
+  );
 
   /* ---------- steps definition ---------- */
   const steps = useMemo(() => {
@@ -198,8 +220,22 @@ export function OnboardingTour({
     );
 
   const saveProfile = async () => {
-    await api.patch("auth/me", { json: { nickname: nick.trim(), avatar } });
-    await qc.invalidateQueries({ queryKey: ["me"] });
+    if (!canSaveProfile) return;
+
+    const nickname = nick.trim();
+    const prev = qc.getQueryData(["me"]);
+
+    qc.setQueryData(["me"], (curr: any) =>
+      curr ? { ...curr, nickname, avatar } : curr
+    );
+
+    try {
+      await api.post("profile/update", { json: { nickname, avatar } });
+      await qc.invalidateQueries({ queryKey: ["me"] });
+    } catch (e) {
+      console.error("profile/update in onboarding failed:", e);
+      qc.setQueryData(["me"], prev);
+    }
   };
 
   const handleNext = async () => {
@@ -225,7 +261,7 @@ export function OnboardingTour({
 
     // profil krok – musí být vyplněno
     if ((current as any).isProfileStep) {
-      if (!nick.trim() || !avatar.trim()) return;
+      if (!canSaveProfile) return;
       await saveProfile();
     }
 
@@ -380,7 +416,10 @@ export function OnboardingTour({
 
           <Button
             onClick={handleNext}
-            disabled={(current as any).isConsent && !consentAccepted}
+            disabled={
+              ((current as any).isConsent && !consentAccepted) ||
+              ((current as any).isProfileStep && !canSaveProfile)
+            }
             className="rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
           >
             {isLast
@@ -446,50 +485,69 @@ function ProfileStep({
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-4">
-      <div>
+    <div className="space-y-5">
+      {/* Nickname */}
+      <div className="space-y-2">
         <label
           className={cn(
-            "block text-sm mb-1",
-            isDark ? "text-gray-300" : "text-gray-700"
+            "block text-sm font-medium",
+            isDark ? "text-gray-300" : "text-gray-800"
           )}
         >
-          {t("onboarding.profile.nickname.label")}
+          {t("profile.nickname.label")}
         </label>
-        <input
+        <Input
           value={nick}
           onChange={(e) => setNick(e.target.value)}
           maxLength={24}
+          placeholder={t("profile.nickname.placeholder")}
           className={cn(
-            "w-full h-10 px-3 rounded-md border",
+            "rounded-md",
             isDark
-              ? "bg-slate-700 border-slate-600 text-white"
-              : "bg-white border-green-200"
+              ? "bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
+              : "bg-white border-green-200 text-gray-900 placeholder:text-gray-400"
           )}
-          placeholder={t("onboarding.profile.nickname.placeholder")}
         />
       </div>
 
-      <div>
-        <label
+      {/* Avatar / emoji – stejná logika jako v EditProfileModal */}
+      <div className="space-y-2">
+        <div
           className={cn(
-            "block text-sm mb-1",
-            isDark ? "text-gray-300" : "text-gray-700"
+            "text-sm font-medium",
+            isDark ? "text-gray-300" : "text-gray-800"
           )}
         >
-          {t("onboarding.profile.avatar.label")}
-        </label>
-        <input
-          value={avatar}
-          onChange={(e) => setAvatar(e.target.value)}
+          {t("profile.avatar.label")}
+        </div>
+        <p
           className={cn(
-            "w-full h-10 px-3 rounded-md border",
-            isDark
-              ? "bg-slate-700 border-slate-600 text-white"
-              : "bg-white border-green-200"
+            "text-xs",
+            isDark ? "text-gray-400" : "text-gray-500"
           )}
-          placeholder={t("onboarding.profile.avatar.placeholder")}
-        />
+        >
+          {t("profile.avatar.placeholder")}
+        </p>
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
+          {EMOJIS.map((e) => (
+            <button
+              key={e.id}
+              type="button"
+              onClick={() => setAvatar(e.emoji)}
+              className={cn(
+                "p-2.5 sm:p-3 rounded-xl border-2 text-base sm:text-lg transition-all duration-200",
+                avatar === e.emoji
+                  ? "border-green-500 bg-green-50"
+                  : isDark
+                  ? "border-slate-600 bg-slate-700 hover:border-slate-500"
+                  : "border-gray-300 bg-gray-50 hover:border-gray-400"
+              )}
+              aria-label={e.name}
+            >
+              {e.emoji}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -518,10 +576,10 @@ function NotificationsStep({
     >
       <div className="max-w-[75%]">
         <p className="font-medium mb-1">
-          {t("onboarding.notifications.titleInline")}
+          {t("profile.notifications.title")}
         </p>
         <p className="text-sm opacity-80">
-          {t("onboarding.notifications.text")}
+          {t("profile.notifications.description")}
         </p>
       </div>
 
@@ -620,8 +678,8 @@ function StarterPicker({
                 >
                   {selected && <Check className="w-3.5 h-3.5" />}
                   {selected
-                    ? t("onboarding.starters.selected")
-                    : t("onboarding.starters.select")}
+                    ? t("profile.starters.selected")
+                    : t("profile.starters.select")}
                 </div>
 
                 {/* top */}
@@ -674,7 +732,7 @@ function StarterPicker({
                       )}
                     >
                       <SelectValue
-                        placeholder={t("onboarding.starters.frequency")}
+                        placeholder={t("profile.starters.frequency")}
                       />
                     </SelectTrigger>
                     <SelectContent
