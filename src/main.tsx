@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { attachQueryClient } from "./lib/api.ts";
 import { Toaster } from "react-hot-toast";
 import { registerServiceWorker } from "./lib/registerServiceWorker.ts";
 
@@ -13,7 +12,6 @@ const queryClient = new QueryClient({
   },
 });
 
-attachQueryClient(queryClient);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
