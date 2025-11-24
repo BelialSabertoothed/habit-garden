@@ -62,7 +62,6 @@ export function PlantCard({
   const isDark = theme === "night";
   const { t } = useTranslation();
 
-  // ⭐ helper z growth
   const { stage, progress } = getStageAndProgress(
     frequency,
     streak,
@@ -87,6 +86,9 @@ export function PlantCard({
 
   const prevStage = useRef(stage);
   const [evolving, setEvolving] = useState(false);
+
+  const visualProgress =
+    stage === "tree" ? progress : Math.min(progress, 95);
 
   useEffect(() => {
     if (prevStage.current !== stage) {
@@ -204,10 +206,8 @@ export function PlantCard({
           >
             <motion.div
               className={`h-full bg-gradient-to-r ${config.progressColor} rounded-full`}
-              animate={{ width: `${progress}%` }}
+              animate={{ width: `${visualProgress}%` }}
               transition={{ duration: 0.6 }}
-              key={progress}
-              initial={{ width: 0 }}
             />
           </div>
 
