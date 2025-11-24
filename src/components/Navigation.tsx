@@ -89,8 +89,6 @@ export function Navigation({
               })}
               <div className="ml-auto flex items-center gap-4">
                 <LanguageSwitcher />
-                {/* Logout button */}
-                <button onClick={onLogout}>...</button>
               </div>
 
               {/* Logout button */}
