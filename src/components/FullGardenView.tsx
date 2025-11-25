@@ -56,31 +56,33 @@ function resolveGardenStage(avg: number, plantCount: number): GardenStage {
   return "seed";
 }
 
+/* ---------------- BACKGROUNDS & IMAGES ---------------- */
+
 const gardenBackgroundConfig = {
   empty: {
     light: "from-sky-50 via-slate-50 to-emerald-50",
     dark: "from-slate-950 via-slate-900 to-slate-950",
-    blob: "bg-sky-200/40",
+    blob: "bg-sky-200/60",
   },
   seed: {
     light: "from-emerald-50 via-lime-50 to-sky-50",
     dark: "from-slate-900 via-emerald-900/30 to-slate-950",
-    blob: "bg-emerald-300/40",
+    blob: "bg-emerald-300/70",
   },
   sprout: {
     light: "from-emerald-50 via-teal-50 to-sky-100",
     dark: "from-slate-900 via-teal-900/30 to-slate-950",
-    blob: "bg-teal-300/40",
+    blob: "bg-teal-300/70",
   },
   flower: {
     light: "from-rose-50 via-pink-50 to-amber-50",
     dark: "from-slate-900 via-rose-900/30 to-slate-950",
-    blob: "bg-rose-300/40",
+    blob: "bg-rose-300/70",
   },
   tree: {
     light: "from-emerald-50 via-green-50 to-amber-50",
     dark: "from-slate-900 via-emerald-900/40 to-slate-950",
-    blob: "bg-emerald-400/40",
+    blob: "bg-emerald-400/70",
   },
 } as const;
 
@@ -113,7 +115,9 @@ function pickStageEncouragementKey(avg: number, plantCount: number): string {
   return "dashboard.fullGarden.encouragement.stage.high";
 }
 
-/* ---------------- COMPONENT ---------------- */
+/* ------------------------------------------------ */
+/*        🌟 COMPONENT – WITH RANDOM EFFECTS        */
+/* ------------------------------------------------ */
 
 export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
   const isDark = theme === "night";
@@ -141,18 +145,12 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
       h.currentStreak,
       h.bestStreak
     );
-
     const base = STAGE_BASE[stage];
     const top = STAGE_TOP[stage];
     const span = Math.max(1, top - base);
     const score = base + (span * progress) / 100;
 
-    return {
-      ...h,
-      stage,
-      progressInStage: progress,
-      score,
-    };
+    return { ...h, stage, progressInStage: progress, score };
   });
 
   const totalScore = enriched.reduce((acc, h) => acc + h.score, 0);
@@ -164,7 +162,9 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
   const imgCfg = gardenImageConfig[gardenStage];
   const bgImageSrc = isDark ? imgCfg.night : imgCfg.day;
 
-  /* RANDOM EFFECT DATA */
+  /* ------------------------------------------------ */
+  /*         🌈 RANDOM BLOBS (3 pieces)               */
+  /* ------------------------------------------------ */
 
   const randomBlobs = useMemo(
     () =>
@@ -172,7 +172,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
         const size = 110 + Math.random() * 80;
         const x = Math.random() * 80;
         const y = Math.random() * 70;
-        const opacity = 0.3 + Math.random() * 0.4;
+        const opacity = 0.35 + Math.random() * 0.4;
 
         const variants = [
           "hg-blob",
@@ -192,6 +192,10 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
     []
   );
 
+  /* ------------------------------------------------ */
+  /*         🌸 RANDOM PETALS (9 pieces)              */
+  /* ------------------------------------------------ */
+
   const randomPetals = useMemo(
     () =>
       Array.from({ length: 9 }, (_, i) => {
@@ -199,12 +203,21 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
         const x = Math.random() * 100;
         const delay = Math.random() * 8;
 
-        const colors = [
-          "bg-rose-200/80",
-          "bg-pink-200/80",
-          "bg-amber-100/80",
-          "bg-rose-100/80",
+        const colorsDark = [
+          "bg-rose-200/90",
+          "bg-pink-200/90",
+          "bg-amber-100/90",
+          "bg-rose-100/90",
         ] as const;
+
+        const colorsLight = [
+          "bg-rose-500/80",
+          "bg-pink-500/80",
+          "bg-amber-400/85",
+          "bg-orange-500/75",
+        ] as const;
+
+        const colors = isDark ? colorsDark : colorsLight;
 
         return {
           id: i,
@@ -214,28 +227,30 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
           colorClass: colors[i % colors.length],
         };
       }),
-    []
+    [isDark]
   );
+
+  /* ------------------------------------------------ */
+  /*         🔆 RANDOM FIREFLIES (7 pieces)           */
+  /* ------------------------------------------------ */
 
   const randomFireflies = useMemo(
     () =>
       Array.from({ length: 7 }, (_, i) => {
         const size = 3 + Math.random() * 4;
         const x = 5 + Math.random() * 90;
-        const y = 5 + Math.random() * 80;
         const delay = Math.random() * 10;
 
         const colors = [
-          "bg-emerald-200/90 shadow-[0_0_10px_rgba(110,231,183,0.9)]",
-          "bg-lime-200/90 shadow-[0_0_10px_rgba(190,242,100,0.9)]",
-          "bg-teal-200/90 shadow-[0_0_10px_rgba(45,212,191,0.9)]",
+          "bg-emerald-200/90 shadow-[0_0_14px_rgba(110,231,183,0.95)]",
+          "bg-lime-200/90 shadow-[0_0_14px_rgba(190,242,100,0.95)]",
+          "bg-teal-200/90 shadow-[0_0_14px_rgba(45,212,191,0.95)]",
         ] as const;
 
         return {
           id: i,
           size,
           x,
-          y,
           delay,
           colorClass: colors[i % colors.length],
         };
@@ -243,10 +258,13 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
     []
   );
 
+  /* ------------------------------------------------ */
+  /*                     RENDER                       */
+  /* ------------------------------------------------ */
+
   const idx =
     (new Date().getDate() + enriched.length + averageProgress) %
     encouragementPoolKeys.length;
-
   const extraEncouragement = t(encouragementPoolKeys[idx]);
   const stageEncouragement = t(
     pickStageEncouragementKey(averageProgress, enriched.length)
@@ -276,7 +294,6 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
             >
               {t("dashboard.fullGarden.title")}
             </h3>
-
             <p
               className={`text-sm ${
                 isDark ? "text-gray-400" : "text-gray-600"
@@ -312,31 +329,32 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
             isDark ? bgCfg.dark : bgCfg.light
           } transition-colors duration-700`}
         >
-          {/* BLOBS */}
+          {/* 🌈 RANDOM BLOBS */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             {randomBlobs.map((blob) => (
               <div
                 key={blob.id}
-                className={`rounded-full blur-3xl ${bgCfg.blob} ${blob.variant}`}
+                className={`${bgCfg.blob} ${blob.variant} blur-3xl ${
+                  !isDark ? "mix-blend-multiply" : ""
+                }`}
                 style={{
-                  position: "absolute",
                   width: `${blob.size}px`,
                   height: `${blob.size}px`,
                   left: `${blob.x}%`,
                   top: `${blob.y}%`,
-                  opacity: blob.opacity,
+                  opacity: Math.min(1, blob.opacity + (isDark ? 0 : 0.25)),
                 }}
               />
             ))}
           </div>
 
-          {/* PETALS */}
+          {/* 🌸 RANDOM PETALS */}
           {gardenStage === "flower" && (
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
               {randomPetals.map((p) => (
                 <div
                   key={p.id}
-                  className={`hg-petal rounded-full ${p.colorClass}`}
+                  className={`hg-petal ${p.colorClass}`}
                   style={{
                     left: `${p.x}%`,
                     width: `${p.size}px`,
@@ -348,13 +366,13 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
             </div>
           )}
 
-          {/* FIREFLIES */}
+          {/* 🔆 RANDOM FIREFLIES (only in tree + night) */}
           {gardenStage === "tree" && isDark && (
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
               {randomFireflies.map((f) => (
                 <div
                   key={f.id}
-                  className={`hg-firefly rounded-full ${f.colorClass}`}
+                  className={`hg-firefly ${f.colorClass}`}
                   style={{
                     left: `${f.x}%`,
                     width: `${f.size}px`,
@@ -375,7 +393,6 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                 isDark ? "opacity-35" : "opacity-70"
               }`}
             />
-
             <div
               className={`absolute inset-0 ${
                 isDark
@@ -384,13 +401,13 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
               }`}
             />
 
-            {/* white card */}
+            {/* Info card */}
             <div className="absolute inset-0 flex items-center justify-center px-4">
               <div
                 className={`${
                   isDark ? "bg-slate-900/90" : "bg-white/95"
                 } backdrop-blur-sm rounded-2xl px-4 py-5 sm:px-6 sm:py-6 shadow-xl border ${
-                  isDark ? "border-slate-707" : "border-emerald-100"
+                  isDark ? "border-slate-700" : "border-emerald-100"
                 } transform hover:scale-[1.02] transition-all duration-300 max-w-md w-full`}
               >
                 {enriched.length > 0 ? (
@@ -462,7 +479,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* STATS */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {(["seed", "sprout", "flower", "tree"] as const).map((stage) => {
             const count = enriched.filter((h) => h.stage === stage).length;
@@ -471,7 +488,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
               <div
                 key={stage}
                 className={`${
-                  isDark ? "bg-slate-707/60" : "bg-white/80"
+                  isDark ? "bg-slate-700/60" : "bg-white/80"
                 } rounded-lg p-3 text-center border ${
                   isDark ? "border-slate-600" : "border-emerald-100"
                 } flex flex-col items-center justify-center gap-1`}
@@ -496,11 +513,11 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
           })}
         </div>
 
-        {/* Encouragement */}
+        {/* ENCOURAGEMENT */}
         <div
           className={`mt-2 text-sm sm:text-base rounded-xl px-4 py-3 ${
             isDark
-              ? "bg-slate-808/80 text-gray-200"
+              ? "bg-slate-800/80 text-gray-200"
               : "bg-emerald-50 text-emerald-900"
           } border ${
             isDark ? "border-slate-700" : "border-emerald-100"

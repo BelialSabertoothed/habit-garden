@@ -193,7 +193,7 @@ html {
    HABIT GARDEN ANIMATIONS
    =========================== */
 
-/* 🌈 BLOBS – jemný drift kolem random pozice (px, ne %) */
+/* 🌈 BLOBS – jemný drift kolem random pozice */
 @keyframes hgBlobMove {
   0% {
     transform: translate3d(-20px, 0, 0) scale(1);
@@ -240,6 +240,7 @@ html {
 .hg-blob-reverse,
 .hg-blob-slow {
   position: absolute;
+  border-radius: 9999px;
   animation-duration: 24s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
@@ -282,7 +283,10 @@ html {
 
 .hg-petal {
   position: absolute;
+  top: -10%;
+  border-radius: 9999px;
   animation: hgPetalFall 8s linear infinite;
+  animation-fill-mode: backwards;
 }
 
 /* 🔆 FIREFLIES – taky vertikálně přes celý box */
@@ -311,5 +315,8 @@ html {
 
 .hg-firefly {
   position: absolute;
+  top: -5%;
+  border-radius: 9999px;
   animation: hgFireflyFloat 11s ease-in-out infinite;
+  animation-fill-mode: backwards;
 }
