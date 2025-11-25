@@ -245,12 +245,16 @@
       }
     },
     "register": {
+      "success": {
+        "title": "Check your inbox 📫",
+        "subtitle": "We’ve sent you a verification email. Please click the link to activate your Habit Garden account.",
+        "info": "If you don’t see the message within a few minutes, check your spam folder or the “Promotions” tab.",
+        "note": "You can safely close this window – you’ll be able to log in right after confirming your email.",
+        "close": "Got it, I’ll check my email"
+      },
       "dialog": {
         "title": "Create Your Account",
         "description": "Join Habit Garden and start growing your habits today"
-      },
-      "success": {
-        "info": "We've sent you a verification email.\nPlease click the link in your inbox to activate your account."
       },
       "fields": {
         "email": {
@@ -259,7 +263,9 @@
         },
         "password": {
           "label": "Password",
-          "placeholder": "Create a password"
+          "placeholder": "Create a password",
+          "show": "Show password",
+          "hide": "Hide password"
         },
         "confirm": {
           "label": "Confirm password",

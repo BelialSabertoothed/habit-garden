@@ -320,3 +320,33 @@ html {
   animation: hgFireflyFloat 11s ease-in-out infinite;
   animation-fill-mode: backwards;
 }
+/* ---- globální barvy pro scrollbar ---- */
+:root {
+  --scrollbar-track: #edf2f7;  /* světle šedé pozadí */
+  --scrollbar-thumb: #a7b3c2;  /* thumb */
+}
+
+.dark {
+  --scrollbar-track: #020617;  /* skoro černé pozadí */
+  --scrollbar-thumb: #475569;  /* tlumená šedá pro thumb */
+}
+
+/* měkký zaoblený scrollbar – použij v modalech i jinde */
+.scrollbar-soft {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.scrollbar-soft::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-soft::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 999px;
+}
+
+.scrollbar-soft::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}

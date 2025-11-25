@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { User, Mail, Lock, Sparkles } from "lucide-react";
+import { User, Mail, Lock, Sparkles, Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface RegistrationModalProps {
@@ -48,6 +48,8 @@ export function RegistrationModal({
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [avatar, setAvatar] = useState<string>(avatars[0].id);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // ui state
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -150,7 +152,7 @@ export function RegistrationModal({
         onOpenChange(o);
       }}
     >
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto scrollbar-none bg-white/95 backdrop-blur-sm border-green-200 rounded-3xl">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto scrollbar-soft bg-white/95 backdrop-blur-sm border-green-200 rounded-3xl">
         {!success ? (
           <>
             {/* STEP 1 – registrační formulář */}
@@ -204,25 +206,38 @@ export function RegistrationModal({
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     id="password"
-                    type="password"
-                    placeholder={t(
-                      "auth.register.fields.password.placeholder"
-                    )}
+                    type={showPassword ? "text" : "password"}
+                    placeholder={t("auth.register.fields.password.placeholder")}
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
                       setErrors((x) => ({ ...x, password: "" }));
                     }}
-                    className="pl-10 rounded-xl border-green-200 focus:border-green-400 focus:ring-green-400"
+                    className="pl-10 pr-10 rounded-xl border-green-200 focus:border-green-400 focus:ring-green-400"
                     autoComplete="new-password"
                     disabled={loading}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={
+                      showPassword
+                        ? t("auth.register.fields.password.hide")
+                        : t("auth.register.fields.password.show")
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="text-sm text-red-500">{errors.password}</p>
                 )}
               </div>
-
               {/* Confirm password */}
               <div className="space-y-2">
                 <Label htmlFor="confirm" className="text-gray-700">
@@ -232,19 +247,33 @@ export function RegistrationModal({
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     id="confirm"
-                    type="password"
-                    placeholder={t(
-                      "auth.register.fields.confirm.placeholder"
-                    )}
+                    type={showConfirm ? "text" : "password"}
+                    placeholder={t("auth.register.fields.confirm.placeholder")}
                     value={confirm}
                     onChange={(e) => {
                       setConfirm(e.target.value);
                       setErrors((x) => ({ ...x, confirm: "" }));
                     }}
-                    className="pl-10 rounded-xl border-green-200 focus:border-green-400 focus:ring-green-400"
+                    className="pl-10 pr-10 rounded-xl border-green-200 focus:border-green-400 focus:ring-green-400"
                     autoComplete="new-password"
                     disabled={loading}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={
+                      showConfirm
+                        ? t("auth.register.fields.confirm.hide")
+                        : t("auth.register.fields.confirm.show")
+                    }
+                  >
+                    {showConfirm ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
                 {errors.confirm && (
                   <p className="text-sm text-red-500">{errors.confirm}</p>
@@ -261,9 +290,7 @@ export function RegistrationModal({
                   <Input
                     id="nickname"
                     type="text"
-                    placeholder={t(
-                      "auth.register.fields.nickname.placeholder"
-                    )}
+                    placeholder={t("auth.register.fields.nickname.placeholder")}
                     value={nickname}
                     onChange={(e) => {
                       setNickname(e.target.value);
@@ -332,28 +359,17 @@ export function RegistrationModal({
                 </div>
               </div>
               <DialogTitle className="text-center text-green-900">
-                {t("auth.register.success.title", "Check your inbox 📫")}
+                {t("auth.register.success.title")}
               </DialogTitle>
               <DialogDescription className="text-center text-gray-600">
-                {t(
-                  "auth.register.success.subtitle",
-                  "We’ve sent you a verification e-mail. Please click the link to activate your Habit Garden account."
-                )}
+                {t("auth.register.success.subtitle")}
               </DialogDescription>
             </DialogHeader>
 
             <div className="mt-4 space-y-4 text-sm text-gray-700">
-              <p className="text-center">
-                {t(
-                  "auth.register.success.info",
-                  "If you don’t see the message within a few minutes, check your spam folder or the “Promotions” tab."
-                )}
-              </p>
+              <p className="text-center">{t("auth.register.success.info")}</p>
               <p className="text-center text-xs text-gray-500">
-                {t(
-                  "auth.register.success.note",
-                  "You can safely close this window – you’ll be able to log in right after confirming your e-mail."
-                )}
+                {t("auth.register.success.note")}
               </p>
 
               <Button
@@ -361,7 +377,7 @@ export function RegistrationModal({
                 onClick={handleClose}
                 className="w-full mt-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl py-3 shadow-md"
               >
-                {t("auth.register.success.close", "Got it, I’ll check my e-mail")}
+                {t("auth.register.success.close")}
               </Button>
             </div>
           </>

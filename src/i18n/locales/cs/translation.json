@@ -245,25 +245,29 @@
       }
     },
     "register": {
+      "success": {
+        "title": "Mrkni do e-mailu 📫",
+        "subtitle": "Poslali jsme ti ověřovací e-mail. Klikni na odkaz a aktivuj si účet Habit Garden.",
+        "info": "Pokud zprávu během pár minut neuvidíš, zkontroluj složku Spam nebo „Promo akce“.",
+        "note": "Toto okno můžeš v klidu zavřít – přihlášení bude možné hned po potvrzení e-mailu.",
+        "close": "Dobře, jdu zkontrolovat e-mail"
+      },
       "dialog": {
         "title": "Vytvoř si účet",
         "description": "Přidej se do Habit Garden a začni pěstovat své návyky"
       },
-      "success": {
-        "info": "Poslali jsme ti ověřovací e-mail.\nKlikni prosím na odkaz v mailu, abys účet aktivovala."
-      },
       "fields": {
+        "password": {
+          "show": "Zobrazit heslo",
+          "hide": "Skrýt heslo"
+        },
+        "confirm": {
+          "show": "Zobrazit heslo",
+          "hide": "Skrýt heslo"
+        },
         "email": {
           "label": "E-mailová adresa",
           "placeholder": "ty@example.com"
-        },
-        "password": {
-          "label": "Heslo",
-          "placeholder": "Vytvoř si heslo"
-        },
-        "confirm": {
-          "label": "Potvrzení hesla",
-          "placeholder": "Potvrď své heslo"
         },
         "nickname": {
           "label": "Přezdívka",

@@ -140,11 +140,7 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent
-        className={`${
-          isDark ? "bg-slate-800 border-slate-700 text-white" : "bg-white"
-        } rounded-2xl max-w-md w-[95vw] max-h-[90vh] flex flex-col`}
-      >
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto scrollbar-soft bg-white/95 backdrop-blur-sm border-green-200 rounded-3xl">
         <DialogHeader>
           <DialogTitle className={isDark ? "text-white" : ""}>
             {t("habits.addModal.title")}
