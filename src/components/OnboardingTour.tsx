@@ -657,16 +657,17 @@ function StarterPicker({
 
   return (
     <div className="space-y-5">
-      {/* categories */}
+      {/* category chips */}
       <div className="flex flex-wrap justify-center gap-2">
         {CATS.map(({ id, labelKey, icon: Icon }) => {
           const on = active.includes(id);
           return (
             <button
               key={id}
+              type="button"
               onClick={() => toggle(id)}
               className={cn(
-                "inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-colors",
+                "inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs sm:text-sm transition-colors",
                 on
                   ? "bg-emerald-600 text-white border-emerald-600"
                   : isDark
@@ -681,7 +682,7 @@ function StarterPicker({
         })}
       </div>
 
-      {/* list – one column, whole card clickable */}
+      {/* habit cards */}
       <div className="grid grid-cols-1 gap-4">
         {active.flatMap((cat) => {
           const catHabits = SUGGESTED_HABITS_BY_CATEGORY[cat] ?? [];
@@ -698,7 +699,7 @@ function StarterPicker({
                 key={h.id}
                 onClick={toggleSelect}
                 className={cn(
-                  "relative flex flex_col justify-between p-5 rounded-xl border transition-all duration-200 overflow-visible cursor-pointer",
+                  "relative flex flex-col justify-between gap-4 p-4 sm:p-5 rounded-xl border transition-all duration-200 overflow-visible cursor-pointer",
                   selected
                     ? "border-emerald-500 ring-1 ring-emerald-200/60 bg-emerald-50/10"
                     : isDark
@@ -709,7 +710,7 @@ function StarterPicker({
                 {/* selected chip */}
                 <div
                   className={cn(
-                    "absolute top-3 right-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs border",
+                    "absolute top-3 right-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] sm:text-xs border",
                     selected
                       ? "bg-emerald-600 text-white border-emerald-600"
                       : isDark
@@ -723,25 +724,25 @@ function StarterPicker({
                     : t("profile.starters.select")}
                 </div>
 
-                {/* top */}
+                {/* top part: icon + title + category */}
                 <div className="flex items-start gap-3 min-w-0">
                   <div
                     className={cn(
-                      "w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0",
+                      "w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0",
                       isDark ? "bg-slate-700" : "bg-emerald-100"
                     )}
                   >
                     <Icon
                       className={cn(
-                        "w-6 h-6",
+                        "w-5 h-5 sm:w-6 sm:h-6",
                         isDark ? "text-gray-300" : "text-emerald-600"
                       )}
                     />
                   </div>
-                  <div className="flex flex-col min-w-0 pr-16">
+                  <div className="flex flex-col min-w-0 pr-12">
                     <span
                       className={cn(
-                        "font-semibold text-base leading-snug break-words",
+                        "font-semibold text-sm sm:text-base leading-snug break-words",
                         isDark ? "text-white" : "text-gray-900"
                       )}
                     >
@@ -749,7 +750,7 @@ function StarterPicker({
                     </span>
                     <span
                       className={cn(
-                        "text-xs mt-1",
+                        "text-[11px] sm:text-xs mt-1",
                         isDark ? "text-gray-400" : "text-gray-500"
                       )}
                     >
@@ -758,15 +759,15 @@ function StarterPicker({
                   </div>
                 </div>
 
-                {/* frequency select */}
-                <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+                {/* frequency select – klik na select nevyvolá toggle */}
+                <div className="mt-1" onClick={(e) => e.stopPropagation()}>
                   <Select
                     value={frequency}
                     onValueChange={(v) => setFreq(h.id, v as Freq)}
                   >
                     <SelectTrigger
                       className={cn(
-                        "h-10 rounded-md text-sm w-full",
+                        "h-9 sm:h-10 rounded-md text-sm w-full",
                         isDark ? "bg-slate-700 border-slate-600 text-white" : ""
                       )}
                     >
