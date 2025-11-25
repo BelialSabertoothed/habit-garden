@@ -189,33 +189,38 @@
 html {
   font-size: var(--font-size);
 }
-
 /* ===========================
    HABIT GARDEN ANIMATIONS
    =========================== */
 
-/* Bloby v pozadí */
+/* 🌈 BLOBS – jemný drift kolem random pozice (px, ne %) */
 @keyframes hgBlobMove {
   0% {
-    transform: translate3d(-5%, 0, 0) scale(1);
+    transform: translate3d(-20px, 0, 0) scale(1);
+    opacity: 0.7;
   }
   50% {
-    transform: translate3d(8%, -6%, 0) scale(1.06);
+    transform: translate3d(20px, -15px, 0) scale(1.06);
+    opacity: 1;
   }
   100% {
-    transform: translate3d(-5%, 0, 0) scale(1);
+    transform: translate3d(-20px, 0, 0) scale(1);
+    opacity: 0.7;
   }
 }
 
 @keyframes hgBlobMoveReverse {
   0% {
-    transform: translate3d(5%, 0, 0) scale(1);
+    transform: translate3d(20px, 0, 0) scale(1);
+    opacity: 0.7;
   }
   50% {
-    transform: translate3d(-8%, 6%, 0) scale(1.06);
+    transform: translate3d(-20px, 15px, 0) scale(1.06);
+    opacity: 1;
   }
   100% {
-    transform: translate3d(5%, 0, 0) scale(1);
+    transform: translate3d(20px, 0, 0) scale(1);
+    opacity: 0.7;
   }
 }
 
@@ -224,53 +229,66 @@ html {
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(4%, -4%, 0) scale(1.03);
+    transform: translate3d(15px, -15px, 0) scale(1.04);
   }
   100% {
     transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
+.hg-blob,
+.hg-blob-reverse,
+.hg-blob-slow {
+  position: absolute;
+  animation-duration: 24s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
 .hg-blob {
-  animation: hgBlobMove 22s ease-in-out infinite;
+  animation-name: hgBlobMove;
 }
 
 .hg-blob-reverse {
-  animation: hgBlobMoveReverse 26s ease-in-out infinite;
+  animation-name: hgBlobMoveReverse;
 }
 
 .hg-blob-slow {
-  animation: hgBlobMoveSlow 30s ease-in-out infinite;
+  animation-name: hgBlobMoveSlow;
 }
 
-/* Padající lístky */
+/* 🌸 PETALS – přes CELÝ kontejner (top -10% → 110%) */
 @keyframes hgPetalFall {
   0% {
-    transform: translate3d(0, -15%, 0) rotate(0deg);
+    top: -10%;
+    transform: translateX(0) rotate(0deg);
     opacity: 0;
   }
   15% {
     opacity: 1;
   }
   50% {
-    transform: translate3d(12px, 60%, 0) rotate(20deg);
+    transform: translateX(15px) rotate(20deg);
   }
   85% {
     opacity: 0.9;
   }
   100% {
-    transform: translate3d(-10px, 120%, 0) rotate(-18deg);
+    top: 110%;
+    transform: translateX(-10px) rotate(-18deg);
     opacity: 0;
   }
 }
 
 .hg-petal {
-  animation: hgPetalFall 9s linear infinite;
+  position: absolute;
+  animation: hgPetalFall 8s linear infinite;
 }
 
-/* Světlušky */
+/* 🔆 FIREFLIES – taky vertikálně přes celý box */
 @keyframes hgFireflyFloat {
   0% {
+    top: -5%;
     transform: translate3d(0, 0, 0) scale(0.7);
     opacity: 0;
   }
@@ -278,18 +296,20 @@ html {
     opacity: 1;
   }
   50% {
-    transform: translate3d(14px, -18px, 0) scale(1.15);
+    top: 50%;
+    transform: translate3d(10px, -20px, 0) scale(1.1);
   }
   80% {
-    transform: translate3d(-10px, 14px, 0) scale(1);
     opacity: 0.9;
   }
   100% {
-    transform: translate3d(6px, 24px, 0) scale(0.8);
+    top: 105%;
+    transform: translate3d(-8px, 10px, 0) scale(0.8);
     opacity: 0;
   }
 }
 
 .hg-firefly {
+  position: absolute;
   animation: hgFireflyFloat 11s ease-in-out infinite;
 }

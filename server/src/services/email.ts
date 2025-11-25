@@ -1,32 +1,49 @@
-import nodemailer from "nodemailer";
+import fetch from "node-fetch";
 
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-
+const MAILTRAP_TOKEN = process.env.MAILTRAP_API_TOKEN!;
 const EMAIL_FROM =
-  process.env.EMAIL_FROM || "Habit Garden <hello@habitgarden.app>";
+  process.env.EMAIL_FROM || "Habit Garden <noreply@habitgarden.app>";
+const SERVER_URL = process.env.SERVER_URL || "http://localhost:5050";
 
-const SERVER_URL =
-  process.env.SERVER_URL || "http://localhost:5050";
-
-if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-  console.warn(
-    "[email] SMTP is not fully configured – verification emails may not work."
-  );
+if (!MAILTRAP_TOKEN) {
+  console.warn("[email] Missing MAILTRAP_API_TOKEN – emails will not send.");
 }
 
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: false, // 587 = STARTTLS, u Mailtrapu takhle ok
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  },
-});
+/**
+ * Sends e-mails using the Mailtrap HTTP API
+ */
+async function sendMailViaMailtrap(opts: {
+  to: string;
+  subject: string;
+  html: string;
+}) {
+  const res = await fetch("https://send.api.mailtrap.io/api/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${MAILTRAP_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: { email: EMAIL_FROM.match(/<(.+)>/)?.[1] || EMAIL_FROM },
+      to: [{ email: opts.to }],
+      subject: opts.subject,
+      html: opts.html,
+      category: "transactional",
+    }),
+  });
 
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("[Mailtrap send error]", err);
+    throw new Error("Mailtrap API failed: " + err);
+  }
+
+  return true;
+}
+
+/**
+ * Sends verification e-mail
+ */
 export async function sendVerificationEmail(opts: {
   to: string;
   token: string;
@@ -36,47 +53,52 @@ export async function sendVerificationEmail(opts: {
   )}`;
 
   const html = `
-    <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont; color:#0f172a;">
-      <!-- CZ část -->
-      <h2>Habit Garden – ověř svůj e-mail 🌱</h2>
-      <p>Ahoj,</p>
-      <p>děkujeme, že ses zaregistrovala do Habit Garden. Prosím ověř svou e-mailovou adresu kliknutím na tlačítko níže:</p>
-      <p>
-        <a href="${verifyUrl}"
-           style="display:inline-block;padding:10px 16px;background:#22c55e;color:white;border-radius:6px;text-decoration:none;font-weight:500;">
-          Ověřit e-mail
-        </a>
-      </p>
-      <p>Pokud tlačítko nefunguje, zkopíruj následující odkaz do prohlížeče:</p>
-      <p><a href="${verifyUrl}" style="color:#16a34a;">${verifyUrl}</a></p>
-      <p>Pokud jsi si účet v Habit Garden nevytvořila, můžeš tento e-mail ignorovat.</p>
+    <div style="font-family: system-ui, Arial; font-size: 15px;">
+      <h2 style="color:#22c55e;">Habit Garden – verify your email 🌱</h2>
+      <p>Ahoj! 👋</p>
+      <p>Please confirm your email address by clicking the button below:</p>
 
-      <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb;">
-
-      <!-- EN část -->
-      <h2>Habit Garden – verify your email 🌱</h2>
-      <p>Hi,</p>
-      <p>thank you for signing up for Habit Garden. Please confirm your email address by clicking the button below:</p>
-      <p>
+      <p style="margin: 24px 0;">
         <a href="${verifyUrl}"
-           style="display:inline-block;padding:10px 16px;background:#22c55e;color:white;border-radius:6px;text-decoration:none;font-weight:500;">
+           style="padding: 12px 20px; background:#22c55e; color:white; font-weight:bold; border-radius:8px; text-decoration:none;">
           Verify email
         </a>
       </p>
-      <p>If the button does not work, copy and paste this link into your browser:</p>
-      <p><a href="${verifyUrl}" style="color:#16a34a;">${verifyUrl}</a></p>
-      <p>If you did not create a Habit Garden account, you can safely ignore this email.</p>
 
-      <p style="margin-top:24px;font-size:12px;color:#6b7280;">
-        This is an automated message, please do not reply.
-      </p>
+      <p>If the button doesn't work, open this link:</p>
+      <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+
+      <hr style="margin:32px 0; opacity:0.2">
+      <p style="font-size:13px; color:#666;">If you didn't create an account, ignore this e-mail.</p>
     </div>
+  <div style="font-family: system-ui, Arial; font-size: 15px;">
+
+    <h2 style="color:#22c55e;">Habit Garden – ověření e-mailu 🌱</h2>
+    <p>Ahoj! 👋</p>
+    <p>Prosím ověř svůj e-mail kliknutím na tlačítko níže:</p>
+
+    <p style="margin: 24px 0;">
+      <a href="${verifyUrl}"
+         style="padding: 12px 20px; background:#22c55e; color:white; font-weight:bold; border-radius:8px; text-decoration:none;">
+        Ověřit e-mail
+      </a>
+    </p>
+
+    <p>Pokud tlačítko nefunguje, zkopíruj a vlož tento odkaz:</p>
+    <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+
+    <hr style="margin:32px 0; opacity:0.2">
+
+    <h3>English version</h3>
+    <p>Please verify your email by clicking the button above.</p>
+    <p>If you did not request this, you can safely ignore it.</p>
+
+  </div>
   `;
 
-  await transporter.sendMail({
-    from: EMAIL_FROM,
+  await sendMailViaMailtrap({
     to: opts.to,
-    subject: "Habit Garden – ověření e-mailu / Email verification",
+    subject: "Verify your email – Habit Garden",
     html,
   });
 }

@@ -317,8 +317,9 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
             {randomBlobs.map((blob) => (
               <div
                 key={blob.id}
-                className={`absolute rounded-full blur-3xl ${bgCfg.blob} ${blob.variant}`}
+                className={`rounded-full blur-3xl ${bgCfg.blob} ${blob.variant}`}
                 style={{
+                  position: "absolute",
                   width: `${blob.size}px`,
                   height: `${blob.size}px`,
                   left: `${blob.x}%`,
@@ -335,10 +336,9 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
               {randomPetals.map((p) => (
                 <div
                   key={p.id}
-                  className={`absolute rounded-full hg-petal ${p.colorClass}`}
+                  className={`hg-petal rounded-full ${p.colorClass}`}
                   style={{
                     left: `${p.x}%`,
-                    top: "-15%",
                     width: `${p.size}px`,
                     height: `${p.size}px`,
                     animationDelay: `${p.delay}s`,
@@ -354,10 +354,9 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
               {randomFireflies.map((f) => (
                 <div
                   key={f.id}
-                  className={`absolute rounded-full hg-firefly ${f.colorClass}`}
+                  className={`hg-firefly rounded-full ${f.colorClass}`}
                   style={{
                     left: `${f.x}%`,
-                    top: `${f.y}%`,
                     width: `${f.size}px`,
                     height: `${f.size}px`,
                     animationDelay: `${f.delay}s`,
