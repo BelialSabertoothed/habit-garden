@@ -323,7 +323,7 @@
     },
     "actions": {
       "google": "Pokračovat přes Google",
-      "email": "Pokračovat přes e-mail",
+      "email": "Přilásit se přes e-mail",
       "hideEmail": "Skrýt přihlášení e-mailem",
       "register": "Vytvořit účet"
     },

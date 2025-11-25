@@ -326,7 +326,7 @@
     },
     "actions": {
       "google": "Continue with Google",
-      "email": "Continue with Email",
+      "email": "Sign in with Email",
       "hideEmail": "Hide Email Login",
       "register": "Register"
     },
