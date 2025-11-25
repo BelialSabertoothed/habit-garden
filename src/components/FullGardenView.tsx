@@ -113,6 +113,8 @@ function pickStageEncouragementKey(avg: number, plantCount: number): string {
   return "dashboard.fullGarden.encouragement.stage.high";
 }
 
+/* ---------------- COMPONENT ---------------- */
+
 export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
   const isDark = theme === "night";
   const { t } = useTranslation();
@@ -139,12 +141,18 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
       h.currentStreak,
       h.bestStreak
     );
+
     const base = STAGE_BASE[stage];
     const top = STAGE_TOP[stage];
     const span = Math.max(1, top - base);
     const score = base + (span * progress) / 100;
 
-    return { ...h, stage, progressInStage: progress, score };
+    return {
+      ...h,
+      stage,
+      progressInStage: progress,
+      score,
+    };
   });
 
   const totalScore = enriched.reduce((acc, h) => acc + h.score, 0);
@@ -156,6 +164,8 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
   const imgCfg = gardenImageConfig[gardenStage];
   const bgImageSrc = isDark ? imgCfg.night : imgCfg.day;
 
+  /* RANDOM EFFECT DATA */
+
   const randomBlobs = useMemo(
     () =>
       Array.from({ length: 3 }, (_, i) => {
@@ -165,9 +175,9 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
         const opacity = 0.3 + Math.random() * 0.4;
 
         const variants = [
-          "animate-blob-animate",
-          "animate-blob-animate-reverse",
-          "animate-blob-animate-slow",
+          "hg-blob",
+          "hg-blob-reverse",
+          "hg-blob-slow",
         ] as const;
 
         return {
@@ -302,7 +312,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
             isDark ? bgCfg.dark : bgCfg.light
           } transition-colors duration-700`}
         >
-          {/* 🌈 RANDOM BLOBS */}
+          {/* BLOBS */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             {randomBlobs.map((blob) => (
               <div
@@ -319,16 +329,16 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
             ))}
           </div>
 
-          {/* 🌸 RANDOM PETALS */}
+          {/* PETALS */}
           {gardenStage === "flower" && (
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
               {randomPetals.map((p) => (
                 <div
                   key={p.id}
-                  className={`absolute rounded-full animate-petalFall ${p.colorClass}`}
+                  className={`absolute rounded-full hg-petal ${p.colorClass}`}
                   style={{
                     left: `${p.x}%`,
-                    top: "-12%",
+                    top: "-15%",
                     width: `${p.size}px`,
                     height: `${p.size}px`,
                     animationDelay: `${p.delay}s`,
@@ -338,13 +348,13 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
             </div>
           )}
 
-          {/* 🔆 RANDOM FIREFLIES (only in tree + night) */}
+          {/* FIREFLIES */}
           {gardenStage === "tree" && isDark && (
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
               {randomFireflies.map((f) => (
                 <div
                   key={f.id}
-                  className={`absolute rounded-full animate-fireflyFloat ${f.colorClass}`}
+                  className={`absolute rounded-full hg-firefly ${f.colorClass}`}
                   style={{
                     left: `${f.x}%`,
                     top: `${f.y}%`,
@@ -357,7 +367,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
             </div>
           )}
 
-          {/* Actual background image */}
+          {/* BACKGROUND IMAGE + CARD */}
           <div className="relative h-[220px] sm:h-[260px] lg:h-[280px]">
             <ImageWithFallback
               src={bgImageSrc}
@@ -366,6 +376,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
                 isDark ? "opacity-35" : "opacity-70"
               }`}
             />
+
             <div
               className={`absolute inset-0 ${
                 isDark
@@ -374,13 +385,13 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
               }`}
             />
 
-            {/* White info card */}
+            {/* white card */}
             <div className="absolute inset-0 flex items-center justify-center px-4">
               <div
                 className={`${
                   isDark ? "bg-slate-900/90" : "bg-white/95"
                 } backdrop-blur-sm rounded-2xl px-4 py-5 sm:px-6 sm:py-6 shadow-xl border ${
-                  isDark ? "border-slate-700" : "border-emerald-100"
+                  isDark ? "border-slate-707" : "border-emerald-100"
                 } transform hover:scale-[1.02] transition-all duration-300 max-w-md w-full`}
               >
                 {enriched.length > 0 ? (
@@ -452,7 +463,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
           </div>
         </div>
 
-        {/* STATS */}
+        {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {(["seed", "sprout", "flower", "tree"] as const).map((stage) => {
             const count = enriched.filter((h) => h.stage === stage).length;
@@ -461,7 +472,7 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
               <div
                 key={stage}
                 className={`${
-                  isDark ? "bg-slate-700/60" : "bg-white/80"
+                  isDark ? "bg-slate-707/60" : "bg-white/80"
                 } rounded-lg p-3 text-center border ${
                   isDark ? "border-slate-600" : "border-emerald-100"
                 } flex flex-col items-center justify-center gap-1`}
@@ -486,11 +497,11 @@ export function FullGardenView({ habits = [], theme }: FullGardenViewProps) {
           })}
         </div>
 
-        {/* ENCOURAGEMENT */}
+        {/* Encouragement */}
         <div
           className={`mt-2 text-sm sm:text-base rounded-xl px-4 py-3 ${
             isDark
-              ? "bg-slate-800/80 text-gray-200"
+              ? "bg-slate-808/80 text-gray-200"
               : "bg-emerald-50 text-emerald-900"
           } border ${
             isDark ? "border-slate-700" : "border-emerald-100"

@@ -189,81 +189,87 @@
 html {
   font-size: var(--font-size);
 }
-/* ======================================================
-    GARDEN — FINAL ANIMATIONS (full container coverage)
-   ====================================================== */
 
-@keyframes gardenBlob {
-  0%, 100% {
-    transform: translate3d(0, 0, 0) scale(1);
+/* ===========================
+   HABIT GARDEN ANIMATIONS
+   =========================== */
+
+/* Bloby v pozadí */
+@keyframes hgBlobMove {
+  0% {
+    transform: translate3d(-5%, 0, 0) scale(1);
   }
-  33% {
-    transform: translate3d(40px, -30px, 0) scale(1.1);
+  50% {
+    transform: translate3d(8%, -6%, 0) scale(1.06);
   }
-  66% {
-    transform: translate3d(-30px, 35px, 0) scale(0.95);
+  100% {
+    transform: translate3d(-5%, 0, 0) scale(1);
   }
 }
 
-@keyframes gardenBlobReverse {
-  0%, 100% {
-    transform: translate3d(0, 0, 0) scale(1);
+@keyframes hgBlobMoveReverse {
+  0% {
+    transform: translate3d(5%, 0, 0) scale(1);
   }
-  33% {
-    transform: translate3d(-35px, 25px, 0) scale(1.05);
+  50% {
+    transform: translate3d(-8%, 6%, 0) scale(1.06);
   }
-  66% {
-    transform: translate3d(35px, -25px, 0) scale(1.12);
+  100% {
+    transform: translate3d(5%, 0, 0) scale(1);
   }
 }
 
-@keyframes gardenBlobSlow {
-  0%, 100% {
+@keyframes hgBlobMoveSlow {
+  0% {
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(20px, -20px, 0) scale(1.08);
+    transform: translate3d(4%, -4%, 0) scale(1.03);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
-.animate-blob-animate {
-  animation: gardenBlob 16s ease-in-out infinite;
+.hg-blob {
+  animation: hgBlobMove 22s ease-in-out infinite;
 }
 
-.animate-blob-animate-reverse {
-  animation: gardenBlobReverse 20s ease-in-out infinite;
+.hg-blob-reverse {
+  animation: hgBlobMoveReverse 26s ease-in-out infinite;
 }
 
-.animate-blob-animate-slow {
-  animation: gardenBlobSlow 24s ease-in-out infinite;
+.hg-blob-slow {
+  animation: hgBlobMoveSlow 30s ease-in-out infinite;
 }
 
-@keyframes gardenPetalFall {
+/* Padající lístky */
+@keyframes hgPetalFall {
   0% {
-    transform: translate3d(0, -20%, 0) rotate(0deg);
+    transform: translate3d(0, -15%, 0) rotate(0deg);
     opacity: 0;
   }
-  10% {
+  15% {
     opacity: 1;
   }
-  40% {
-    transform: translate3d(-30px, 40%, 0) rotate(25deg);
+  50% {
+    transform: translate3d(12px, 60%, 0) rotate(20deg);
   }
-  70% {
-    transform: translate3d(25px, 90%, 0) rotate(-20deg);
+  85% {
     opacity: 0.9;
   }
   100% {
-    transform: translate3d(0, 130%, 0) rotate(-35deg);
+    transform: translate3d(-10px, 120%, 0) rotate(-18deg);
     opacity: 0;
   }
 }
 
-.animate-petalFall {
-  animation: gardenPetalFall 9s linear infinite;
+.hg-petal {
+  animation: hgPetalFall 9s linear infinite;
 }
 
-@keyframes gardenFireflyFloat {
+/* Světlušky */
+@keyframes hgFireflyFloat {
   0% {
     transform: translate3d(0, 0, 0) scale(0.7);
     opacity: 0;
@@ -272,35 +278,18 @@ html {
     opacity: 1;
   }
   50% {
-    transform: translate3d(20px, -35px, 0) scale(1.2);
-    opacity: 0.9;
+    transform: translate3d(14px, -18px, 0) scale(1.15);
   }
   80% {
-    opacity: 1;
-    transform: translate3d(-15px, 25px, 0) scale(1);
+    transform: translate3d(-10px, 14px, 0) scale(1);
+    opacity: 0.9;
   }
   100% {
-    transform: translate3d(5px, 40px, 0) scale(0.8);
+    transform: translate3d(6px, 24px, 0) scale(0.8);
     opacity: 0;
   }
 }
 
-.animate-fireflyFloat {
-  animation: gardenFireflyFloat 11s ease-in-out infinite;
-}
-
-.delay-1500 {
-  animation-delay: 1.5s;
-}
-
-.delay-2000 {
-  animation-delay: 2s;
-}
-
-.delay-3000 {
-  animation-delay: 3s;
-}
-
-.delay-3500 {
-  animation-delay: 3.5s;
+.hg-firefly {
+  animation: hgFireflyFloat 11s ease-in-out infinite;
 }
