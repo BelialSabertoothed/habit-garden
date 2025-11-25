@@ -14,8 +14,7 @@ export function registerServiceWorker() {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/service-worker.js")
-      .then((registration) => {
-        console.log("[SW] Registered with scope:", registration.scope);
+      .then(() => {
       })
       .catch((error) => {
         console.error("[SW] Registration failed:", error);

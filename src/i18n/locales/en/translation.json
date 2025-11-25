@@ -225,9 +225,11 @@
     "emailLogin": {
       "fields": {
         "email": {
-          "placeholder": "E-mail"
+          "placeholder": "E-mail",
+          "label": "E-mail"
         },
         "password": {
+          "label": "Password",
           "placeholder": "Password"
         }
       },
@@ -309,8 +311,13 @@
   },
   "landing": {
     "brand": "Habit Garden",
+
+    "card": {
+      "header": "Start your growth journey today",
+      "tagline": "Turn small, consistent actions into a garden of better habits.",
+      "footer": "A simple way to grow better habits."
+    },
     "hero": {
-      "pill": "Start your growth journey today",
       "title": {
         "line1": "Grow Better Habits,",
         "line2": "One Day at a Time"

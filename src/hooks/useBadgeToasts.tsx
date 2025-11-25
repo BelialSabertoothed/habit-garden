@@ -53,15 +53,10 @@ export function useBadgeToasts(theme: Theme, enabled: boolean) {
 
     if (!rewardsArr) return;
 
-    // logování pro debug – můžeš klidně nechat
-    console.log("[BadgeToasts] enabled =", enabled, "raw =", rewardsRaw);
-
     // normalizace a filtrace na badge, které známe
     const rewards = rewardsArr.filter(
       (r) => r && typeof r._id === "string" && BADGES[r.badge as BadgeId]
     );
-
-    console.log("[BadgeToasts] normalized rewards =", rewards);
 
     // první běh hooku – načteme seenIds z localStorage
     if (!initialised) {
@@ -127,7 +122,6 @@ export function useBadgeToasts(theme: Theme, enabled: boolean) {
 
       saveSeenIds(seenRef.current);
       setInitialised(true);
-      console.log("[BadgeToasts] first run, localStorage empty – handled fresh");
       return;
     }
 
@@ -143,8 +137,6 @@ export function useBadgeToasts(theme: Theme, enabled: boolean) {
 
       seenRef.current.add(id);
       saveSeenIds(seenRef.current);
-
-      console.log("[BadgeToasts] NEW reward → toast", id, badgeId);
 
       toast.custom(
         (t) => (

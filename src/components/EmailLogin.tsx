@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { api } from "../lib/api";
 import { setAccessToken } from "../lib/authToken";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,11 +19,11 @@ export default function EmailLogin() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
 
-  const [err, setErr] = useState<string | null>(null); // jen pro invalid login
+  const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // modal pro verifikaci
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [verifyMessage, setVerifyMessage] = useState("");
 
@@ -41,7 +42,7 @@ export default function EmailLogin() {
 
       setAccessToken(accessToken);
       await qc.invalidateQueries({ queryKey: ["me"] });
-      // tady můžeš zavřít parent login modal
+
       setLoading(false);
     } catch (err: any) {
       const code = err?.response?.status;
@@ -61,39 +62,83 @@ export default function EmailLogin() {
 
   return (
     <>
-      {/* FORM */}
-      <form onSubmit={onSubmit} className="space-y-2">
-        <input
-          className="border rounded px-3 py-2 w-full"
-          placeholder={t("auth.emailLogin.fields.email.placeholder")}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      <form onSubmit={onSubmit} className="space-y-4">
+        {/* EMAIL FIELD */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700">
+            {t("auth.emailLogin.fields.email.label")}
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+              placeholder={t("auth.emailLogin.fields.email.placeholder")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+            />
+          </div>
+        </div>
 
-        <input
-          className="border rounded px-3 py-2 w-full"
-          placeholder={t("auth.emailLogin.fields.password.placeholder")}
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        {/* PASSWORD FIELD */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700">
+            {t("auth.emailLogin.fields.password.label")}
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
 
-        {err && <div className="text-red-600 text-sm">{err}</div>}
+            <input
+              className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+              placeholder={t("auth.emailLogin.fields.password.placeholder")}
+              type={showPw ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
-        <button disabled={loading} className="border rounded px-3 py-2 w-full">
-          {loading
-            ? t("auth.emailLogin.actions.signingIn")
-            : t("auth.emailLogin.actions.signIn")}
-        </button>
+            {/* toggle visibility */}
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
+              onClick={() => setShowPw((v) => !v)}
+            >
+              {showPw ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* ERROR */}
+        {err && (
+          <div className="text-sm bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl shadow-sm">
+            {err}
+          </div>
+        )}
+
+        {/* SUBMIT BUTTON */}
+        <Button
+          disabled={loading}
+          className="w-full py-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md"
+        >
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              {t("auth.emailLogin.actions.signingIn")}
+            </span>
+          ) : (
+            t("auth.emailLogin.actions.signIn")
+          )}
+        </Button>
       </form>
 
       {/* VERIFICATION MODAL */}
       <Dialog open={showVerifyModal} onOpenChange={setShowVerifyModal}>
         <DialogContent className="rounded-2xl max-w-sm">
           <DialogHeader>
-            <DialogTitle>
-              {t("auth.emailLogin.verify.title")}
-            </DialogTitle>
+            <DialogTitle>{t("auth.emailLogin.verify.title")}</DialogTitle>
             <DialogDescription>{verifyMessage}</DialogDescription>
           </DialogHeader>
 

@@ -218,16 +218,18 @@
       "c2": { "title": "Napiš krátký zápisek do deníku" },
       "c3": { "title": "Vyfoť něco inspirativního" },
       "c4": { "title": "Věnuj se kreativnímu koníčku" },
-      "c5": { "title": "Dej si něco, co tě inspiruje" }
+      "c5": { "title": "Udělej něco, co tě inspiruje" }
     }
   },
   "auth": {
     "emailLogin": {
       "fields": {
         "email": {
+          "label": "E-mail",
           "placeholder": "E-mail"
         },
         "password": {
+          "label": "Heslo",
           "placeholder": "Heslo"
         }
       },
@@ -307,8 +309,12 @@
   },
   "landing": {
     "brand": "Habit Garden",
+    "card": {
+      "header": "Začni růst ještě dnes",
+      "tagline": "Proměň malé, pravidelné kroky v rozkvetlou zahradu lepších návyků.",
+      "footer": "Jednoduchý způsob, jak pěstovat lepší návyky."
+    },
     "hero": {
-      "pill": "Začni svou růstovou cestu ještě dnes",
       "title": {
         "line1": "Pěstuj lepší návyky,",
         "line2": "den po dni"
