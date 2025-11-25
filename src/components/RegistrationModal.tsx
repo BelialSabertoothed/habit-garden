@@ -152,7 +152,11 @@ export function RegistrationModal({
         onOpenChange(o);
       }}
     >
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto scrollbar-soft bg-white/95 backdrop-blur-sm border-green-200 rounded-3xl">
+      <DialogContent
+        className="max-w-md max-h-[90vh] overflow-y-auto scrollbar-soft
+             bg-white/95 backdrop-blur-sm border-green-200 rounded-3xl
+             flex flex-col px-1"
+      >
         {!success ? (
           <>
             {/* STEP 1 – registrační formulář */}

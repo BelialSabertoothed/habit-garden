@@ -320,21 +320,10 @@ html {
   animation: hgFireflyFloat 11s ease-in-out infinite;
   animation-fill-mode: backwards;
 }
-/* ---- globální barvy pro scrollbar ---- */
-:root {
-  --scrollbar-track: #edf2f7;  /* světle šedé pozadí */
-  --scrollbar-thumb: #a7b3c2;  /* thumb */
-}
 
-.dark {
-  --scrollbar-track: #020617;  /* skoro černé pozadí */
-  --scrollbar-thumb: #475569;  /* tlumená šedá pro thumb */
-}
-
-/* měkký zaoblený scrollbar – použij v modalech i jinde */
 .scrollbar-soft {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;               /* Firefox */
+  scrollbar-color: rgba(148, 163, 184, 0.8) transparent;
 }
 
 .scrollbar-soft::-webkit-scrollbar {
@@ -342,11 +331,21 @@ html {
 }
 
 .scrollbar-soft::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-  border-radius: 999px;
+  background: transparent;
 }
 
 .scrollbar-soft::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 999px;
+  background-color: rgba(148, 163, 184, 0.9);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+}
+
+/* Dark mode varianta (Tailwind class .dark na <html> / <body>) */
+
+.dark .scrollbar-soft {
+  scrollbar-color: rgba(100, 116, 139, 0.9) transparent;
+}
+
+.dark .scrollbar-soft::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.95);
 }

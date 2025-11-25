@@ -140,7 +140,15 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto scrollbar-soft bg-white/95 backdrop-blur-sm border-green-200 rounded-3xl">
+      <DialogContent
+        className={`max-w-md max-h-[90vh] rounded-3xl border
+                  backdrop-blur-sm flex flex-col
+                  ${
+                    isDark
+                      ? "bg-slate-900/95 border-slate-700"
+                      : "bg-white/95 border-green-200"
+                  }`}
+      >
         <DialogHeader>
           <DialogTitle className={isDark ? "text-white" : ""}>
             {t("habits.addModal.title")}
@@ -151,7 +159,7 @@ export function AddHabitModal({ open, onClose, theme }: AddHabitModalProps) {
         </DialogHeader>
 
         {/* scrollovatelný obsah */}
-        <div className="flex-1 overflow-y-auto space-y-5 py-4 pr-1">
+        <div className="flex-1 overflow-y-auto scrollbar-soft space-y-5 py-4 pr-2">
           {/* TITLE */}
           <div className="space-y-2">
             <Label
