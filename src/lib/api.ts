@@ -1,4 +1,4 @@
-import { getAccessToken, setAccessToken, clearAccessToken } from "./authToken";
+import { getAccessToken, setAccessToken } from "./authToken";
 
 const RAW_API_URL = import.meta.env.VITE_API_URL ?? "";
 const API_URL = RAW_API_URL.replace(/\/+$/, "") + "/";
@@ -85,8 +85,7 @@ async function request<T>(
         }));
       }
     } else {
-      // refresh selhal → prostě smažeme token a dál necháme 401 dojít až do useMe
-      clearAccessToken();
+      throw new ApiError(r.status, await r.json().catch(() => null));
     }
   }
 

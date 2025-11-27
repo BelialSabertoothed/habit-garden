@@ -5,7 +5,11 @@ import { User } from "../models/User.js";
 import { sendVerificationEmail } from "../services/email.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { hashPassword, verifyPassword } from "../lib/password.js";
-import { signAccessToken, signRefreshToken, verifyRefresh } from "../lib/jwt.js";
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefresh,
+} from "../lib/jwt.js";
 import { trackEvent } from "../utils/trackEvent.js";
 
 import crypto from "node:crypto";
@@ -16,8 +20,8 @@ const router = Router();
 function setRefreshCookie(res: Response, token: string) {
   res.cookie("refresh_token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "none",
+    secure: true, 
     path: "/api/auth/refresh",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -53,7 +57,9 @@ router.post(
 
     // 🔑 verifikační token + expirace 24h
     const emailVerificationToken = crypto.randomBytes(32).toString("hex");
-    const emailVerificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const emailVerificationExpiresAt = new Date(
+      Date.now() + 24 * 60 * 60 * 1000
+    );
 
     const user = await User.create({
       email: email.toLowerCase(),
@@ -83,7 +89,6 @@ router.post(
   })
 );
 
-
 /* ---------- Email verifikace ---------- */
 
 router.get(
@@ -112,7 +117,6 @@ router.get(
     return res.redirect(`${clientUrl}/verify-email-success`);
   })
 );
-
 
 /* ---------- LOGIN ---------- */
 
@@ -166,12 +170,20 @@ router.post(
 
 /* ---------- Google OAuth ---------- */
 
-router.get("/google",
-  passport.authenticate("google", { scope: ["profile", "email"], prompt: "select_account" })
+router.get(
+  "/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    prompt: "select_account",
+  })
 );
 
-router.get("/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: `${process.env.CLIENT_URL}/auth-failed` }),
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: `${process.env.CLIENT_URL}/auth-failed`,
+  }),
   async (req, res) => {
     const id = (req.user as any).id as string;
 
@@ -186,7 +198,9 @@ router.get("/google/callback",
     }
 
     setRefreshCookie(res, refresh);
-    const redirectUrl = `${process.env.CLIENT_URL}/oauth-callback#access_token=${encodeURIComponent(access)}`;
+    const redirectUrl = `${
+      process.env.CLIENT_URL
+    }/oauth-callback#access_token=${encodeURIComponent(access)}`;
     return res.redirect(302, redirectUrl);
   }
 );
@@ -200,13 +214,17 @@ router.post("/refresh", async (req, res) => {
   try {
     const payload = verifyRefresh(cookie);
     const user = await User.findById(payload.sub);
-    if (!user || !user.refreshTokenHash) return res.status(401).json({ error: "invalid refresh" });
+    if (!user || !user.refreshTokenHash)
+      return res.status(401).json({ error: "invalid refresh" });
 
     const valid = await argon2.verify(user.refreshTokenHash, cookie);
     if (!valid) return res.status(401).json({ error: "invalid refresh" });
 
     const newAccess = signAccessToken(user._id.toString());
-    const newRefresh = signRefreshToken(user._id.toString(), crypto.randomUUID());
+    const newRefresh = signRefreshToken(
+      user._id.toString(),
+      crypto.randomUUID()
+    );
 
     user.refreshTokenHash = await argon2.hash(newRefresh);
     await user.save();

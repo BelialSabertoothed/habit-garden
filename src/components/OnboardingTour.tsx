@@ -746,7 +746,7 @@ function StarterPicker({
                         isDark ? "text-white" : "text-gray-900"
                       )}
                     >
-                      {h.title}
+                      {t("habits.suggestions." + h.id + ".title")}
                     </span>
                     <span
                       className={cn(
