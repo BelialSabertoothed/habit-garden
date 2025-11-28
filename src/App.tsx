@@ -14,6 +14,7 @@ import { Navigation } from "./components/Navigation";
 import { useBadgeToasts } from "./hooks/useBadgeToasts";
 import { askNotificationPermission } from "./lib/notificationPermission";
 import { FlowerLoader } from "./components/FlowerLoader";
+import { useTranslation } from "react-i18next";   // ⬅️ přidáno
 import "./i18n/i18n";
 
 type Page = "garden" | "habits" | "stats" | "profile";
@@ -22,6 +23,7 @@ export default function App() {
   const { data: me, isLoading } = useMe();
   const logout = useLogout();
   const qc = useQueryClient();
+  const { i18n } = useTranslation();           // ⬅️ přidáno
 
   const [currentPage, setCurrentPage] = useState<Page>("garden");
 
@@ -31,6 +33,25 @@ export default function App() {
   // badge toasty jen pro gamified variantu
   const badgeToastsEnabled = me?.experimentVariant === "gamified";
   useBadgeToasts(theme, badgeToastsEnabled);
+
+  // 🔒 říct prohlížeči "nepřekládej mě"
+  useEffect(() => {
+    const html = document.documentElement;
+    html.classList.add("notranslate");
+    html.setAttribute("translate", "no");
+
+    return () => {
+      html.classList.remove("notranslate");
+      html.removeAttribute("translate");
+    };
+  }, []);
+
+  // 🌐 nastavení <html lang="cs|en"> podle i18n
+  useEffect(() => {
+    const html = document.documentElement;
+    const lang = i18n.language?.toLowerCase().startsWith("cs") ? "cs" : "en";
+    html.lang = lang;
+  }, [i18n.language]);
 
   useEffect(() => {
     if (!me) return;
@@ -53,7 +74,6 @@ export default function App() {
 
     if (token) {
       setAccessToken(token);
-
       window.location.replace("/");
     }
   }, []);
@@ -71,7 +91,6 @@ export default function App() {
 
   /* ---------------------- ONBOARDING ---------------------- */
 
-  // OnboardingTour běží po prvním přihlášení, dokud neproběhne POST /profile/onboarding
   if (!me.onboardingDone) {
     return (
       <OnboardingTour
