@@ -1,7 +1,6 @@
 import { api } from "./api";
 
-const VAPID_PUBLIC_KEY = import.meta.env
-  .VITE_VAPID_PUBLIC_KEY as string | undefined;
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
 function urlBase64ToUint8Array(base64String: string) {
   try {
@@ -17,67 +16,79 @@ function urlBase64ToUint8Array(base64String: string) {
       outputArray[i] = rawData.charCodeAt(i);
     }
     return outputArray;
-  } catch (e) {
-    console.error("Failed to convert VAPID key. Is it a valid base64 string?", e);
-    throw new Error("Invalid VAPID key format");
+  } catch (error) {
+    console.error("[Notification] Failed to convert VAPID key:", error);
+    throw new Error(`Invalid VAPID key format. Key length: ${base64String?.length}`);
   }
 }
 export async function enableNotificationsOnClient(): Promise<boolean> {
+  // 1. Kontrola podpory v prohlížeči
+  if (
+    typeof window === "undefined" ||
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window)
+  ) {
+    console.warn("[Notification] Push API not supported");
+    return false;
+  }
+
+  // 2. Kontrola VAPID klíče
+  if (!VAPID_PUBLIC_KEY) {
+    console.error("[Notification] Missing VITE_VAPID_PUBLIC_KEY environment variable");
+    return false;
+  }
+
   try {
-    if (
-      typeof window === "undefined" ||
-      !("serviceWorker" in navigator) ||
-      !("PushManager" in window)
-    ) {
-      console.warn("[notifications] Push not supported in this browser");
-      return false;
+    // 3. Registrace Service Workeru (jistota, že běží)
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) {
+      console.error("[Notification] No Service Worker registered. App setup issue?");
+      // Pokus o nouzovou registraci (pokud by v main.tsx selhala)
+      await navigator.serviceWorker.register("/service-worker.js");
     }
 
-    if (!VAPID_PUBLIC_KEY) {
-      console.error(
-        "[notifications] Missing VAPID public key (VITE_VAPID_PUBLIC_KEY). Check your env variables."
-      );
-      return false;
-    }
+    const readyReg = await navigator.serviceWorker.ready;
 
-    // 1) Permission
+    // 4. Oprávnění (Permission)
     let permission = Notification.permission;
-    if (permission === "denied") {
-      console.warn("[notifications] Permission is denied");
-      // Můžeme zkusit požádat znovu, ale pravděpodobně to failne, pokud user explicitně zakázal
-      return false;
+    if (permission === "default") {
+      permission = await Notification.requestPermission();
     }
 
     if (permission !== "granted") {
-      permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        console.warn("[notifications] Permission not granted:", permission);
-        return false;
-      }
+      console.warn("[Notification] Permission denied by user");
+      return false;
     }
 
-    // 2) SW ready
-    const reg = await navigator.serviceWorker.ready;
+    let sub = await readyReg.pushManager.getSubscription();
 
-    // 3) Subscription
-    let sub = await reg.pushManager.getSubscription();
-    
     if (!sub) {
-      // Konverze klíče může vyhodit chybu, pokud je klíč špatný
+      console.log("[Notification] Creating new subscription...");
       const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
       
-      sub = await reg.pushManager.subscribe({
+      sub = await readyReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey,
       });
+    } else {
+
+      console.log("[Notification] Found existing subscription");
     }
 
-    // 4) Pošleme subscription na BE
+    // 6. Odeslání na backend
+    console.log("[Notification] Sending subscription to backend...");
     await api.post("push/subscribe", { json: sub });
+    console.log("[Notification] Successfully subscribed!");
 
     return true;
-  } catch (err) {
-    console.error("[notifications] enable failed:", err);
+  } catch (err: any) {
+    console.error("[Notification] Enable failed with error:", err);
+    
+    // Specifická detekce "push service error"
+    if (err.name === "AbortError" || err.message?.includes("push service")) {
+      console.error("👉 HINT: This often means the VAPID public key is invalid or doesn't match the private key on the server.");
+    }
+    
     return false;
   }
 }
@@ -89,9 +100,10 @@ export async function disableNotificationsOnClient(): Promise<void> {
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
         await sub.unsubscribe();
+        console.log("[Notification] Unsubscribed locally");
       }
     }
   } catch (err) {
-    console.warn("[notifications] disable failed:", err);
+    console.warn("[Notification] Disable failed:", err);
   }
 }
