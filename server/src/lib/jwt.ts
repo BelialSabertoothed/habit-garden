@@ -1,7 +1,12 @@
 import jwt, { type JwtPayload, type Secret, type SignOptions } from "jsonwebtoken";
 
+if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
+  throw new Error("❌ CRITICAL: Missing JWT_ACCESS_SECRET or JWT_REFRESH_SECRET in env variables.");
+}
+
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET as Secret;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as Secret;
+
 const ACCESS_TTL = process.env.JWT_ACCESS_TTL || "15m";
 const REFRESH_TTL = process.env.JWT_REFRESH_TTL || "7d";
 

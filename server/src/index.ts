@@ -3,18 +3,16 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import dotenv from "dotenv";
+import helmet from "helmet";
 import { initPassport } from "./lib/passport.js";
 import { connectDB } from "./db/connect.js";
 import { errorHandler } from "./middleware/error.js";
-import health from "./routes/health.js";
 import auth from "./routes/auth.js";
 import habits from "./routes/habits.js";
 import logs from "./routes/logs.js";
 import statsRouter from "./routes/stats.js";
 import rewards from "./routes/rewards.js";
-import authRouter from "./routes/auth.js";       
-import authMeRouter from "./routes/auth.me.js";  
+import authMeRouter from "./routes/auth.me.js";
 import profileRouter from "./routes/profile.js";
 import pushRouter from "./routes/push.js";
 import { sendDailyNotifications } from "./cron/checkHabits.js";
@@ -24,8 +22,15 @@ cron.schedule("0 20 * * *", async () => {
   console.log("Running daily habit notification check...");
   await sendDailyNotifications();
 });
-dotenv.config();
+
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
+
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
+
+app.use(helmet());
 
 app.use(cors({
   origin: [process.env.CLIENT_URL || "http://localhost:5173"],
@@ -33,34 +38,38 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
   methods: ["GET","POST","PATCH","DELETE","OPTIONS"]
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
-// jen pro OAuth handshake (Passport vyžaduje session middleware,
-// ale nepoužíváme perzistentní store, protože JWT vydáváme sami)
 app.use(session({
-  secret: "tmp-oauth-session", resave: false, saveUninitialized: false,
-  cookie: { secure: false, sameSite: "lax" } // v prod nasadit secure: true (HTTPS)
+  secret: process.env.SESSION_SECRET || "tmp-oauth-session",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    httpOnly: true,
+    maxAge: 1000 * 60 * 15
+  }
 }));
-const passport = initPassport(); 
+
+const passport = initPassport();
 app.use(passport.initialize());
 
-app.use("/api/health", health);
 app.use("/api/auth", auth);
-app.use("/api/auth", authRouter);
 app.use("/api/auth", authMeRouter);
 app.use("/api/profile", profileRouter);
-// chráněné trasy můžeš chránit requireJwt (až je napojíš na FE s Bearer tokenem)
-// např:
-// import { requireJwt } from "./middleware/requireJwt.js";
-// app.use("/api/habits", requireJwt, habits);
 app.use("/api/habits", habits);
 app.use("/api/logs", logs);
 app.use("/api/stats", statsRouter);
 app.use("/api/rewards", rewards);
 app.use("/api/push", pushRouter);
 
-app.use((req, res) => res.status(404).json({ error: "Not found", path: req.path }));
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found", path: req.path });
+});
+
 app.use(errorHandler);
 
 const PORT = Number(process.env.PORT) || 5050;

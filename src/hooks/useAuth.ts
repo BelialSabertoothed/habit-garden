@@ -19,7 +19,9 @@ export function useMe() {
         throw e;
       }
     },
-    retry: false,
+    retry: 0, 
+    staleTime: 1000 * 60 * 2, 
+    refetchOnWindowFocus: true, 
   });
 }
 
@@ -27,11 +29,14 @@ export function useLogout() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => api.post<null>("auth/logout"),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["me"] }),
+    onSuccess: () => {
+      qc.setQueryData(["me"], null);
+      qc.invalidateQueries({ queryKey: ["me"] });
+    },
   });
 }
 
 export function loginWithGoogle() {
-  const base = import.meta.env.VITE_API_URL as string; // končí /api/
+  const base = import.meta.env.VITE_API_URL as string; 
   window.location.href = new URL("auth/google", base).toString();
 }

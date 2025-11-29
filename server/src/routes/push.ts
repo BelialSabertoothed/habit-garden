@@ -14,8 +14,8 @@ router.get(
     res.json({ publicKey: VAPID_PUBLIC });
   })
 );
-// POST /push/subscribe – uloží push subscription pro usera
 
+// POST /push/subscribe – uloží push subscription pro usera
 router.post("/subscribe", requireAuth, async (req: AuthReq, res) => {
   try {
     const sub = req.body;
@@ -24,17 +24,18 @@ router.post("/subscribe", requireAuth, async (req: AuthReq, res) => {
       return res.status(400).json({ ok: false, message: "invalid subscription" });
     }
 
+
     await PushSubscription.findOneAndUpdate(
-      { userId: req.userId },
+      { endpoint: sub.endpoint },
       {
         $set: {
           userId: req.userId,
           endpoint: sub.endpoint,
           keys: sub.keys,
-          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       },
-      { upsert: true }
+      { upsert: true, new: true }
     );
 
     return res.json({ ok: true });
@@ -44,26 +45,31 @@ router.post("/subscribe", requireAuth, async (req: AuthReq, res) => {
   }
 });
 
-// POST /push/test – pošle testovací notifikaci na všechny userovy subscription
 router.post("/test", requireAuth, async (req: AuthReq, res) => {
   try {
     const { userId } = req;
-    const sub = await PushSubscription.findOne({ userId });
+    const subs = await PushSubscription.find({ userId });
 
-    if (!sub) return res.status(404).json({ ok: false, message: "no subscription" });
+    if (!subs.length) {
+      return res.status(404).json({ ok: false, message: "no subscription found" });
+    }
 
-    await webpush.sendNotification(
-      {
-        endpoint: sub.endpoint,
-        keys: sub.keys
-      },
-      JSON.stringify({
-        title: "Habit Garden",
-        body: "Test notification 🌱",
-      })
+    const promises = subs.map((sub) =>
+      webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: sub.keys,
+        },
+        JSON.stringify({
+          title: "Habit Garden",
+          body: "Test notification 🌱",
+        })
+      )
     );
 
-    return res.json({ ok: true });
+    await Promise.all(promises);
+
+    return res.json({ ok: true, count: subs.length });
   } catch (err) {
     console.error("push test failed:", err);
     return res.status(500).json({ ok: false });

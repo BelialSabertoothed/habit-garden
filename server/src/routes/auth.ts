@@ -17,17 +17,25 @@ import argon2 from "argon2";
 
 const router = Router();
 
+const isProduction = process.env.NODE_ENV === "production";
+
 function setRefreshCookie(res: Response, token: string) {
   res.cookie("refresh_token", token, {
-    httpOnly: true,
-    sameSite: "none",
-    secure: true, 
+    httpOnly: true,           
+    sameSite: isProduction ? "none" : "lax", 
+    secure: isProduction,     
     path: "/api/auth/refresh",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 }
+
 function clearRefreshCookie(res: Response) {
-  res.clearCookie("refresh_token", { path: "/api/auth/refresh" });
+  res.clearCookie("refresh_token", { 
+    path: "/api/auth/refresh",
+    httpOnly: true,
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction
+  });
 }
 
 /* ---------- Email + heslo registrace + verifikace ---------- */

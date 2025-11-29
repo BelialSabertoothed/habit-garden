@@ -18,14 +18,6 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-/**
- * Zapne notifikace:
- *  - ověří podporu
- *  - zajistí "granted" permission
- *  - vytvoří / obnoví push subscription
- *  - pošle subscription na BE
- *  - nastaví notificationsEnabled = true na BE
- */
 export async function enableNotificationsOnClient(): Promise<boolean> {
   try {
     if (
@@ -71,13 +63,8 @@ export async function enableNotificationsOnClient(): Promise<boolean> {
       });
     }
 
-    // 4) Pošleme subscription na BE
+    // 4) Pošleme subscription na BE (uložíme si ho, ale neukládáme stav 'enabled')
     await api.post("push/subscribe", { json: sub });
-
-    // 5) Nastavíme flag v profilu
-    await api.post("profile/notifications", {
-      json: { notificationsEnabled: true },
-    });
 
     return true;
   } catch (err) {
@@ -85,12 +72,6 @@ export async function enableNotificationsOnClient(): Promise<boolean> {
     return false;
   }
 }
-
-/**
- * Vypne notifikace:
- *  - zruší subscription (pokud existuje)
- *  - nastaví notificationsEnabled = false na BE
- */
 export async function disableNotificationsOnClient(): Promise<void> {
   try {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
@@ -100,11 +81,6 @@ export async function disableNotificationsOnClient(): Promise<void> {
         await sub.unsubscribe();
       }
     }
-
-    await api.post("profile/notifications", {
-      json: { notificationsEnabled: false },
-    });
-
   } catch (err) {
     console.warn("[notifications] disable failed:", err);
   }
