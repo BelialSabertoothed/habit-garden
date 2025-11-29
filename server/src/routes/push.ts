@@ -54,7 +54,7 @@ router.post("/test", requireAuth, async (req: AuthReq, res) => {
       return res.status(404).json({ ok: false, message: "no subscription found" });
     }
 
-    const promises = subs.map((sub) =>
+    const promises = subs.map((sub: any)=>
       webpush.sendNotification(
         {
           endpoint: sub.endpoint,

@@ -2,7 +2,7 @@ import webpush from "web-push";
 import { Habit } from "../models/Habit.js";
 import { PushSubscription } from "../models/PushSubscription.js";
 import { User } from "../models/User.js";
-import { dayKey, weekKey } from "../lib/dateKeys.js"; 
+import { dayKey, weekKey } from "../lib/dateKeys.js";
 
 export async function sendDailyNotifications() {
   const users = await User.find({ notificationsEnabled: true });
@@ -36,7 +36,7 @@ export async function sendDailyNotifications() {
 
     if (subs.length === 0) continue;
 
-    const notifications = subs.map((sub) =>
+    const notifications = subs.map((sub: any) =>
       webpush
         .sendNotification(
           {
