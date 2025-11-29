@@ -4,20 +4,24 @@ const VAPID_PUBLIC_KEY = import.meta.env
   .VITE_VAPID_PUBLIC_KEY as string | undefined;
 
 function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
+  try {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
 
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
 
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  } catch (e) {
+    console.error("Failed to convert VAPID key. Is it a valid base64 string?", e);
+    throw new Error("Invalid VAPID key format");
   }
-  return outputArray;
 }
-
 export async function enableNotificationsOnClient(): Promise<boolean> {
   try {
     if (
@@ -31,7 +35,7 @@ export async function enableNotificationsOnClient(): Promise<boolean> {
 
     if (!VAPID_PUBLIC_KEY) {
       console.error(
-        "[notifications] Missing VAPID public key (VITE_VAPID_PUBLIC_KEY)"
+        "[notifications] Missing VAPID public key (VITE_VAPID_PUBLIC_KEY). Check your env variables."
       );
       return false;
     }
@@ -40,6 +44,7 @@ export async function enableNotificationsOnClient(): Promise<boolean> {
     let permission = Notification.permission;
     if (permission === "denied") {
       console.warn("[notifications] Permission is denied");
+      // Můžeme zkusit požádat znovu, ale pravděpodobně to failne, pokud user explicitně zakázal
       return false;
     }
 
@@ -56,14 +61,18 @@ export async function enableNotificationsOnClient(): Promise<boolean> {
 
     // 3) Subscription
     let sub = await reg.pushManager.getSubscription();
+    
     if (!sub) {
+      // Konverze klíče může vyhodit chybu, pokud je klíč špatný
+      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey,
       });
     }
 
-    // 4) Pošleme subscription na BE (uložíme si ho, ale neukládáme stav 'enabled')
+    // 4) Pošleme subscription na BE
     await api.post("push/subscribe", { json: sub });
 
     return true;
@@ -72,6 +81,7 @@ export async function enableNotificationsOnClient(): Promise<boolean> {
     return false;
   }
 }
+
 export async function disableNotificationsOnClient(): Promise<void> {
   try {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
