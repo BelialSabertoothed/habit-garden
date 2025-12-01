@@ -28,7 +28,6 @@ const HabitInput = z.object({
   worth: z.number().min(1).max(100).default(10),
 });
 
-// 🔒 Nová validace pro update – povolíme jen bezpečné pole
 const HabitUpdateInput = z.object({
   title: z.string().min(2).max(64).optional(),
   category: z.enum([
@@ -37,7 +36,6 @@ const HabitUpdateInput = z.object({
   icon: z.enum(["heart", "leaf", "briefcase", "users", "palette"]).optional(),
   frequency: z.enum(["Daily", "Weekly"]).optional(),
   active: z.boolean().optional(),
-  // Streak, bestStreak ani worth tu NEJSOU = nelze je změnit
 });
 
 const BulkInput = z.object({
@@ -90,20 +88,60 @@ router.post(
   })
 );
 
-/* ---------------------------- List mine ---------------------------- */
+/* ---------------------------- List mine (s auto-resetem streaku) ---------------------------- */
 
 router.get(
   "/mine",
   requireAuth,
   asyncHandler(async (req: AuthReq, res: Response) => {
-    const items = await Habit.find({
+    // 1. Načteme návyky jako Mongoose dokumenty (ne .lean(), abychom mohli volat .save())
+    const habits = await Habit.find({
       userId: req.userId,
       active: { $ne: false },
-    })
-      .sort({ createdAt: 1 })
-      .lean();
+    }).sort({ createdAt: 1 });
 
-    res.json({ items });
+    const now = new Date();
+    const yesterdayK = prevDayKey(now);
+    const lastWeekK = prevWeekKey(now);
+    
+    const updates = [];
+
+    // 2. Projdeme návyky a zkontrolujeme expiraci streaku
+    for (const habit of habits) {
+      let changed = false;
+      const streak = habit.streak ?? 0;
+
+      if (streak > 0) {
+        if (habit.frequency === "Daily") {
+           const lastKey = habit.lastCompletedAt ? dayKey(habit.lastCompletedAt) : null;
+           // Pokud bylo naposledy PŘED včerejškem -> přerušeno (vynechal jsi včera)
+           // (Pokud lastKey === yesterdayK, streak drží. Pokud lastKey < yesterdayK, je konec.)
+           if (lastKey && lastKey < yesterdayK) {
+             habit.streak = 0;
+             changed = true;
+           }
+        } else if (habit.frequency === "Weekly") {
+           const lastKey = habit.lastCompletedAt ? weekKey(habit.lastCompletedAt) : null;
+           // Pokud bylo naposledy PŘED minulým týdnem -> přerušeno
+           if (lastKey && lastKey < lastWeekK) {
+             habit.streak = 0;
+             changed = true;
+           }
+        }
+      }
+      
+      if (changed) {
+          updates.push(habit.save());
+      }
+    }
+
+    // 3. Uložíme změny paralelně
+    if (updates.length > 0) {
+        await Promise.all(updates);
+    }
+
+    // 4. Vrátíme (případně aktualizované) návyky
+    res.json({ items: habits });
   })
 );
 
@@ -197,6 +235,9 @@ router.post(
         ? dayKey(habit.lastCompletedAt)
         : undefined;
 
+      // Pokud bylo naposledy včera -> navazujeme
+      // Pokud dnes (double check) -> navazujeme (ale to už řeší dedup výše)
+      // Jinak reset na 1
       habit.streak = lastKey === yesterdayKey ? prevStreak + 1 : 1;
     } else {
       const prevWeek = prevWeekKey(now);
@@ -318,7 +359,6 @@ router.post(
   })
 );
 
-// 🛡️ OPRAVENO: Použití HabitUpdateInput pro validaci
 router.patch(
   "/:id",
   requireAuth,
@@ -326,7 +366,6 @@ router.patch(
     const userId = req.userId!;
     const { id } = req.params;
     
-    // Validace payloadu - zahodí všechno, co není v HabitUpdateInput (např. streak, worth)
     const updateData = HabitUpdateInput.parse(req.body);
 
     const updated = await Habit.findOneAndUpdate(
