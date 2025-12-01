@@ -3,9 +3,8 @@ import { Button } from "./ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-
-// ⭐ NÁŠ NOVÝ HELPER
 import { getStageAndProgress } from "../lib/growth";
+import { SUGGESTED_HABITS_BY_CATEGORY } from "../data/suggestedHabits";
 
 /* -------------------------------- UI Config -------------------------------- */
 
@@ -35,6 +34,13 @@ const stageConfig = {
     size: 60,
   },
 } as const;
+
+const SUGGESTION_TITLE_MAP: Record<string, string> = {};
+Object.values(SUGGESTED_HABITS_BY_CATEGORY)
+  .flat()
+  .forEach((h) => {
+    SUGGESTION_TITLE_MAP[h.title] = h.titleKey;
+  });
 
 /* -------------------------------- Component -------------------------------- */
 
@@ -98,11 +104,13 @@ export function PlantCard({
     }
   }, [stage]);
 
-  // streak text – zvlášť pro daily/weekly kvůli správnému plurálu
   const streakText =
     frequency === "Daily"
       ? t("dashboard.plantCard.streak.daily", { count: streak })
       : t("dashboard.plantCard.streak.weekly", { count: streak });
+
+  const translationKey = SUGGESTION_TITLE_MAP[habitName];
+  const displayName = translationKey ? t(translationKey) : habitName;
 
   return (
     <div
@@ -216,7 +224,7 @@ export function PlantCard({
               isDark ? "text-white" : "text-gray-900"
             }`}
           >
-            {habitName}
+            {displayName}
           </p>
           <p
             className={`text-center text-sm ${
