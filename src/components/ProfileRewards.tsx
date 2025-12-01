@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Award, Sun, Moon, Zap, Pencil, User as UserIcon } from "lucide-react";
+import { Award, Sun, Moon, Zap, Pencil, User as UserIcon, Bell } from "lucide-react";
 import { motion } from "framer-motion";
 import { BadgeIcon } from "./BadgeIcon";
 import { Switch } from "./ui/switch";
@@ -11,11 +11,7 @@ import EditProfileModal from "./UpdateProfileModal";
 import { useRewards } from "../hooks/useRewards";
 import { BADGES, type BadgeId } from "./badges/config";
 import { useTranslation } from "react-i18next";
-import { Bell } from "lucide-react";
-import {
-  enableNotificationsOnClient,
-  disableNotificationsOnClient,
-} from "../lib/notification";
+import toast from "react-hot-toast";
 
 /* ---------- XP / level křivka – stejné jako na BE ---------- */
 
@@ -104,33 +100,30 @@ export function ProfileRewards() {
     }
   };
 
+  // ZJEDNODUŠENO: Jen API call, žádné Web Push
   const handleNotificationsToggle = async (checked: boolean) => {
     const prev = qc.getQueryData(["me"]);
     // optimistic update v UI
     qc.setQueryData(["me"], { ...me, notificationsEnabled: checked });
 
     try {
-      if (checked) {
-        // chceme zapnout – zajistíme permission + subscription
-        const ok = await enableNotificationsOnClient();
-        if (!ok) {
-          throw new Error("enableNotificationsOnClient returned false");
-        }
-      } else {
-        // vypínáme – odhlásíme subscription
-        await disableNotificationsOnClient();
-      }
-
-      // uložíme stav i do BE
       await api.post("profile/notifications", {
         json: { notificationsEnabled: checked },
       });
 
       await qc.invalidateQueries({ queryKey: ["me"] });
+      
+      if (checked) {
+        toast.success("Daily email reminders enabled ✅");
+      } else {
+        toast.success("Reminders disabled");
+      }
+      
     } catch (err) {
       console.error("notifications toggle failed:", err);
-      // rollback UI, pokud cokoliv selže
+      // rollback UI
       qc.setQueryData(["me"], prev);
+      toast.error("Failed to update settings");
     }
   };
 
@@ -349,7 +342,8 @@ export function ProfileRewards() {
                   isDark ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                {t("profile.notifications.description")}
+                {/* Upravený text - už to není push, ale email */}
+                Daily email reminders around 20:00 if you have pending habits.
               </p>
             </div>
           </div>

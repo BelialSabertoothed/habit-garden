@@ -1,65 +1,66 @@
-import webpush from "web-push";
 import { Habit } from "../models/Habit.js";
-import { PushSubscription } from "../models/PushSubscription.js";
 import { User } from "../models/User.js";
 import { dayKey, weekKey } from "../lib/dateKeys.js";
+import { sendDailyReminderEmail } from "../services/email.js";
 
 export async function sendDailyNotifications() {
-  const users = await User.find({ notificationsEnabled: true });
+  console.log("[Cron] Starting daily email check...");
+  
+
+  const users = await User.find({ 
+    notificationsEnabled: true,
+    emailVerified: true,
+    email: { $exists: true, $ne: null }
+  });
+
+  console.log(`[Cron] Found ${users.length} users with notifications enabled.`);
 
   const now = new Date();
   const todayK = dayKey(now);
   const thisWeekK = weekKey(now);
 
+  let emailsSent = 0;
+
   for (const user of users) {
-    const habits = await Habit.find({ userId: user._id, active: true });
+    try {
+      const habits = await Habit.find({ userId: user._id, active: true });
+      if (habits.length === 0) continue;
 
-    const pending = habits.some((h) => {
-      if (h.frequency === "Daily") {
-        if (!h.lastCompletedAt) return true;
-        const lastKey = dayKey(h.lastCompletedAt);
-        return lastKey !== todayK;
-      }
+      let pendingCount = 0;
 
-      if (h.frequency === "Weekly") {
-        if (!h.lastCompletedAt) return true;
-        const lastWeek = weekKey(h.lastCompletedAt);
-        return lastWeek !== thisWeekK;
-      }
-
-      return false;
-    });
-
-    if (!pending) continue;
-
-    const subs = await PushSubscription.find({ userId: user._id });
-
-    if (subs.length === 0) continue;
-
-    const notifications = subs.map((sub: any) =>
-      webpush
-        .sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: sub.keys,
-          },
-          JSON.stringify({
-            title: "Habit Garden 🌱",
-            body: "You still have habits to water today ✨",
-            data: { url: "/#garden" },
-          })
-        )
-        .catch((err) => {
-
-          if (err.statusCode === 404 || err.statusCode === 410) {
-            console.log(`[Cron] Cleaning up expired subscription for user ${user._id}`);
-            PushSubscription.deleteOne({ _id: sub._id }).catch(() => {});
+      for (const h of habits) {
+        if (h.frequency === "Daily") {
+          if (!h.lastCompletedAt) {
+            pendingCount++;
           } else {
-            console.error(`[Cron] Push failed for user ${user._id}:`, err);
+            const lastKey = dayKey(h.lastCompletedAt);
+            if (lastKey !== todayK) pendingCount++;
           }
-        })
-    );
+        } else if (h.frequency === "Weekly") {
+          if (!h.lastCompletedAt) {
+            pendingCount++;
+          } else {
+            const lastWeek = weekKey(h.lastCompletedAt);
+            if (lastWeek !== thisWeekK) pendingCount++;
+          }
+        }
+      }
 
-    await Promise.all(notifications);
+      if (pendingCount === 0) continue;
+
+      await sendDailyReminderEmail({
+        to: user.email,
+        nickname: user.nickname || "Gardener",
+        pendingCount
+      });
+
+      emailsSent++;
+      await new Promise(resolve => setTimeout(resolve, 200)); 
+
+    } catch (err) {
+      console.error(`[Cron] Failed to send email to user ${user._id}:`, err);
+    }
   }
+
+  console.log(`[Cron] Finished. Emails sent: ${emailsSent}`);
 }

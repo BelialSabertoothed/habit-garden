@@ -3,20 +3,22 @@ import fetch from "node-fetch";
 const MAILTRAP_TOKEN = process.env.MAILTRAP_API_TOKEN!;
 const EMAIL_FROM =
   process.env.EMAIL_FROM || "Habit Garden <noreply@habitgarden.app>";
-const SERVER_URL = process.env.SERVER_URL || "http://localhost:5050";
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 if (!MAILTRAP_TOKEN) {
   console.warn("[email] Missing MAILTRAP_API_TOKEN – emails will not send.");
 }
 
-/**
- * Sends e-mails using the Mailtrap HTTP API
- */
 async function sendMailViaMailtrap(opts: {
   to: string;
   subject: string;
   html: string;
 }) {
+  if (!MAILTRAP_TOKEN) {
+    console.log(`[email-mock] Would send to ${opts.to}: ${opts.subject}`);
+    return;
+  }
+
   const res = await fetch("https://send.api.mailtrap.io/api/send", {
     method: "POST",
     headers: {
@@ -28,7 +30,7 @@ async function sendMailViaMailtrap(opts: {
       to: [{ email: opts.to }],
       subject: opts.subject,
       html: opts.html,
-      category: "transactional",
+      category: "notification",
     }),
   });
 
@@ -41,64 +43,101 @@ async function sendMailViaMailtrap(opts: {
   return true;
 }
 
-/**
- * Sends verification e-mail
- */
+
 export async function sendVerificationEmail(opts: {
   to: string;
   token: string;
 }) {
-  const verifyUrl = `${SERVER_URL}/api/auth/verify-email?token=${encodeURIComponent(
+  const verifyUrl = `${process.env.SERVER_URL || "http://localhost:5050"}/api/auth/verify-email?token=${encodeURIComponent(
     opts.token
   )}`;
 
   const html = `
-    <div style="font-family: system-ui, Arial; font-size: 15px;">
-
-    <h2 style="color:#22c55e;">Habit Garden – ověření e-mailu 🌱</h2>
-    <p>Ahoj! 👋</p>
-    <p>Prosím ověř svůj e-mail kliknutím na tlačítko níže:</p>
-
-    <p style="margin: 24px 0;">
-      <a href="${verifyUrl}"
-         style="padding: 12px 20px; background:#22c55e; color:white; font-weight:bold; border-radius:8px; text-decoration:none;">
-        Ověřit e-mail
-      </a>
-    </p>
-
-    <p>Pokud tlačítko nefunguje, zkopíruj a vlož tento odkaz:</p>
-    <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-
-    <hr style="margin:32px 0; opacity:0.2">
-
-    <h3>English version</h3>
-    <p>Please verify your email by clicking the button above.</p>
-    <p>If you did not request this, you can safely ignore it.</p>
-
-  </div>
-    <div style="font-family: system-ui, Arial; font-size: 15px;">
-      <h2 style="color:#22c55e;">Habit Garden – verify your email 🌱</h2>
-      <p>Hello! 👋</p>
-      <p>Please confirm your email address by clicking the button below:</p>
+    <div style="font-family: system-ui, Arial; font-size: 15px; color: #333; max-width: 600px; margin: 0 auto;">
+      <!-- CZ Section -->
+      <h2 style="color:#10b981;">Habit Garden – ověření e-mailu 🌱</h2>
+      <p>Ahoj!</p>
+      <p>Prosím ověř svůj e-mail kliknutím na tlačítko níže:</p>
 
       <p style="margin: 24px 0;">
         <a href="${verifyUrl}"
-           style="padding: 12px 20px; background:#22c55e; color:white; font-weight:bold; border-radius:8px; text-decoration:none;">
-          Verify email
+           style="padding: 12px 24px; background:#10b981; color:white; font-weight:bold; border-radius:8px; text-decoration:none; display:inline-block;">
+          Ověřit e-mail / Verify Email
         </a>
       </p>
+      
+      <p style="font-size:13px; color:#666;">Pokud tlačítko nefunguje: <br><a href="${verifyUrl}" style="color:#10b981;">${verifyUrl}</a></p>
 
-      <p>If the button doesn't work, open this link:</p>
-      <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;">
 
-      <hr style="margin:32px 0; opacity:0.2">
-      <p style="font-size:13px; color:#666;">If you didn't create an account, ignore this e-mail.</p>
+      <!-- EN Section -->
+      <h3 style="color:#10b981; font-size: 18px;">English version</h3>
+      <p>Hello!</p>
+      <p>Please verify your email address by clicking the button above.</p>
+      <p style="font-size:13px; color:#666;">If the button doesn't work, copy and paste the link above.</p>
     </div>
   `;
 
   await sendMailViaMailtrap({
     to: opts.to,
-    subject: "Verify your email – Habit Garden",
+    subject: "Ověřte svůj e-mail / Verify your email – Habit Garden",
+    html,
+  });
+}
+
+
+export async function sendDailyReminderEmail(opts: {
+  to: string;
+  nickname: string;
+  pendingCount: number;
+}) {
+  const gardenUrl = `${CLIENT_URL}/#garden`;
+
+  const html = `
+    <div style="font-family: system-ui, Arial; font-size: 15px; color: #333; max-width: 600px; margin: 0 auto;">
+      <div style="text-align: center; padding: 20px 0;">
+        <span style="font-size: 40px;">🌱</span>
+      </div>
+      
+      <!-- CZ Section -->
+      <h2 style="color:#10b981; text-align: center; margin-top: 0;">Čas zalít tvoji zahradu!</h2>
+      
+      <p>Ahoj <strong>${opts.nickname}</strong>,</p>
+      
+      <p>Všimli jsme si, že ti dnes zbývá dokončit <strong>${opts.pendingCount} návyků</strong>.</p>
+      
+      <p>Nenech svou sérii přerušit a své rostlinky uschnout. Stačí chvilka!</p>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${gardenUrl}"
+           style="padding: 14px 28px; background: linear-gradient(to right, #10b981, #059669); color:white; font-weight:bold; border-radius:50px; text-decoration:none; display:inline-block; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">
+          Otevřít Habit Garden / Open App
+        </a>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;">
+      
+      <!-- EN Section -->
+      <h3 style="color:#10b981; text-align: center; font-size: 18px;">Time to water your garden!</h3>
+      
+      <p>Hi <strong>${opts.nickname}</strong>,</p>
+      
+      <p>We noticed you have <strong>${opts.pendingCount} habits</strong> remaining for today.</p>
+      
+      <p>Don't let your streak break and your plants wither. It only takes a moment!</p>
+
+      <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;">
+
+      <p style="font-size: 12px; color: #888; text-align: center;">
+        Tento e-mail ti přišel, protože máš zapnuté denní připomínky v aplikaci Habit Garden.<br>
+        You received this email because you enabled daily reminders in Habit Garden.
+      </p>
+    </div>
+  `;
+
+  await sendMailViaMailtrap({
+    to: opts.to,
+    subject: "🌱 Tvoje zahrada tě potřebuje! / Your garden needs you!",
     html,
   });
 }
