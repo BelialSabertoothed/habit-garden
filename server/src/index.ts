@@ -15,6 +15,7 @@ import rewards from "./routes/rewards.js";
 import authMeRouter from "./routes/auth.me.js";
 import profileRouter from "./routes/profile.js";
 import pushRouter from "./routes/push.js";
+import debug from "./routes/debug.js";
 import { sendDailyNotifications } from "./cron/checkHabits.js";
 import cron from "node-cron";
 
@@ -65,6 +66,7 @@ app.use("/api/logs", logs);
 app.use("/api/stats", statsRouter);
 app.use("/api/rewards", rewards);
 app.use("/api/push", pushRouter);
+app.use("/api/debug", debug);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found", path: req.path });
