@@ -95,6 +95,17 @@
       "buttonGamified": "Gamified",
       "buttonControl": "Control (No Gamification)"
     },
+    "updateModal": {
+      "title": "Edit Profile",
+      "description": "Change your nickname or avatar. This is how you'll appear in your garden.",
+      "nicknameLabel": "Nickname",
+      "nicknamePlaceholder": "Your display name",
+      "avatarLabel": "Avatar (emoji)",
+      "avatarDescription": "Choose a plant that best represents you.",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "saving": "Saving..."
+    },
     "dangerZone": {
       "title": "Danger Zone",
       "deleteButton": "Delete Account",
@@ -352,7 +363,6 @@
   },
   "landing": {
     "brand": "Habit Garden",
-
     "card": {
       "header": "Start your growth journey today",
       "tagline": "Turn small, consistent actions into a garden of better habits.",
