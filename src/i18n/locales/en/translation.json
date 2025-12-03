@@ -74,7 +74,7 @@
     },
     "notifications": {
       "title": "Habit reminders",
-      "description": "Daily push notification around 20:00 if you still have habits to water."
+      "description": "Daily email notification if you still have habits to water."
     },
     "badges": {
       "title": "Badges",

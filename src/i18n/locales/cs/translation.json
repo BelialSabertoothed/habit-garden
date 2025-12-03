@@ -74,7 +74,7 @@
     },
     "notifications": {
       "title": "Denní připomínky",
-      "description": "Pošleme ti e-mail kolem 20:00, pokud ti ještě zbývají návyky k odškrtnutí."
+      "description": "Pošleme ti večer e-mail, pokud ti ještě zbývají návyky k odškrtnutí."
     },
     "badges": {
       "title": "Síň slávy",
@@ -514,12 +514,12 @@
     "loading": "Připravuji profil…",
     "steps": {
       "consent": {
-        "title": "O co v tomto projektu jde? 🌿",
-        "description": "Jsem studentka a tato aplikace je mou bakalářskou prací. Tvým používáním mi pomáháš sbírat anonymní data o tom, jak nás baví plnit úkoly."
+        "title": "O projektu 🌿",
+        "description": "Tato aplikace je součástí bakalářské práce. Anonymní údaje o používání jsou shromažďovány pro akademický výzkum."
       },
       "experiment": {
-        "title": "Co budeme testovat? 🎮",
-        "description": "Zkoumám vliv herních prvků na naši motivaci. Aplikace ti náhodně přidělila jeden ze dvou vzhledů. Prosím, zkus ho chvíli používat tak, jak je."
+        "title": "Dvě verze 🎮",
+        "description": "Existuje gamifikovaná a negamifikovaná verze. Byla vám náhodně přiřazena – nejprve vyzkoušejte přiřazenou verzi, poté můžete přepnout."
       },
       "notifications": {
         "title": "Nenech to uschnout 🔔",
@@ -548,7 +548,7 @@
       "letsGo": "Jdeme na to"
     },
     "consent": {
-      "text": "Používáním souhlasíš se sběrem anonymních dat pro účely akademické studie. Data neobsahují tvůj osobní obsah.",
+      "text": "Pokračováním souhlasíte s tím, že mohou být shromažďovány anonymní údaje o používání pro akademickou studii (bakalářskou práci) za účelem vyhodnocení dopadu gamifikace. Údaje nebudou obsahovat osobní obsah a budou použity pouze v souhrnné podobě.",
       "checkbox": "Rozumím a souhlasím"
     }
   },

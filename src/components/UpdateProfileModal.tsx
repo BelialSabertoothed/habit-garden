@@ -214,9 +214,6 @@ export default function EditProfileModal({
 
             {/* DANGER ZONE */}
             <div className="pt-6 mt-6 border-t border-gray-100 dark:border-slate-700">
-              <h4 className="text-xs font-semibold text-red-500 uppercase tracking-wider mb-3">
-                {t("profile.dangerZone.title")}
-              </h4>
               <Button
                 type="button"
                 variant="destructive"

@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Award, Sun, Moon, Zap, Pencil, User as UserIcon, Bell } from "lucide-react";
+import {
+  Award,
+  Sun,
+  Moon,
+  Zap,
+  Pencil,
+  User as UserIcon,
+  Bell,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { BadgeIcon } from "./BadgeIcon";
 import { Switch } from "./ui/switch";
@@ -71,9 +79,7 @@ export function ProfileRewards() {
   const typedRewards = rewards as RewardItem[];
 
   const unlockedIds = new Set<BadgeId>(
-    typedRewards
-      .map((r) => r.badge)
-      .filter((b): b is BadgeId => !!b)
+    typedRewards.map((r) => r.badge).filter((b): b is BadgeId => !!b)
   );
 
   const badges = (
@@ -112,13 +118,12 @@ export function ProfileRewards() {
       });
 
       await qc.invalidateQueries({ queryKey: ["me"] });
-      
+
       if (checked) {
         toast.success("Daily email reminders enabled ✅");
       } else {
         toast.success("Reminders disabled");
       }
-      
     } catch (err) {
       console.error("notifications toggle failed:", err);
       // rollback UI
@@ -320,7 +325,7 @@ export function ProfileRewards() {
         </div>
       </div>
 
-            {/* Notifications */}
+      {/* Notifications */}
       <div
         className={`${
           isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-100"
@@ -343,7 +348,7 @@ export function ProfileRewards() {
                 }`}
               >
                 {/* Upravený text - už to není push, ale email */}
-                Daily email reminders around 20:00 if you have pending habits.
+                {t("profile.notifications.description")}
               </p>
             </div>
           </div>
@@ -388,7 +393,7 @@ export function ProfileRewards() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {badges.map((badge, idx) =>
               badge.unlocked ? (
-                 <motion.div
+                <motion.div
                   key={badge.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}

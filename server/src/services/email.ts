@@ -153,6 +153,7 @@ export async function sendPasswordResetEmail(opts: {
     <div style="font-family: system-ui, Arial; font-size: 15px; color: #333; max-width: 600px; margin: 0 auto;">
       <h2 style="color:#10b981;">Reset hesla / Password Reset 🔒</h2>
       <p>Někdo (pravděpodobně ty) požádal o změnu hesla k účtu Habit Garden.</p>
+      <p>Someone (probably you) requested a password reset for your Habit Garden account.</p>
       
       <p style="margin: 24px 0;">
         <a href="${resetUrl}"
@@ -163,7 +164,7 @@ export async function sendPasswordResetEmail(opts: {
       
       <p style="font-size:13px; color:#666;">
         Odkaz je platný 1 hodinu. Pokud jsi o změnu nežádal/a, tento email ignoruj.<br>
-        Link valid for 1 hour. If you didn't request this, ignore this email.
+        Link is valid for 1 hour. If you didn't request this, ignore this email.
       </p>
     </div>
   `;
