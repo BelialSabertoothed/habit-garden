@@ -11,6 +11,7 @@ import {
   verifyRefresh,
 } from "../lib/jwt.js";
 import { trackEvent } from "../utils/trackEvent.js";
+import { sendPasswordResetEmail } from "../services/email.js";
 
 import crypto from "node:crypto";
 import argon2 from "argon2";
@@ -254,10 +255,84 @@ router.post("/logout", async (req, res) => {
         user.refreshTokenHash = null;
         await user.save();
       }
-    } catch {}
+    } catch {
+      // Silently ignore errors during logout
+    }
   }
   clearRefreshCookie(res);
   res.json({ ok: true });
 });
+
+/* ---------- FORGOT PASSWORD ---------- */
+
+const ForgotPasswordInput = z.object({
+  email: z.string().email(),
+});
+
+router.post(
+  "/forgot-password",
+  asyncHandler(async (req, res) => {
+    const { email } = ForgotPasswordInput.parse(req.body);
+    
+    const user = await User.findOne({ email: email.toLowerCase() });
+    // Z bezpečnostních důvodů neříkáme, jestli user existuje, nebo ne
+    if (!user || !user.passwordHash) {
+      return res.json({ ok: true, message: "If user exists, email was sent." });
+    }
+
+    // Vygenerovat token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hodina
+
+    user.passwordResetToken = token;
+    user.passwordResetExpiresAt = expiresAt;
+    await user.save();
+
+    await sendPasswordResetEmail({
+      to: user.email,
+      token,
+    });
+
+    res.json({ ok: true, message: "If user exists, email was sent." });
+  })
+);
+
+/* ---------- RESET PASSWORD ---------- */
+
+const ResetPasswordInput = z.object({
+  token: z.string(),
+  password: z.string().min(8),
+});
+
+router.post(
+  "/reset-password",
+  asyncHandler(async (req, res) => {
+    const { token, password } = ResetPasswordInput.parse(req.body);
+
+    const user = await User.findOne({
+      passwordResetToken: token,
+      passwordResetExpiresAt: { $gt: new Date() }, // token musí být platný
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+
+    // Hashnout nové heslo
+    const newHash = await hashPassword(password);
+    
+    // Update user
+    user.passwordHash = newHash;
+    user.passwordResetToken = null;
+    user.passwordResetExpiresAt = null;
+    
+    // Pro jistotu invalidujeme refresh tokeny (odhlásíme ho ze všech zařízení)
+    user.refreshTokenHash = null; 
+
+    await user.save();
+
+    res.json({ ok: true, message: "Password updated successfully" });
+  })
+);
 
 export default router;

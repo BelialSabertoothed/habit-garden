@@ -4,6 +4,12 @@ import { User } from "../models/User.js";
 import { requireAuth, AuthReq } from "../middleware/requireAuth.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { trackEvent } from "../utils/trackEvent.js";
+import { Habit } from "../models/Habit.js";
+import { HabitLog } from "../models/HabitLog.js";
+import { HabitTick } from "../models/HabitTick.js";
+import { Reward } from "../models/Reward.js";
+import { PushSubscription } from "../models/PushSubscription.js";
+import { ExperimentEvent } from "../models/ExperimentEvent.js";
 
 const router = Router();
 
@@ -181,47 +187,52 @@ router.patch(
     const { nickname, avatar, theme, notificationsEnabled, experimentVariant } =
       ProfileUpdateInput.parse(req.body);
 
-    const updateData: Partial<{
-      nickname: string;
-      avatar: string;
-      theme: "day" | "night";
-      notificationsEnabled: boolean;
-      experimentVariant: "gamified" | "control";
-      profileComplete: boolean;
-    }> = {};
-    if (nickname !== undefined) updateData.nickname = nickname;
-    if (avatar !== undefined) updateData.avatar = avatar;
-    if (theme !== undefined) updateData.theme = theme;
-    if (notificationsEnabled !== undefined)
-      updateData.notificationsEnabled = notificationsEnabled;
-    if (experimentVariant !== undefined)
-      updateData.experimentVariant = experimentVariant;
-
-    let shouldSetComplete = false;
-
-    if (nickname) {
-      shouldSetComplete = true;
-    } else {
-      const currentUser = await User.findById(userId).select("nickname profileComplete");
-      if (currentUser && currentUser.nickname && !currentUser.profileComplete) {
-        shouldSetComplete = true;
-      }
-    }
-
-    if (shouldSetComplete) {
-      updateData.profileComplete = true;
-    }
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $set: updateData },
-      { new: true }
-    );
-
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (nickname !== undefined) user.nickname = nickname;
+    if (avatar !== undefined) user.avatar = avatar;
+    if (theme !== undefined) user.theme = theme;
+    if (notificationsEnabled !== undefined) user.notificationsEnabled = notificationsEnabled;
+    if (experimentVariant !== undefined) user.experimentVariant = experimentVariant;
+
+    if (user.nickname && user.avatar && user.nickname.trim().length > 0) {
+      user.profileComplete = true;
+    }
+
+    await user.save();
 
     res.json(user);
   })
 );
 
-export default router;
+
+router.delete(
+  "/",
+  requireAuth,
+  asyncHandler(async (req: AuthReq, res: Response) => {
+    const userId = req.userId!;
+
+    // Smazání všech souvisejících dat paralelně
+    await Promise.all([
+      Habit.deleteMany({ userId }),
+      HabitLog.deleteMany({ userId }),
+      HabitTick.deleteMany({ userId }),
+      Reward.deleteMany({ userId }),
+      PushSubscription.deleteMany({ userId }),
+      ExperimentEvent.deleteMany({ userId }), // Volitelné, pokud chceš držet analytiku, tohle vynech
+    ]);
+
+    // Nakonec smazání uživatele
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Vymazání cookie, pokud ji používáš
+    res.clearCookie("refresh_token");
+    
+    res.json({ ok: true, message: "Account deleted successfully" });
+  })
+);

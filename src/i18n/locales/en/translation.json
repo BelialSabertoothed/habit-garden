@@ -94,6 +94,17 @@
       "description": "Switch between the gamified experience (XP, levels, badges) and the minimal experience (no gamification).",
       "buttonGamified": "Gamified",
       "buttonControl": "Control (No Gamification)"
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "deleteButton": "Delete Account",
+      "dialog": {
+        "title": "Delete Account?",
+        "description": "This action cannot be undone. This will permanently delete your account, all your habits, stats, and rewards.",
+        "cancel": "Cancel",
+        "confirm": "Yes, Delete Everything",
+        "deleting": "Deleting..."
+      }
     }
   },
   "habits": {
@@ -235,7 +246,8 @@
       },
       "actions": {
         "signIn": "Sign In",
-        "signingIn": "Signing in..."
+        "signingIn": "Signing in...",
+        "forgotPassword": "Forgot password?"
       },
       "errors": {
         "invalidCredentials": "Invalid email or password."
@@ -244,7 +256,36 @@
         "title": "Email verification required",
         "message": "Please verify your email first. Check your inbox for the verification link.",
         "button": "OK"
+      },
+      "forgot": {
+        "title": "Reset Password",
+        "description": "Enter your email address and we'll send you a link to reset your password.",
+        "submit": "Send Reset Link",
+        "submitting": "Sending...",
+        "success": "If the email exists, we sent a reset link.",
+        "error": "Failed to request password reset."
       }
+    },
+    "reset": {
+      "title": "Reset Password",
+      "subtitle": "Create a new strong password for your account.",
+      "successTitle": "All set!",
+      "successDesc": "Your password has been changed successfully.",
+      "loginButton": "Log in with new password",
+      "invalidTitle": "Invalid Link",
+      "invalidDesc": "No reset token found or link expired. Please check your email link again.",
+      "homeButton": "Go Home",
+      "fields": {
+        "newPassword": { "label": "New Password", "placeholder": "Min. 8 characters" },
+        "confirm": { "label": "Confirm Password", "placeholder": "Re-enter password" }
+      },
+      "errors": {
+        "missingToken": "Missing reset token",
+        "tooShort": "Password is too short (min 8 chars)",
+        "mismatch": "Passwords do not match"
+      },
+      "submit": "Reset Password",
+      "submitting": "Saving..."
     },
     "register": {
       "success": {

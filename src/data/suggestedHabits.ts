@@ -9,8 +9,8 @@ export type SuggestedFrequency = "Daily" | "Weekly";
 
 export type SuggestedHabit = {
   id: string;
-  titleKey: string; // i18n klíč na titulek
-  title: string; // defaultní EN text (např. pro BE)
+  titleKey: string; 
+  title: string; 
   category: SuggestedCategory;
   icon: "heart" | "leaf" | "briefcase" | "users" | "palette";
   frequency: SuggestedFrequency;

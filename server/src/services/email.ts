@@ -141,3 +141,36 @@ export async function sendDailyReminderEmail(opts: {
     html,
   });
 }
+
+export async function sendPasswordResetEmail(opts: {
+  to: string;
+  token: string;
+}) {
+  // Odkaz směřuje na Frontend, kde bude formulář pro zadání nového hesla
+  const resetUrl = `${CLIENT_URL}/reset-password?token=${encodeURIComponent(opts.token)}`;
+
+  const html = `
+    <div style="font-family: system-ui, Arial; font-size: 15px; color: #333; max-width: 600px; margin: 0 auto;">
+      <h2 style="color:#10b981;">Reset hesla / Password Reset 🔒</h2>
+      <p>Někdo (pravděpodobně ty) požádal o změnu hesla k účtu Habit Garden.</p>
+      
+      <p style="margin: 24px 0;">
+        <a href="${resetUrl}"
+           style="padding: 12px 24px; background:#10b981; color:white; font-weight:bold; border-radius:8px; text-decoration:none; display:inline-block;">
+          Změnit heslo / Reset Password
+        </a>
+      </p>
+      
+      <p style="font-size:13px; color:#666;">
+        Odkaz je platný 1 hodinu. Pokud jsi o změnu nežádal/a, tento email ignoruj.<br>
+        Link valid for 1 hour. If you didn't request this, ignore this email.
+      </p>
+    </div>
+  `;
+
+  await sendMailViaMailtrap({
+    to: opts.to,
+    subject: "Reset hesla – Habit Garden",
+    html,
+  });
+}

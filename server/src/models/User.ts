@@ -35,7 +35,8 @@ const UserSchema = new Schema(
     emailVerified: { type: Boolean, default: false },
     emailVerificationToken: { type: String, default: null },
     emailVerificationExpiresAt: { type: Date, default: null },
-
+    passwordResetToken: { type: String, default: null },
+    passwordResetExpiresAt: { type: Date, default: null },
     refreshTokenHash: { type: String, default: null },
     lastLoginAt: Date,
   },

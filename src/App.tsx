@@ -8,6 +8,7 @@ import { DashboardGarden } from "./components/DashboardGarden";
 import { HabitsList } from "./components/HabitsList";
 import { StatsGrowthLog } from "./components/StatsGrowthLog";
 import { ProfileRewards } from "./components/ProfileRewards";
+import { ResetPassword } from "./components/ResetPassword";
 import { useMe, loginWithGoogle, useLogout } from "./hooks/useAuth";
 import { api } from "./lib/api";
 import { Navigation } from "./components/Navigation";
@@ -77,6 +78,18 @@ export default function App() {
       window.location.replace("/");
     }
   }, []);
+
+  const [isResetPage, setIsResetPage] = useState(false);
+
+  useEffect(() => {
+    if (window.location.pathname === "/reset-password") {
+        setIsResetPage(true);
+    }
+  }, []);
+
+  if (isResetPage) {
+    return <ResetPassword />;
+  }
 
   /* ---------------------- LOADING / NO USER ---------------------- */
 
