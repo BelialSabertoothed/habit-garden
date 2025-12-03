@@ -48,11 +48,7 @@ const EMOJIS = [
   { id: "🌼", emoji: "🌼", name: "Daisy" },
 ];
 
-export default function EditProfileModal({
-  open,
-  onOpenChange,
-  theme,
-}: Props) {
+export default function EditProfileModal({ open, onOpenChange, theme }: Props) {
   const { t } = useTranslation();
   const { data: me } = useMe();
   const qc = useQueryClient();
@@ -217,7 +213,11 @@ export default function EditProfileModal({
               <Button
                 type="button"
                 variant="destructive"
-                className="w-full rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 shadow-none dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/40"
+                className={`w-full rounded-xl shadow-none border transition-colors ${
+                  isDark
+                    ? "bg-red-900/20 text-red-400 border-red-900/50 hover:bg-red-900/40"
+                    : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                }`}
                 onClick={() => setShowDeleteConfirm(true)}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -255,10 +255,7 @@ export default function EditProfileModal({
       </Dialog>
 
       {/* ALERT DIALOG PRO DELETE - OPRAVA BAREV PRO SVĚTLÝ REŽIM */}
-      <AlertDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-      >
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent
           className={`rounded-2xl ${
             isDark
