@@ -64,7 +64,7 @@
       "levelLabel": "Úroveň {{level}}",
       "totalXp": "Celkem {{xp}} XP",
       "streakLabel": "🔥 Série: {{current}} (rekord {{best}})",
-      "progressToNextLevel": "Do další úrovně",
+      "progressToNextLevel": "Postup k úrovni {{level}}",
       "progressXp": "{{current}} / {{span}} XP"
     },
     "theme": {
@@ -94,6 +94,17 @@
       "defaultDescription": "Právě jsi získal nové ocenění ve své zahradě!",
       "checkPrefix": "Mrkni do",
       "checkSuffix": "na svou novou trofej 🌱"
+    },
+    "updateModal": {
+      "title": "Upravit profil",
+      "description": "Změň si přezdívku nebo avatara. Pod tímto jménem a obrázkem tě uvidíme v celé zahradě.",
+      "nicknameLabel": "Přezdívka",
+      "nicknamePlaceholder": "Tvoje zobrazené jméno",
+      "avatarLabel": "Avatar (emoji)",
+      "avatarDescription": "Vyber si rostlinku, která tě bude nejlépe vystihovat.",
+      "cancel": "Zrušit",
+      "save": "Uložit",
+      "saving": "Ukládám..."
     },
     "dangerZone": {
       "title": "Nebezpečná zóna",
@@ -503,12 +514,12 @@
     "loading": "Připravuji profil…",
     "steps": {
       "consent": {
-        "title": "O projektu 🌿",
-        "description": "Tato aplikace vznikla jako bakalářská práce. Sbíráme anonymní data pro výzkum."
+        "title": "O co v tomto projektu jde? 🌿",
+        "description": "Jsem studentka a tato aplikace je mou bakalářskou prací. Tvým používáním mi pomáháš sbírat anonymní data o tom, jak nás baví plnit úkoly."
       },
       "experiment": {
-        "title": "Jakou verzi máš? 🎮",
-        "description": "Testujeme, jak funguje gamifikace. Prosím, používej přidělenou verzi, pomůžeš tím vědě."
+        "title": "Co budeme testovat? 🎮",
+        "description": "Zkoumám vliv herních prvků na naši motivaci. Aplikace ti náhodně přidělila jeden ze dvou vzhledů. Prosím, zkus ho chvíli používat tak, jak je."
       },
       "notifications": {
         "title": "Nenech to uschnout 🔔",
@@ -519,12 +530,12 @@
         "description": "Vyber si jméno a tvář pro svou zahradu."
       },
       "garden": {
-        "title": "Princip zahrady 🌱",
-        "description": "Návyk = rostlina. Splnění = zalití. Sleduj, jak rostou a sbírej XP."
+        "title": "Jak funguje tvoje zahrada? 🌱",
+        "description": "Představ si své návyky jako rostlinky. Každé splnění je jako zalití – rostlinka povyroste a ty získáš zkušenosti (XP)."
       },
       "simple": {
-        "title": "Jednoduchost především 📅",
-        "description": "Čistý a přehledný seznam úkolů bez zbytečných rušivých prvků."
+        "title": "Jak to funguje? 📅",
+        "description": "Máš rád pořádek? Tady najdeš čistý seznam svých návyků. Žádné zbytečnosti, jen ty a tvůj pokrok."
       },
       "starters": {
         "title": "S čím začneme? 🌟",

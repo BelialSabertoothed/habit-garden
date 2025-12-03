@@ -48,17 +48,23 @@ const EMOJIS = [
   { id: "🌼", emoji: "🌼", name: "Daisy" },
 ];
 
-export default function EditProfileModal({ open, onOpenChange, theme }: Props) {
+export default function EditProfileModal({
+  open,
+  onOpenChange,
+  theme,
+}: Props) {
+  const { t } = useTranslation();
   const { data: me } = useMe();
   const qc = useQueryClient();
-  const isDark = theme === "night";
   const logout = useLogout();
-  const { t } = useTranslation();
+  const isDark = theme === "night";
 
   const [nickname, setNickname] = useState(me?.nickname ?? "");
   const [avatar, setAvatar] = useState(me?.avatar ?? "");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // Delete dialog states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -100,14 +106,12 @@ export default function EditProfileModal({ open, onOpenChange, theme }: Props) {
     setIsDeleting(true);
     try {
       await api.del("profile");
-
       clearAccessToken();
       await logout.mutateAsync();
       qc.cancelQueries();
       qc.clear();
-
       window.location.href = "/";
-    } catch (_) {
+    } catch (_e) {
       toast.error("Failed to delete account.");
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -126,17 +130,15 @@ export default function EditProfileModal({ open, onOpenChange, theme }: Props) {
         >
           <DialogHeader>
             <DialogTitle className={isDark ? "text-white" : "text-gray-900"}>
-              Edit profile
+              {t("profile.updateModal.title")}
             </DialogTitle>
             <DialogDescription
               className={isDark ? "text-gray-400" : "text-gray-600"}
             >
-              Update your nickname and garden avatar. This is how you&apos;ll be
-              shown across Habit Garden.
+              {t("profile.updateModal.description")}
             </DialogDescription>
           </DialogHeader>
 
-          {/* scrollovatelný obsah */}
           <div className="flex-1 overflow-y-auto space-y-5 py-4 pr-1">
             {/* Nickname */}
             <div className="space-y-2">
@@ -146,13 +148,13 @@ export default function EditProfileModal({ open, onOpenChange, theme }: Props) {
                   isDark ? "text-gray-200" : "text-gray-800"
                 }`}
               >
-                Nickname
+                {t("profile.updateModal.nicknameLabel")}
               </label>
               <Input
                 id="profile-nickname"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                placeholder="Your display name"
+                placeholder={t("profile.updateModal.nicknamePlaceholder")}
                 maxLength={40}
                 className={`rounded-lg ${
                   isDark
@@ -169,14 +171,14 @@ export default function EditProfileModal({ open, onOpenChange, theme }: Props) {
                   isDark ? "text-gray-200" : "text-gray-800"
                 }`}
               >
-                Avatar (emoji)
+                {t("profile.updateModal.avatarLabel")}
               </div>
               <p
                 className={`text-xs ${
                   isDark ? "text-gray-400" : "text-gray-500"
                 }`}
               >
-                Pick a small plant friend to represent you in your garden.
+                {t("profile.updateModal.avatarDescription")}
               </p>
               <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 mt-2">
                 {EMOJIS.map((e) => (
@@ -209,23 +211,24 @@ export default function EditProfileModal({ open, onOpenChange, theme }: Props) {
                 {err}
               </div>
             )}
+
+            {/* DANGER ZONE */}
+            <div className="pt-6 mt-6 border-t border-gray-100 dark:border-slate-700">
+              <h4 className="text-xs font-semibold text-red-500 uppercase tracking-wider mb-3">
+                {t("profile.dangerZone.title")}
+              </h4>
+              <Button
+                type="button"
+                variant="destructive"
+                className="w-full rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 shadow-none dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/40"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                {t("profile.dangerZone.deleteButton")}
+              </Button>
+            </div>
           </div>
 
-          {/* 👇 DANGER ZONE - PŘIDAT NA KONEC SCROLL OBALU */}
-          <div className="pt-6 mt-6 border-t border-gray-100 dark:border-slate-700">
-            <h4 className="text-xs font-semibold text-red-500 uppercase tracking-wider mb-3">
-              {t("profile.dangerZone.title")}
-            </h4>
-            <Button
-              type="button"
-              variant="destructive"
-              className="w-full rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 shadow-none dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/40"
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              {t("profile.dangerZone.deleteButton")}
-            </Button>
-          </div>
           <DialogFooter className="mt-2 gap-3">
             <Button
               type="button"
@@ -238,7 +241,7 @@ export default function EditProfileModal({ open, onOpenChange, theme }: Props) {
                   : "border-gray-300 text-gray-700 hover:bg-gray-100"
               }`}
             >
-              {t("profile.dangerZone.dialog.cancel")}
+              {t("profile.updateModal.cancel")}
             </Button>
             <Button
               type="button"
@@ -246,19 +249,26 @@ export default function EditProfileModal({ open, onOpenChange, theme }: Props) {
               disabled={saving || !canSave}
               className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-full"
             >
-              {saving ? "Saving…" : "Save"}
+              {saving
+                ? t("profile.updateModal.saving")
+                : t("profile.updateModal.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+
+      {/* ALERT DIALOG PRO DELETE */}
+      <AlertDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+      >
         <AlertDialogContent className="rounded-2xl bg-white dark:bg-slate-900 border-red-100 dark:border-red-900">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-600">
               {t("profile.dangerZone.dialog.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("profile.dangerZone.dialog.description")}{" "}
+              {t("profile.dangerZone.dialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
