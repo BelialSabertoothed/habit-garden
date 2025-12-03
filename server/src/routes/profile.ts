@@ -236,3 +236,5 @@ router.delete(
     res.json({ ok: true, message: "Account deleted successfully" });
   })
 );
+
+export default router;
