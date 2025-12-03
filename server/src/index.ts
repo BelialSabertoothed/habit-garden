@@ -18,10 +18,17 @@ import pushRouter from "./routes/push.js";
 import debug from "./routes/debug.js";
 import { sendDailyNotifications } from "./cron/checkHabits.js";
 import cron from "node-cron";
+import rateLimit from 'express-rate-limit';
 
 cron.schedule("0 20 * * *", async () => {
   console.log("Running daily habit notification check...");
   await sendDailyNotifications();
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minut
+  max: 10, // max 10 pokusů
+  message: "Too many login attempts, please try again later"
 });
 
 const app = express();
@@ -67,6 +74,8 @@ app.use("/api/stats", statsRouter);
 app.use("/api/rewards", rewards);
 app.use("/api/push", pushRouter);
 app.use("/api/debug", debug);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found", path: req.path });
