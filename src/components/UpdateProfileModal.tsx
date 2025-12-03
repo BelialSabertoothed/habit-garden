@@ -111,7 +111,7 @@ export default function EditProfileModal({
       qc.cancelQueries();
       qc.clear();
       window.location.href = "/";
-    } catch (_e) {
+    } catch (e) {
       toast.error("Failed to delete account.");
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -254,22 +254,36 @@ export default function EditProfileModal({
         </DialogContent>
       </Dialog>
 
-      {/* ALERT DIALOG PRO DELETE */}
+      {/* ALERT DIALOG PRO DELETE - OPRAVA BAREV PRO SVĚTLÝ REŽIM */}
       <AlertDialog
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
       >
-        <AlertDialogContent className="rounded-2xl bg-white dark:bg-slate-900 border-red-100 dark:border-red-900">
+        <AlertDialogContent
+          className={`rounded-2xl ${
+            isDark
+              ? "bg-slate-900 border-red-900/50"
+              : "bg-white border-red-100"
+          }`}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-600">
               {t("profile.dangerZone.dialog.title")}
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription
+              className={isDark ? "text-slate-400" : "text-slate-600"}
+            >
               {t("profile.dangerZone.dialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-full">
+            <AlertDialogCancel
+              className={`rounded-full ${
+                isDark
+                  ? "bg-slate-800 text-white border-slate-700 hover:bg-slate-700 hover:text-white"
+                  : "bg-white text-slate-900 border-slate-200 hover:bg-slate-50"
+              }`}
+            >
               {t("profile.dangerZone.dialog.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
@@ -277,7 +291,7 @@ export default function EditProfileModal({
                 e.preventDefault();
                 handleDeleteAccount();
               }}
-              className="bg-red-600 hover:bg-red-700 text-white rounded-full"
+              className="bg-red-600 hover:bg-red-700 text-white rounded-full border-0"
               disabled={isDeleting}
             >
               {isDeleting
