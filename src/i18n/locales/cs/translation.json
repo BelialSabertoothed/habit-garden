@@ -164,11 +164,11 @@
     },
     "delete": {
       "title": "Smazat návyk",
-      "confirmPrefix": "Opravdu chceš vykopat",
+      "confirmPrefix": "Opravdu chceš smazat",
       "defaultName": "tento návyk",
       "warning": "Přijdeš o celou jeho historii a sérii.",
       "actions": {
-        "cancel": "Nechat být",
+        "cancel": "Nechat růst",
         "deleting": "Mažu…",
         "delete": "Smazat"
       }

@@ -51,7 +51,7 @@ type HabitItem = {
   title: string;
   category: string;
   frequency: "Daily" | "Weekly";
-  iconId?: Habit["icon"]; 
+  iconId?: Habit["icon"];
 };
 
 const BASE_CATEGORIES: Habit["category"][] = [
@@ -269,9 +269,7 @@ export function HabitsList({ theme }: HabitsListProps) {
                 {/* Card itself */}
                 <HabitCard
                   name={habit.title}
-                  category={
-                    (habit.category as Habit["category"]) ?? "Custom"
-                  }
+                  category={(habit.category as Habit["category"]) ?? "Custom"}
                   frequency={habit.frequency}
                   theme={theme}
                   iconId={habit.iconId}
@@ -303,7 +301,7 @@ export function HabitsList({ theme }: HabitsListProps) {
       <DeleteHabitDialog
         open={!!habitToDelete}
         theme={theme}
-        habitName={habitToDelete?.title ?? ""}
+        habitName={t("habits.edit.title") ?? ""}
         loading={deleteHabit.isPending}
         onCancel={() => {
           if (!deleteHabit.isPending) setHabitToDelete(null);
@@ -331,7 +329,7 @@ function EditHabitModal({
   const updateHabit = useUpdateHabit();
   const { t } = useTranslation();
 
- const [title, setTitle] = useState(() => {
+  const [title, setTitle] = useState(() => {
     const key = SUGGESTION_TITLE_MAP[habit.title];
     return key ? t(key) : habit.title;
   });
@@ -346,9 +344,7 @@ function EditHabitModal({
     "Custom",
   ];
 
-  const isPredefined = BASE_CATEGORIES.includes(
-    category as Habit["category"]
-  );
+  const isPredefined = BASE_CATEGORIES.includes(category as Habit["category"]);
   const isCustomCategory = category === "Custom";
 
   const handleSave = () => {
@@ -613,8 +609,7 @@ function DeleteHabitDialog({
             <span className="font-semibold">
               {habitName || t("habits.delete.defaultName")}
             </span>
-            ?{" "}
-            {t("habits.delete.warning")}
+            ? {t("habits.delete.warning")}
           </DialogDescription>
         </DialogHeader>
 
