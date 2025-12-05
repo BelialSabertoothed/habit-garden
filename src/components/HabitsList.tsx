@@ -124,6 +124,11 @@ export function HabitsList({ theme }: HabitsListProps) {
     return t(`habits.categories.${category}`);
   };
 
+  const getResolvedTitle = (title: string) => {
+    const key = SUGGESTION_TITLE_MAP[title];
+    return key ? t(key) : title;
+  };
+
   if (isLoading) {
     return <FlowerLoader theme={theme} />;
   }
@@ -301,7 +306,7 @@ export function HabitsList({ theme }: HabitsListProps) {
       <DeleteHabitDialog
         open={!!habitToDelete}
         theme={theme}
-        habitName={t("habit.title") ?? ""}
+        habitName={habitToDelete ? getResolvedTitle(habitToDelete.title) : ""}
         loading={deleteHabit.isPending}
         onCancel={() => {
           if (!deleteHabit.isPending) setHabitToDelete(null);
