@@ -301,7 +301,7 @@ export function HabitsList({ theme }: HabitsListProps) {
       <DeleteHabitDialog
         open={!!habitToDelete}
         theme={theme}
-        habitName={t("habits.edit.title") ?? ""}
+        habitName={t("habit.title") ?? ""}
         loading={deleteHabit.isPending}
         onCancel={() => {
           if (!deleteHabit.isPending) setHabitToDelete(null);
