@@ -79,10 +79,10 @@ export function HabitCard({
 
       <div className="flex-1 min-w-0 pt-0.5"> 
         <p className="font-medium break-words leading-tight">{displayName}</p> 
-          className={`text-xs mt-1 ${
+          <p className={`text-xs mt-1 ${
             isDark ? "text-gray-400" : "text-gray-500"
           }`}
-       <p>
+        >
           {translatedCategory} • {translatedFrequency}
         </p>
       </div>
