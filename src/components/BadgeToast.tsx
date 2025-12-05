@@ -83,7 +83,6 @@ export function BadgeToast({ badgeId, theme, visible }: BadgeToastProps) {
                   transition={{ type: "spring", stiffness: 260, damping: 14 }}
                   className="text-2xl"
                 >
-                  {/* můžeš si sem dát klidně vlastní emoji podle badgeId */}
                   🌟
                 </motion.span>
               </div>
@@ -127,7 +126,7 @@ export function BadgeToast({ badgeId, theme, visible }: BadgeToastProps) {
                   }`}
                 >
                   {t("profile.badgeToast.checkPrefix")}{" "}
-                  <span className="font-semibold">Profile → Badges</span>{" "}
+                  <span className="font-semibold">{t("profile.badgeToast.route")}</span>{" "}
                   {t("profile.badgeToast.checkSuffix")}
                 </p>
               </div>

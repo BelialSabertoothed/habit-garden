@@ -93,6 +93,7 @@
       "defaultName": "Nový úspěch",
       "defaultDescription": "Právě jsi získal nové ocenění ve své zahradě!",
       "checkPrefix": "Mrkni do",
+      "route": "Profil → Odznaky",
       "checkSuffix": "na svou novou trofej 🌱"
     },
     "updateModal": {
@@ -220,7 +221,7 @@
       "h5": { "title": "Zdravá snídaně" },
 
       "p1": { "title": "Urči si 3 priority dne" },
-      "p2": { "title": "25 min hluboké práce" },
+      "p2": { "title": "25 min soustředěné práce" },
       "p3": { "title": "Udělej jeden odkládaný úkol" },
       "p4": { "title": "Ukliď si pracovní stůl" },
       "p5": { "title": "Plánování na další týden" },
@@ -558,7 +559,7 @@
       "subtitle": "Podívej se, jak se ti daří v čase",
       "summary": {
         "errorTitle": "Chyba načítání",
-        "successTitle": "Tento týden válíš!",
+        "successTitle": "Super práce!",
         "loading": "Počítám statistiky…",
         "prefix": "Tvoje zahrada kvetla",
         "daysOfWeek": "{{completedDays}} ze 7 dní",
@@ -587,5 +588,11 @@
         "moreActive": "Více"
       }
     }
+  },
+  "nav": {
+    "garden": "Zahrada",
+    "habits": "Moje návyky",
+    "stats": "Statistiky",
+    "profile": "Profil"
   }
 }

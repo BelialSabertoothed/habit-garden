@@ -9,8 +9,8 @@ export type SuggestedFrequency = "Daily" | "Weekly";
 
 export type SuggestedHabit = {
   id: string;
-  titleKey: string; 
-  title: string; 
+  titleKey: string;
+  title: string;
   category: SuggestedCategory;
   icon: "heart" | "leaf" | "briefcase" | "users" | "palette";
   frequency: SuggestedFrequency;
@@ -248,3 +248,10 @@ export const SUGGESTED_HABITS_BY_CATEGORY: Record<
     },
   ],
 };
+
+export const SUGGESTION_TITLE_MAP: Record<string, string> = {};
+Object.values(SUGGESTED_HABITS_BY_CATEGORY)
+  .flat()
+  .forEach((h) => {
+    SUGGESTION_TITLE_MAP[h.title] = h.titleKey;
+  });

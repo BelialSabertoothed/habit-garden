@@ -7,6 +7,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useTranslation } from "react-i18next"; 
 
 interface NavigationProps {
   currentPage: "garden" | "habits" | "stats" | "profile";
@@ -21,11 +22,14 @@ export function Navigation({
   onLogout,
   theme,
 }: NavigationProps) {
+
+  const { t } = useTranslation(); 
+  
   const navItems = [
-    { id: "garden", label: "Garden", icon: Home },
-    { id: "habits", label: "Habits", icon: ListChecks },
-    { id: "stats", label: "Stats", icon: TrendingUp },
-    { id: "profile", label: "Profile", icon: User },
+    { id: "garden", label: t("nav.garden"), icon: Home },
+    { id: "habits", label: t("nav.habits"), icon: ListChecks },
+    { id: "stats", label: t("nav.stats"), icon: TrendingUp },
+    { id: "profile", label: t("nav.profile"), icon: User },
   ] as const;
 
   const isDark = theme === "night";

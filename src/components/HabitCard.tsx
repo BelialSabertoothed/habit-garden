@@ -1,10 +1,10 @@
 import { Heart, Leaf, Briefcase, Users, Palette } from "lucide-react";
 import type { Habit } from "../hooks/useHabits";
 import { useTranslation } from "react-i18next";
-import { SUGGESTED_HABITS_BY_CATEGORY } from "../data/suggestedHabits";
+import { SUGGESTION_TITLE_MAP } from "../data/suggestedHabits"; // Import mapy
 
-type HabitCategory = Habit["category"]; // "Health" | "Eco" | ...
-type HabitIconId = Habit["icon"];       // "heart" | "leaf" | ...
+type HabitCategory = Habit["category"];
+type HabitIconId = Habit["icon"];
 
 const iconMap: Record<HabitIconId, typeof Heart> = {
   heart: Heart,
@@ -21,13 +21,6 @@ const iconByCategory: Record<Exclude<HabitCategory, "Custom">, HabitIconId> = {
   Relationships: "users",
   Creativity: "palette",
 };
-
-const SUGGESTION_TITLE_MAP: Record<string, string> = {};
-Object.values(SUGGESTED_HABITS_BY_CATEGORY)
-  .flat()
-  .forEach((h) => {
-    SUGGESTION_TITLE_MAP[h.title] = h.titleKey;
-  });
 
 interface HabitCardProps {
   name: string;
@@ -66,14 +59,14 @@ export function HabitCard({
 
   return (
     <div
-      className={`rounded-2xl border shadow-sm p-4 flex items-center gap-4 ${
+      className={`rounded-2xl border shadow-sm p-4 flex items-start gap-4 ${ 
         isDark
           ? "bg-slate-800 border-slate-700 text-white"
           : "bg-white border-gray-100 text-gray-900"
       }`}
     >
       <div
-        className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+        className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${ 
           isDark ? "bg-slate-700" : "bg-emerald-50"
         }`}
       >
@@ -84,13 +77,12 @@ export function HabitCard({
         />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{displayName}</p>
-        <p
-          className={`text-xs mt-0.5 ${
+      <div className="flex-1 min-w-0 pt-0.5"> 
+        <p className="font-medium break-words leading-tight">{displayName}</p> 
+          className={`text-xs mt-1 ${
             isDark ? "text-gray-400" : "text-gray-500"
           }`}
-        >
+       <p>
           {translatedCategory} • {translatedFrequency}
         </p>
       </div>

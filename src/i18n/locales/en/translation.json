@@ -87,6 +87,7 @@
       "defaultName": "New badge unlocked",
       "defaultDescription": "You just unlocked a new achievement in your garden!",
       "checkPrefix": "Check your",
+      "route": "Profile → Badges",
       "checkSuffix": "to admire your shiny new trophy 🌱"
     },
     "experiment": {
@@ -588,5 +589,11 @@
         "moreActive": "More active"
       }
     }
+  },
+  "nav": {
+    "garden": "Garden",
+    "habits": "My Habits",
+    "stats": "Stats",
+    "profile": "Profile"
   }
 }

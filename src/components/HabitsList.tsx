@@ -15,7 +15,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { FlowerLoader } from "./FlowerLoader";
 
-
+import { SUGGESTION_TITLE_MAP } from "../data/suggestedHabits";
 import { HabitCard } from "./HabitCard";
 import { AddHabitModal } from "./AddHabitModal";
 import { Input } from "./ui/input";
@@ -44,19 +44,16 @@ interface HabitsListProps {
   theme: "day" | "night";
 }
 
-// FE kategorie (All + BE enum + Custom bucket)
 type Category = "All" | Habit["category"];
 
-// align s BE
 type HabitItem = {
   _id: string;
   title: string;
   category: string;
   frequency: "Daily" | "Weekly";
-  iconId?: Habit["icon"]; // ← z BE
+  iconId?: Habit["icon"]; 
 };
 
-// základní BE kategorie – bez "Custom"
 const BASE_CATEGORIES: Habit["category"][] = [
   "Health",
   "Eco",
@@ -101,7 +98,6 @@ export function HabitsList({ theme }: HabitsListProps) {
 
     if (selectedCategory !== "All") {
       if (selectedCategory === "Custom") {
-        // Custom = všechny kategorie, které nejsou mezi základními
         matchesCategory = !BASE_CATEGORIES.includes(
           habit.category as Habit["category"]
         );
@@ -335,7 +331,10 @@ function EditHabitModal({
   const updateHabit = useUpdateHabit();
   const { t } = useTranslation();
 
-  const [title, setTitle] = useState(habit.title);
+ const [title, setTitle] = useState(() => {
+    const key = SUGGESTION_TITLE_MAP[habit.title];
+    return key ? t(key) : habit.title;
+  });
   const [category, setCategory] = useState<string>(habit.category);
   const [selectedIcon, setSelectedIcon] = useState(habit.iconId); // ← z BE
   const [frequency, setFrequency] = useState<"Daily" | "Weekly">(
@@ -366,7 +365,6 @@ function EditHabitModal({
       category: cleanCategory as Habit["category"],
     };
 
-    // icon posíláme JEN u Custom
     if (cleanCategory === "Custom") {
       payload.icon = (selectedIcon as Habit["icon"]) ?? "leaf";
     }

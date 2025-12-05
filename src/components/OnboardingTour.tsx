@@ -739,7 +739,7 @@ function StarterPicker({
                       )}
                     />
                   </div>
-                  <div className="flex flex-col min-w-0 pr-12">
+                  <div className="flex flex-col min-w-0 pr-12 pt-0.5">
                     <span
                       className={cn(
                         "font-semibold text-sm sm:text-base leading-snug break-words",
