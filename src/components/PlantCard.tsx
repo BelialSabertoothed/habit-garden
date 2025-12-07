@@ -1,4 +1,4 @@
-import { Droplet, Sprout, Leaf, Flower2, TreeDeciduous } from "lucide-react";
+import { Droplet, Sprout, Leaf, Flower2, TreeDeciduous, Heart, Briefcase, Users, Palette } from "lucide-react";
 import { Button } from "./ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { getStageAndProgress } from "../lib/growth";
 import { SUGGESTED_HABITS_BY_CATEGORY } from "../data/suggestedHabits";
 
-/* -------------------------------- UI Config -------------------------------- */
+/* ---------------- UI Config - Gamified ---------------- */
 
 const stageConfig = {
   seed: {
@@ -35,6 +35,16 @@ const stageConfig = {
   },
 } as const;
 
+/* ---------------- UI Config - Control (Category Icons) ---------------- */
+
+const iconMap: Record<string, any> = {
+  heart: Heart,
+  leaf: Leaf,
+  briefcase: Briefcase,
+  users: Users,
+  palette: Palette,
+};
+
 const SUGGESTION_TITLE_MAP: Record<string, string> = {};
 Object.values(SUGGESTED_HABITS_BY_CATEGORY)
   .flat()
@@ -42,7 +52,7 @@ Object.values(SUGGESTED_HABITS_BY_CATEGORY)
     SUGGESTION_TITLE_MAP[h.title] = h.titleKey;
   });
 
-/* -------------------------------- Component -------------------------------- */
+/* ---------------- Component ---------------- */
 
 interface PlantCardProps {
   habitName: string;
@@ -53,6 +63,8 @@ interface PlantCardProps {
   theme: "day" | "night";
   disabled?: boolean;
   disabledLabel?: string;
+  isGamified?: boolean;
+  iconId?: string; 
 }
 
 export function PlantCard({
@@ -64,45 +76,66 @@ export function PlantCard({
   theme,
   disabled,
   disabledLabel,
+  isGamified = true, 
+  iconId = "leaf",
 }: PlantCardProps) {
   const isDark = theme === "night";
   const { t } = useTranslation();
 
+  // --- Logika pro GAMIFIED (fáze růstu) ---
   const { stage, progress } = getStageAndProgress(
     frequency,
     streak,
     bestStreak ?? 0
   );
+  
+  // Vybereme ikonu a barvy
+  let IconComponent: any;
+  let bgGradient = "";
+  let progressColor = "";
 
-  const config = stageConfig[stage];
-  const Icon = config.icon;
+  if (isGamified) {
+    const config = stageConfig[stage];
+    IconComponent = config.icon;
+    bgGradient = config.color;
+    progressColor = config.progressColor;
+  } else {
+    IconComponent = iconMap[iconId] ?? Leaf;
+    bgGradient = isDark ? "from-slate-700 to-slate-600" : "from-gray-100 to-gray-200";
+    progressColor = "from-emerald-400 to-emerald-600";
+  }
 
   /* ---------------- WATERING ANIMATION ---------------- */
-
   const [watering, setWatering] = useState(false);
 
   const handleWater = async () => {
     if (disabled) return;
-    setWatering(true);
+    
+    if (isGamified) {
+      setWatering(true);
+    }
+    
     await onWater?.();
-    setTimeout(() => setWatering(false), 900);
+    
+    if (isGamified) {
+      setTimeout(() => setWatering(false), 900);
+    }
   };
 
-  /* ---------------- EVOLUTION AURA ---------------- */
-
+  /* ---------------- EVOLUTION AURA (Jen gamified) ---------------- */
   const prevStage = useRef(stage);
   const [evolving, setEvolving] = useState(false);
 
-  const visualProgress =
-    stage === "tree" ? progress : Math.min(progress, 85);
+  const visualProgress = stage === "tree" ? progress : Math.min(progress, 85);
 
   useEffect(() => {
+    if (!isGamified) return; 
     if (prevStage.current !== stage) {
       setEvolving(true);
       prevStage.current = stage;
       setTimeout(() => setEvolving(false), 1200);
     }
-  }, [stage]);
+  }, [stage, isGamified]);
 
   const streakText =
     frequency === "Daily"
@@ -118,9 +151,9 @@ export function PlantCard({
         isDark ? "bg-slate-800 border-slate-700" : "bg-white border-green-100"
       } rounded-2xl p-6 shadow-md hover:shadow-lg transition-all duration-200 border relative overflow-hidden`}
     >
-      {/* ✨ Stage-up aura */}
+      {/* ✨ Stage-up aura (Jen Gamified) */}
       <AnimatePresence>
-        {evolving && (
+        {isGamified && evolving && (
           <motion.div
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 0.9, scale: 1.4 }}
@@ -133,31 +166,24 @@ export function PlantCard({
         )}
       </AnimatePresence>
 
-      {/* ✨ Sparkles */}
+      {/* ✨ Sparkles (Jen Gamified) */}
       <AnimatePresence>
-        {evolving && (
+        {isGamified && evolving && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.7 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 pointer-events-none"
           >
-            <div className="absolute top-3 left-6 text-yellow-300 text-xl animate-ping">
-              ✨
-            </div>
-            <div className="absolute bottom-4 right-8 text-green-200 text-xl animate-ping">
-              ✨
-            </div>
-            <div className="absolute top-10 right-10 text-emerald-200 text-xl animate-ping">
-              ✨
-            </div>
+            <div className="absolute top-3 left-6 text-yellow-300 text-xl animate-ping">✨</div>
+            <div className="absolute bottom-4 right-8 text-green-200 text-xl animate-ping">✨</div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 💧 Water droplets animation */}
+      {/* 💧 Water droplets animation (Jen Gamified) */}
       <AnimatePresence>
-        {watering && (
+        {isGamified && watering && (
           <motion.div
             className="absolute inset-0 pointer-events-none flex justify-center"
             initial={{ opacity: 0 }}
@@ -186,56 +212,69 @@ export function PlantCard({
 
       {/* ---------------- CONTENT ---------------- */}
       <div className="flex flex-col items-center gap-4 relative z-10">
-        {/* 🌱 Plant icon + pop */}
+        {/* 🌱 Plant / Category icon */}
         <motion.div
+          // Animace "pop" pouze pro gamifikovanou verzi
           animate={
-            watering || evolving ? { scale: [1, 1.15, 1] } : { scale: 1 }
+            isGamified && (watering || evolving) ? { scale: [1, 1.15, 1] } : { scale: 1 }
           }
           transition={{ duration: 0.6 }}
           className="flex items-center justify-center"
         >
           <div
-            className={`bg-gradient-to-br ${config.color} rounded-full flex items-center justify-center shadow-lg`}
+            className={`bg-gradient-to-br ${bgGradient} rounded-full flex items-center justify-center shadow-lg`}
             style={{
-              width: config.size,
-              height: config.size,
+              width: 60,
+              height: 60,
             }}
           >
-            <Icon className="text-white" size={config.size * 0.45} />
+            <IconComponent 
+              className={isGamified ? "text-white" : (isDark ? "text-gray-300" : "text-gray-600")} 
+              size={isGamified ? 27 : 24} 
+            />
           </div>
         </motion.div>
 
-        {/* 📊 Progress bar */}
+        {/* 📊 Content info */}
         <div className="w-full">
-          <div
-            className={`h-2 rounded-full overflow-hidden mb-2 ${
-              isDark ? "bg-slate-700" : "bg-gray-200"
-            }`}
-          >
-            <motion.div
-              className={`h-full bg-gradient-to-r ${config.progressColor} rounded-full`}
-              animate={{ width: `${visualProgress}%` }}
-              transition={{ duration: 0.6 }}
-            />
-          </div>
+          {/* Progress bar zobrazíme jen v Gamified verzi, v Control to může působit rušivě/zbytečně, 
+              pokud nechceme ukazovat "růst". Pokud chceme v Control ukázat "completed", stačí jen tlačítko.
+              Pro tuto úpravu Progress bar v Control verzi skryjeme. */}
+          {isGamified && (
+            <div
+              className={`h-2 rounded-full overflow-hidden mb-2 ${
+                isDark ? "bg-slate-700" : "bg-gray-200"
+              }`}
+            >
+              <motion.div
+                className={`h-full bg-gradient-to-r ${progressColor} rounded-full`}
+                animate={{ width: `${visualProgress}%` }}
+                transition={{ duration: 0.6 }}
+              />
+            </div>
+          )}
 
           <p
             className={`text-center font-medium ${
               isDark ? "text-white" : "text-gray-900"
-            }`}
+            } ${!isGamified ? "mb-1 text-lg" : ""}`}
           >
             {displayName}
           </p>
-          <p
-            className={`text-center text-sm ${
-              isDark ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            {streakText}
-          </p>
+
+          {/* Streak text - JEN v Gamified */}
+          {isGamified && (
+            <p
+              className={`text-center text-sm ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              {streakText}
+            </p>
+          )}
         </div>
 
-        {/* 💧 Water Button */}
+        {/* 💧 Water / Done Button */}
         <Button
           onClick={handleWater}
           disabled={disabled}
@@ -247,7 +286,9 @@ export function PlantCard({
               : "bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white"
           }`}
         >
-          <Droplet className="w-4 h-4 mr-2" />
+          {/* Ikonku kapky v Control verzi můžeme nechat nebo změnit na 'check' */}
+          {isGamified ? <Droplet className="w-4 h-4 mr-2" /> : null}
+          
           {disabled
             ? disabledLabel ?? t("dashboard.plantCard.button.completed")
             : t("dashboard.plantCard.button.water")}

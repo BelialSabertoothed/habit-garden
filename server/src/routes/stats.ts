@@ -8,7 +8,7 @@ import { dayKey } from "../lib/dateKeys.js";
 const router = Router();
 
 type WeeklyPoint = { day: string; xp: number };
-type HeatmapPoint = { date: string; completed: boolean };
+type HeatmapPoint = { date: string; count: number };
 
 router.get(
   "/growth",
@@ -71,9 +71,10 @@ router.get(
       );
       const dk = dayKey(d);
       const count = perDayCount[dk] ?? 0;
+
       heatmap.push({
         date: d.toISOString(),
-        completed: count > 0,
+        count: count,
       });
     }
 

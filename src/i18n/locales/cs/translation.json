@@ -86,7 +86,8 @@
       "title": "Nastavení experimentu",
       "description": "Můžeš přepínat mezi herní verzí (XP, úrovně) a čistou verzí bez gamifikace.",
       "buttonGamified": "Herní režim",
-      "buttonControl": "Jednoduchý režim"
+      "buttonControl": "Jednoduchý režim",
+      "toastSwitchedToGamified": "Vítej v zahradě! 🌱 Tvůj dosavadní pokrok byl započítán a získal jsi XP."
     },
     "badgeToast": {
       "label": "Nový odznak!",
@@ -402,7 +403,7 @@
       "body": "Nezapomeň dnes splnit své návyky!"
     },
     "xp": {
-      "title": "Zkušenosti",
+      "title": "XP body",
       "levelLabel": "Úroveň {{level}}",
       "toNext": "Chybí {{xpToNext}} XP"
     },

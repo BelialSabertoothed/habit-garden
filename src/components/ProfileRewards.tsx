@@ -139,8 +139,20 @@ export function ProfileRewards() {
     try {
       await api.post("profile/experiment", { json: { variant: next } });
       await qc.invalidateQueries({ queryKey: ["me"] });
+      if (next === "gamified") {
+        toast.success(t("profile.experiment.toastSwitchedToGamified"), {
+          duration: 5000,
+          icon: "🎉",
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        });
+      }
     } catch {
       qc.setQueryData(["me"], prev);
+      toast.error("Failed to switch mode");
     }
   };
 

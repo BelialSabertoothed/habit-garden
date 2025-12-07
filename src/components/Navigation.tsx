@@ -1,18 +1,12 @@
-import {
-  Sprout,
-  Home,
-  ListChecks,
-  TrendingUp,
-  User,
-  LogOut,
-} from "lucide-react";
+import { Sprout, Home, ListChecks, TrendingUp, User, LogOut } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { useTranslation } from "react-i18next"; 
+import { useTranslation } from "react-i18next";
+import { useMe } from "../hooks/useAuth"; 
 
 interface NavigationProps {
   currentPage: "garden" | "habits" | "stats" | "profile";
   onNavigate: (page: "garden" | "habits" | "stats" | "profile") => void;
-  onLogout: () => void; // ← NOVÉ
+  onLogout: () => void;
   theme: "day" | "night";
 }
 
@@ -22,15 +16,21 @@ export function Navigation({
   onLogout,
   theme,
 }: NavigationProps) {
+  const { t } = useTranslation();
+  const { data: me } = useMe(); 
 
-  const { t } = useTranslation(); 
-  
-  const navItems = [
+  const isGamified = (me?.experimentVariant ?? "gamified") === "gamified";
+
+  let navItems = [
     { id: "garden", label: t("nav.garden"), icon: Home },
     { id: "habits", label: t("nav.habits"), icon: ListChecks },
     { id: "stats", label: t("nav.stats"), icon: TrendingUp },
     { id: "profile", label: t("nav.profile"), icon: User },
   ] as const;
+
+  if (!isGamified) {
+    navItems = navItems.filter((item) => item.id !== "stats") as any;
+  }
 
   const isDark = theme === "night";
 
@@ -46,7 +46,8 @@ export function Navigation({
       >
         <div className="max-w-[1200px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+             {/* ... zbytek kódu (logo) ... */}
+             <div className="flex items-center gap-2">
               <div
                 className={`w-10 h-10 rounded-full ${
                   isDark
@@ -69,10 +70,11 @@ export function Navigation({
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPage === item.id;
+                // ... render tlačítka (zůstává stejný)
                 return (
                   <button
                     key={item.id}
-                    onClick={() => onNavigate(item.id)}
+                    onClick={() => onNavigate(item.id as any)}
                     className={`
                       flex items-center gap-2 px-6 py-2.5 rounded-full transition-all duration-200
                       ${
@@ -91,11 +93,12 @@ export function Navigation({
                   </button>
                 );
               })}
+              
+              {/* ... zbytek desktop nav (LanguageSwitcher, Logout) ... */}
               <div className="ml-auto flex items-center gap-4">
                 <LanguageSwitcher />
               </div>
 
-              {/* Logout button */}
               <button
                 onClick={onLogout}
                 className={`
@@ -118,13 +121,15 @@ export function Navigation({
 
       {/* Mobile Navigation - Header */}
       <nav
-        className={`md:hidden sticky top-0 z-50 ${
+         // ... (zůstává stejné)
+         className={`md:hidden sticky top-0 z-50 ${
           isDark
             ? "bg-slate-800/95 border-slate-700"
             : "bg-white/80 border-green-100"
         } backdrop-blur-md border-b shadow-sm transition-colors duration-300`}
       >
-        <div className="px-4 py-3">
+        {/* ... obsah headeru ... */}
+         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div
@@ -148,7 +153,6 @@ export function Navigation({
               <LanguageSwitcher />
             </div>
 
-            {/* Mobile logout (ikonka) */}
             <button
               onClick={onLogout}
               className={`
@@ -176,14 +180,18 @@ export function Navigation({
             : "bg-white/95 border-green-100"
         } backdrop-blur-md border-t shadow-lg transition-colors duration-300`}
       >
-        <div className="grid grid-cols-4 gap-1 px-2 py-2">
+        {/* Zde se grid musí přizpůsobit počtu položek (4 nebo 3) */}
+        <div 
+          className={`grid gap-1 px-2 py-2`}
+          style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+        >
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => onNavigate(item.id)}
+                onClick={() => onNavigate(item.id as any)}
                 className={`
                   flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200
                   ${

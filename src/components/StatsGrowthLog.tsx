@@ -16,16 +16,32 @@ interface StatsGrowthLogProps {
   theme: "day" | "night";
 }
 
+// Helper pro transformaci dat do týdnů (zachováváme count)
 function buildHeatmapWeeks(
-  cells: { date: string; completed: boolean }[]
+  cells: { date: string; count: number }[]
 ): number[][] {
   if (!cells.length) return [];
   const weeks: number[][] = [];
   for (let i = 0; i < cells.length; i += 7) {
     const slice = cells.slice(i, i + 7);
-    weeks.push(slice.map((c) => (c.completed ? 1 : 0)));
+    weeks.push(slice.map((c) => c.count));
   }
   return weeks;
+}
+
+// Helper pro barvu podle aktivity
+function getIntensityClass(count: number, isDark: boolean) {
+  if (count === 0) {
+    return isDark ? "bg-slate-800" : "bg-gray-100";
+  }
+  if (count <= 2) {
+    return isDark ? "bg-emerald-900/60" : "bg-emerald-200";
+  }
+  if (count <= 4) {
+    return isDark ? "bg-emerald-700/80" : "bg-emerald-400";
+  }
+  // 5 a více
+  return isDark ? "bg-emerald-500" : "bg-emerald-600";
 }
 
 export function StatsGrowthLog({ theme }: StatsGrowthLogProps) {
@@ -35,6 +51,12 @@ export function StatsGrowthLog({ theme }: StatsGrowthLogProps) {
   const { t } = useTranslation();
 
   const isGamified = (me?.experimentVariant ?? "gamified") === "gamified";
+
+  // POKUD JDE O CONTROL VERZI, NIC NEVYKRESLUJEME (nebo redirectneme v App.tsx)
+  // Toto je pojistka, kdyby se sem uživatel dostal přímo přes URL
+  if (!isGamified) {
+    return null; 
+  }
 
   const weeklyData = data?.weekly ?? [];
   const heatmapWeeks = buildHeatmapWeeks(data?.heatmap ?? []);
@@ -68,11 +90,7 @@ export function StatsGrowthLog({ theme }: StatsGrowthLogProps) {
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3
-              className={`mb-1 ${
-                isDark ? "text-white" : "text-green-900"
-              }`}
-            >
+            <h3 className={`mb-1 ${isDark ? "text-white" : "text-green-900"}`}>
               {isError
                 ? t("stats.growthLog.summary.errorTitle")
                 : t("stats.growthLog.summary.successTitle")}
@@ -88,19 +106,11 @@ export function StatsGrowthLog({ theme }: StatsGrowthLogProps) {
                     })}
                   </strong>{" "}
                   {t("stats.growthLog.summary.thisWeek")}{" "}
-                  {isGamified && (
-                    <>
-                      {t("stats.growthLog.summary.earnedXpPrefix")}{" "}
-                      <strong>{totalXp}</strong>{" "}
-                      {t("stats.growthLog.summary.earnedXpSuffix")}{" "}
-                      {t("stats.growthLog.summary.andOnStreak")}{" "}
-                    </>
-                  )}
-                  {!isGamified && (
-                    <>
-                      {t("stats.growthLog.summary.streakOnlyPrefix")}{" "}
-                    </>
-                  )}
+                  {/* XP zobrazujeme vždy, streak taky - jsme v gamified */}
+                  {t("stats.growthLog.summary.earnedXpPrefix")}{" "}
+                  <strong>{totalXp}</strong>{" "}
+                  {t("stats.growthLog.summary.earnedXpSuffix")}{" "}
+                  {t("stats.growthLog.summary.andOnStreak")}{" "}
                   <strong>
                     {t("stats.growthLog.summary.streakValue", {
                       currentStreak,
@@ -115,82 +125,52 @@ export function StatsGrowthLog({ theme }: StatsGrowthLogProps) {
         </div>
       </div>
 
-      {/* Weekly XP Chart – jen pro gamifikovanou variantu */}
-      {isGamified && (
-        <div
-          className={`${
-            isDark
-              ? "bg-slate-800 border-slate-700"
-              : "bg-white border-gray-100"
-          } rounded-2xl p-4 sm:p-6 shadow-md border`}
-        >
-          <div className="flex items-center gap-2 mb-4 sm:mb-6">
-            <TrendingUp className="w-5 h-5 text-green-500" />
-            <h3 className={isDark ? "text-white" : "text-gray-900"}>
-              {t("stats.growthLog.weeklyChart.title")}
-            </h3>
-          </div>
-
-          {isLoading ? (
-            <div className="h-[220px] flex items-center justify-center text-sm text-gray-400">
-              {t("stats.growthLog.weeklyChart.loading")}
-            </div>
-          ) : weeklyData.length === 0 ? (
-            <div className="h-[120px] flex items-center justify-center text-sm text-gray-400">
-              {t("stats.growthLog.weeklyChart.empty")}
-            </div>
-          ) : (
-            <div className="w-full">
-              <ResponsiveContainer
-                width="100%"
-                height={260}
-                minWidth={0}
-                minHeight={200}
-              >
-                <LineChart
-                  data={weeklyData}
-                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={isDark ? "#374151" : "#e5e7eb"}
-                  />
-                  <XAxis
-                    dataKey="day"
-                    stroke={isDark ? "#9ca3af" : "#6b7280"}
-                    tick={{ fontSize: 11 }}
-                  />
-                  <YAxis
-                    stroke={isDark ? "#9ca3af" : "#6b7280"}
-                    tick={{ fontSize: 11 }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: isDark ? "#1e293b" : "#ffffff",
-                      border: `1px solid ${
-                        isDark ? "#475569" : "#e5e7eb"
-                      }`,
-                      borderRadius: "8px",
-                      color: isDark ? "#ffffff" : "#000000",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="xp"
-                    stroke="#10b981"
-                    strokeWidth={3}
-                    dot={{ fill: "#10b981", r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+      {/* Weekly XP Chart */}
+      <div
+        className={`${
+          isDark
+            ? "bg-slate-800 border-slate-700"
+            : "bg-white border-gray-100"
+        } rounded-2xl p-4 sm:p-6 shadow-md border`}
+      >
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
+          <TrendingUp className="w-5 h-5 text-green-500" />
+          <h3 className={isDark ? "text-white" : "text-gray-900"}>
+            {t("stats.growthLog.weeklyChart.title")}
+          </h3>
         </div>
-      )}
 
-      {/* Streak Heatmap */}
+        {isLoading ? (
+          <div className="h-[220px] flex items-center justify-center text-sm text-gray-400">
+            {t("stats.growthLog.weeklyChart.loading")}
+          </div>
+        ) : weeklyData.length === 0 ? (
+          <div className="h-[120px] flex items-center justify-center text-sm text-gray-400">
+            {t("stats.growthLog.weeklyChart.empty")}
+          </div>
+        ) : (
+          <div className="w-full">
+            <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={200}>
+              <LineChart data={weeklyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#e5e7eb"} />
+                <XAxis dataKey="day" stroke={isDark ? "#9ca3af" : "#6b7280"} tick={{ fontSize: 11 }} />
+                <YAxis stroke={isDark ? "#9ca3af" : "#6b7280"} tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDark ? "#1e293b" : "#ffffff",
+                    border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
+                    borderRadius: "8px",
+                    color: isDark ? "#ffffff" : "#000000",
+                  }}
+                />
+                <Line type="monotone" dataKey="xp" stroke="#10b981" strokeWidth={3} dot={{ fill: "#10b981", r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      {/* Streak Heatmap s gradientem */}
       <div
         className={`${
           isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-100"
@@ -201,11 +181,7 @@ export function StatsGrowthLog({ theme }: StatsGrowthLogProps) {
           <h3 className={isDark ? "text-white" : "text-gray-900"}>
             {t("stats.growthLog.heatmap.title")}
           </h3>
-          <span
-            className={`ml-auto text-sm ${
-              isDark ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
+          <span className={`ml-auto text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
             {t("stats.growthLog.heatmap.rangeLabel")}
           </span>
         </div>
@@ -223,22 +199,17 @@ export function StatsGrowthLog({ theme }: StatsGrowthLogProps) {
             <div className="space-y-2">
               {heatmapWeeks.map((week, weekIndex) => (
                 <div key={weekIndex} className="flex gap-2">
-                  {week.map((day, dayIndex) => (
+                  {week.map((count, dayIndex) => (
                     <div
                       key={dayIndex}
                       className={`
                         w-full h-8 sm:h-10 rounded-lg transition-all duration-200
-                        ${
-                          day === 1
-                            ? "bg-gradient-to-br from-green-400 to-emerald-500 shadow-sm"
-                            : isDark
-                            ? "bg-slate-700"
-                            : "bg-gray-100"
-                        }
+                        ${getIntensityClass(count, isDark)}
+                        ${count > 0 ? "shadow-sm" : ""}
                       `}
                       title={
-                        day === 1
-                          ? t("stats.growthLog.heatmap.completed")
+                        count > 0
+                          ? `${t("stats.growthLog.heatmap.completed")} (${count})`
                           : t("stats.growthLog.heatmap.missed")
                       }
                     />
@@ -246,29 +217,18 @@ export function StatsGrowthLog({ theme }: StatsGrowthLogProps) {
                 </div>
               ))}
             </div>
+            {/* Legenda */}
             <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
-              <span
-                className={`text-sm ${
-                  isDark ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
+              <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 {t("stats.growthLog.heatmap.lessActive")}
               </span>
               <div className="flex gap-1">
-                <div
-                  className={`w-6 h-6 rounded ${
-                    isDark ? "bg-slate-700" : "bg-gray-100"
-                  }`}
-                />
-                <div className="w-6 h-6 rounded bg-green-200" />
-                <div className="w-6 h-6 rounded bg-green-400" />
-                <div className="w-6 h-6 rounded bg-green-500" />
+                <div className={`w-6 h-6 rounded ${isDark ? "bg-slate-800" : "bg-gray-100"}`} />
+                <div className={`w-6 h-6 rounded ${isDark ? "bg-emerald-900/60" : "bg-emerald-200"}`} />
+                <div className={`w-6 h-6 rounded ${isDark ? "bg-emerald-700/80" : "bg-emerald-400"}`} />
+                <div className={`w-6 h-6 rounded ${isDark ? "bg-emerald-500" : "bg-emerald-600"}`} />
               </div>
-              <span
-                className={`text-sm ${
-                  isDark ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
+              <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 {t("stats.growthLog.heatmap.moreActive")}
               </span>
             </div>

@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 
 export type WeeklyXpPoint = { day: string; xp: number };
-export type HeatmapDay = { date: string; completed: boolean };
+// Změna typu na number
+export type HeatmapDay = { date: string; count: number };
 
 export type GrowthStats = {
   weekly: WeeklyXpPoint[];

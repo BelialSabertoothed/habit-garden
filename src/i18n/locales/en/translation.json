@@ -94,7 +94,8 @@
       "title": "Experiment Variant",
       "description": "Switch between the gamified experience (XP, levels, badges) and the minimal experience (no gamification).",
       "buttonGamified": "Gamified",
-      "buttonControl": "Control (No Gamification)"
+      "buttonControl": "Control (No Gamification)",
+      "toastSwitchedToGamified": "Welcome to the Garden! 🌱 Your progress has been counted and you received XP."
     },
     "updateModal": {
       "title": "Edit Profile",

@@ -663,14 +663,25 @@ export function DashboardGarden({
                 theme={theme}
                 disabled={disabled}
                 disabledLabel={disabledLabel}
+                
+                // 👇 NOVÉ PROPS
+                isGamified={isGamified}
+                iconId={h.icon} // předáme ID ikony (heart, leaf, etc.)
+                
                 onWater={() => {
                   const id = h._id;
                   if (!backendAllowed || isWateringThis) {
                     return Promise.resolve();
                   }
 
+                  // V Control verzi chceme jen API call, bez čekání na animaci
+                  if (!isGamified) {
+                     return water.mutateAsync(id);
+                  }
+
+                  // V Gamified verzi zachováme logiku s "lockStreak" a časovačem
                   const ts = Date.now();
-                  const lockStreak = streak; // původní hodnota před zalitím
+                  const lockStreak = streak;
 
                   setRecentlyWatered((prev) => ({
                     ...prev,
@@ -680,7 +691,6 @@ export function DashboardGarden({
                   setTimeout(() => {
                     setRecentlyWatered((prev) => {
                       const current = prev[id];
-                      // pokud mezitím proběhlo další zalití, necháme novější zámek
                       if (!current || current.ts !== ts) return prev;
                       const copy: typeof prev = { ...prev };
                       delete copy[id];
