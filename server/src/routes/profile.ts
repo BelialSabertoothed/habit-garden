@@ -13,9 +13,14 @@ import { ExperimentEvent } from "../models/ExperimentEvent.js";
 
 const router = Router();
 
+export const ALLOWED_AVATARS = [
+  "🌱", "🌿", "🌸", "🌻", "🌺", "🌹", 
+  "🌵", "🌳", "🍀", "🌾", "🪴", "🌼"
+] as const;
+
 const InitInput = z.object({
   nickname: z.string().min(2).max(40),
-  avatar: z.string().min(1), // klidně emoji/text
+  avatar: z.enum(ALLOWED_AVATARS),
 });
 
 router.post("/init", requireAuth, asyncHandler(async (req: AuthReq, res: Response) => {

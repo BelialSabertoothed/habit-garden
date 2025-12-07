@@ -15,6 +15,7 @@ import { sendPasswordResetEmail } from "../services/email.js";
 
 import crypto from "node:crypto";
 import argon2 from "argon2";
+import { ALLOWED_AVATARS } from "./profile.js";
 
 const router = Router();
 
@@ -45,7 +46,7 @@ const RegisterInput = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   nickname: z.string().min(2).max(40).optional(),
-  avatar: z.string().optional(),
+  avatar: z.enum(ALLOWED_AVATARS).optional(),
 });
 
 type Variant = "gamified" | "control";
@@ -144,7 +145,6 @@ router.post(
       return res.status(401).json({ error: "invalid credentials" });
     }
 
-    // ❗ Blokace nepřihlášeného účtu
     if (!user.emailVerified) {
       return res.status(403).json({
         error: "email_not_verified",
