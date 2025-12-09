@@ -20,10 +20,16 @@ import { sendDailyNotifications } from "./cron/checkHabits.js";
 import cron from "node-cron";
 import rateLimit from 'express-rate-limit';
 
-cron.schedule("0 20 * * *", async () => {
-  console.log("Running daily habit notification check...");
-  await sendDailyNotifications();
-});
+
+if (process.env.NODE_ENV === "production") {
+  cron.schedule("0 20 * * *", async () => {
+    console.log("Running daily habit notification check...");
+    await sendDailyNotifications();
+  }, {
+    timezone: "Europe/Prague" 
+  });
+} else {
+  console.log("Skipping cron job setup in non-production environment");}
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minut
