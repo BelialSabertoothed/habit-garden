@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import MongoStore from "connect-mongo";
 import session from "express-session";
 import helmet from "helmet";
 import { initPassport } from "./lib/passport.js";
@@ -16,28 +17,20 @@ import authMeRouter from "./routes/auth.me.js";
 import profileRouter from "./routes/profile.js";
 import pushRouter from "./routes/push.js";
 import debug from "./routes/debug.js";
-import { sendDailyNotifications } from "./cron/checkHabits.js";
-import cron from "node-cron";
-import rateLimit from 'express-rate-limit';
+import rateLimit from "express-rate-limit";
 
-
-if (process.env.NODE_ENV === "production") {
-  cron.schedule("0 20 * * *", async () => {
-    console.log("Running daily habit notification check...");
-    await sendDailyNotifications();
-  }, {
-    timezone: "Europe/Prague" 
-  });
-} else {
-  console.log("Skipping cron job setup in non-production environment");}
+connectDB();
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minut
-  max: 10, // max 10 pokusů
-  message: "Too many login attempts, please try again later"
+  windowMs: 15 * 60 * 1000,
+
+  max: 10,
+
+  message: "Too many login attempts, please try again later",
 });
 
 const app = express();
+
 const isProduction = process.env.NODE_ENV === "production";
 
 if (isProduction) {
@@ -46,41 +39,72 @@ if (isProduction) {
 
 app.use(helmet());
 
-app.use(cors({
-  origin: [process.env.CLIENT_URL || "http://localhost:5173"],
-  credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
-  methods: ["GET","POST","PATCH","DELETE","OPTIONS"]
-}));
+app.use(
+  cors({
+    origin: [process.env.CLIENT_URL || "http://localhost:5173"],
+
+    credentials: true,
+
+    allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
+
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  }),
+);
 
 app.use(express.json());
+
 app.use(cookieParser());
 
-app.use(session({
-  secret: process.env.SESSION_SECRET || "tmp-oauth-session",
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-    httpOnly: true,
-    maxAge: 1000 * 60 * 15
-  }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "tmp-oauth-session",
+
+    resave: false,
+
+    saveUninitialized: false,
+
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+
+      collectionName: "sessions",
+    }) as unknown as session.Store,
+
+    cookie: {
+      secure: isProduction,
+
+      sameSite: isProduction ? "none" : "lax",
+
+      httpOnly: true,
+
+      maxAge: 1000 * 60 * 15,
+    },
+  }),
+);
 
 const passport = initPassport();
+
 app.use(passport.initialize());
 
 app.use("/api/auth", auth);
+
 app.use("/api/auth", authMeRouter);
+
 app.use("/api/profile", profileRouter);
+
 app.use("/api/habits", habits);
+
 app.use("/api/logs", logs);
+
 app.use("/api/stats", statsRouter);
+
 app.use("/api/rewards", rewards);
+
 app.use("/api/push", pushRouter);
+
 app.use("/api/debug", debug);
+
 app.use("/api/auth/login", authLimiter);
+
 app.use("/api/auth/register", authLimiter);
 
 app.use((req, res) => {
@@ -89,7 +113,4 @@ app.use((req, res) => {
 
 app.use(errorHandler);
 
-const PORT = Number(process.env.PORT) || 5050;
-connectDB().then(() => {
-  app.listen(PORT, () => console.log(`🚀 Server http://localhost:${PORT}`));
-});
+export default app;
